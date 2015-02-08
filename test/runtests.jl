@@ -23,7 +23,7 @@ MT2(4, "dsaf", 5)
 @test_throws ErrorException MT2(r=4)
 @test_throws ErrorException MT2()
 
-@with_kw immutable MT3
+@with_kw type MT3
     r::Int=5
     a::Float64
 end
@@ -42,8 +42,35 @@ end
 @test_throws ErrorException MT4(r=4, a=5.) # need to specify type parameters
 MT4{Float32, Int}(r=4, a=5.)
 MT4{Float32, Int}(a=5.)
-MT4{Float32, Int}(5.4, 4)
+MT4{Float32, Int}(5.4, 4)  # inner positional
+MT4(5.4, 4) # outer positional
 @test_throws ErrorException MT4{Float32, Int}()
 @test_throws InexactError MT4{Float32,Int}(a=5.5)
 @test_throws InexactError MT4{Float32,Int}(5.5, 5.5)
+
+# with type-parameters 2
+abstract AMT{R<:Real}
+@with_kw immutable MT5{R,I<:Integer} <: AMT{R}
+    r::R=5
+    a::I
+end
+@test_throws ErrorException MT5(r=4, a=5.) # need to specify type parameters
+MT5{Float32, Int}(r=4, a=5.)
+MT5{Float32, Int}(a=5.)
+MT5{Float32, Int}(5.4, 4)  # inner positional
+MT5(5.4, 4) # outer positional
+@test_throws ErrorException MT5{Float32, Int}()
+@test_throws InexactError MT5{Float32,Int}(a=5.5)
+@test_throws InexactError MT5{Float32,Int}(5.5, 5.5)
+
+@test_throws  MethodError MT5(5., "asdf")
+@test_throws  TypeError MT5( "asdf", 5)
+@test_throws  TypeError MT5{Float64, String}(5., "asdf")
+@test_throws  TypeError MT5{String, Int}("asdf", 6)
+
+# with unused type parameters
+@with_kw immutable MT6{R,I}
+    r::R=5
+    a
+end
 

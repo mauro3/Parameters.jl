@@ -53,6 +53,13 @@ function typename(typedef)
     end
 end
 
+stripsubtypes(s::Symbol) = s
+function stripsubtypes(e::Expr)
+    # Expr(:<:, :A, :B) => :A
+    e.args[1]
+end
+stripsubtypes(vec::Vector) = [stripsubtypes(v) for v in vec]
+
 
 ## exported functions
 #####################
@@ -83,8 +90,11 @@ function with_kw(typedef)
     if typedef.head!=:type
         error("only works on type-defs")
     end
+    const err1str = "Field \'" 
+    const err2str = "\' has no default, supply it with keyword."
+    
     # type def
-    typ = Expr(:type, copy(typedef.args[1:2])...)
+    typ = Expr(:type, deepcopy(typedef.args[1:2])...)
     fielddefs = quote end
     kws = OrderedDict{Any, Any}()
     for l in Lines(typedef.args[3]) # loop over body of typedef
@@ -92,7 +102,7 @@ function with_kw(typedef)
             push!(fielddefs.args, l)
             sym = l
             syms = string(sym)
-            kws[sym] = :(error("Field '" *$syms * "' has no default, supply it with keyword."))
+            kws[sym] = :(error($err1str * $syms * $err2str))
         elseif l.head==:(=)
             if l.args[1]==:call
                 error("no inner constructors allowed!")
@@ -103,10 +113,10 @@ function with_kw(typedef)
             push!(fielddefs.args, l)
             sym = decolon2(l.args[1])
             syms = string(sym)
-            kws[sym] = :(error("Field '" *$syms * "' has no default, supply it with keyword."))
+            kws[sym] = :(error($err1str *$syms * $err2str))
         end
     end
-    push!(typ.args, fielddefs)
+    push!(typ.args, deepcopy(fielddefs))
     # inner keyword constructor
     args = Any[]
     kwargs = Expr(:parameters)
@@ -126,12 +136,45 @@ function with_kw(typedef)
     append!(innerc.args[2].args, args)
     push!(typ.args[3].args, innerc)
 
-    # Do not provide an outer constructor as it is not clear how to
-    # handle the type parameters.
-    out = quote
-        $typ
+    # Do not provide an outer keyword-constructor as the type
+    # parameters need to be given explicitly anyway.
+
+    # Outer positional constructor which does not need explicit
+    # type-parameters.  Only construct if all type parameters are used
+    # in the fields.
+    if isa(typ.args[2], Symbol)
+        outer_positional = :($tn() = $tn())
+        append!(outer_positional.args[1].args, fielddefs.args)
+        append!(outer_positional.args[2].args, args)
+    else        
+        outer_positional = :($tn{}() = $tn{}())
+        if typ.args[2].head==:<:
+            typhead = typ.args[2].args[1].args[2:end]
+        else
+            typhead = typ.args[2].args[2:end]
+        end
+        append!(outer_positional.args[1].args[1].args, typhead)
+        append!(outer_positional.args[2].args[1].args, stripsubtypes(typhead))
+        
+        append!(outer_positional.args[1].args, fielddefs.args)
+        append!(outer_positional.args[2].args, args)
+        # Check that all type-parameters are used in the constructor
+        # function, otherwise get a method is not callable warning!
+        used_paras = Any[]
+        for f in fielddefs.args
+            if !isa(f,Symbol) && f.head==:(::)
+                push!(used_paras, f.args[2])
+            end
+        end
+        if !issubset(stripsubtypes(typhead), used_paras)
+            outer_positional = :()
+        end
     end
-    out
+
+    quote
+        $typ
+        $outer_positional
+    end
 end
 
 macro with_kw(typedef)
