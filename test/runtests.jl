@@ -39,11 +39,13 @@ MT3(4,5)
     r::R=5
     a::I
 end
-@test_throws ErrorException MT4(r=4, a=5.) # need to specify type parameters
+@test_throws MethodError MT4(r=4, a=5.) # need to specify type parameters
 MT4{Float32, Int}(r=4, a=5.)
 MT4{Float32, Int}(a=5.)
 MT4{Float32, Int}(5.4, 4)  # inner positional
-MT4(5.4, 4) # outer positional
+mt4=MT4(5.4, 4) # outer positional
+@test MT4(mt4)==mt4 # outer reconstruct
+@test MT4(mt4; a=77)==MT4(5.4, 77)
 @test_throws ErrorException MT4{Float32, Int}()
 @test_throws InexactError MT4{Float32,Int}(a=5.5)
 @test_throws InexactError MT4{Float32,Int}(5.5, 5.5)
@@ -54,11 +56,13 @@ abstract AMT{R<:Real}
     r::R=5
     a::I
 end
-@test_throws ErrorException MT5(r=4, a=5.) # need to specify type parameters
+@test_throws MethodError MT5(r=4, a=5.) # need to specify type parameters
 MT5{Float32, Int}(r=4, a=5.)
 MT5{Float32, Int}(a=5.)
 MT5{Float32, Int}(5.4, 4)  # inner positional
-MT5(5.4, 4) # outer positional
+mt5=MT5(5.4, 4) # outer positional
+@test MT5(mt5)==mt5 # outer reconstruct
+@test MT5(mt5; a=77)==MT5(5.4, 77)
 @test_throws ErrorException MT5{Float32, Int}()
 @test_throws InexactError MT5{Float32,Int}(a=5.5)
 @test_throws InexactError MT5{Float32,Int}(5.5, 5.5)

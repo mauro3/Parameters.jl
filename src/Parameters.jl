@@ -11,9 +11,7 @@ using DataStructures
 # All the model parameters
 #
 # Consider using https://github.com/Keno/SIUnits.jl
-export Paras, @with_kw, type2dict
-
-abstract Paras{R<:Real,I<:Integer}
+export @with_kw, type2dict, reconstruct
 
 ## helpers
 ##########
@@ -72,6 +70,26 @@ function type2dict(dt)
 end
 
 @doc """
+    Make a new instance of a type with the same values as 
+    the input type except for the fields given in the associative 
+    second argument or as keywords.
+
+    type A; a; b end
+    a = A(3,4)
+    b = reconstruct(a, [(:b, 99)])
+    """ ->
+function reconstruct{T}(pp::T, di)
+    di = !isa(di, Associative) ? Dict(di) : di
+    ns = names(pp)
+    args = Array(Any, length(ns))
+    for (i,n) in enumerate(ns)
+        args[i] = get(di, n, getfield(pp, n))
+    end
+    T(args...)
+end
+reconstruct{T}(pp::T; kws...) = copyandmodify(pp, kws)
+
+@doc """
     Transforms:
     @with_kw immutable MM{R}
         r::R = 1000.
@@ -85,6 +103,8 @@ end
         a::R
         MM(;r= = 1000., a=error("no default for a") = new(r,a)
     end
+    MM(m::MM; kws...) = reconstruct(mm,kws)
+    MM(m::MM, di::Union(Associative, ((Symbol,Any)...))) = reconstruct(mm, di)
     """ -> 
 function with_kw(typedef)
     if typedef.head!=:type
@@ -140,8 +160,8 @@ function with_kw(typedef)
     # parameters need to be given explicitly anyway.
 
     # Outer positional constructor which does not need explicit
-    # type-parameters.  Only construct if all type parameters are used
-    # in the fields.
+    # type-parameters.  Only make this constructor if all type
+    # parameters are used in the fields.
     if isa(typ.args[2], Symbol)
         outer_positional = :($tn() = $tn())
         append!(outer_positional.args[1].args, fielddefs.args)
@@ -159,7 +179,7 @@ function with_kw(typedef)
         append!(outer_positional.args[1].args, fielddefs.args)
         append!(outer_positional.args[2].args, args)
         # Check that all type-parameters are used in the constructor
-        # function, otherwise get a method is not callable warning!
+        # function, otherwise get a "method is not callable" warning!
         used_paras = Any[]
         for f in fielddefs.args
             if !isa(f,Symbol) && f.head==:(::)
@@ -171,9 +191,17 @@ function with_kw(typedef)
         end
     end
 
+    ## outer copy constructor
+    ###
+    outer_copy = quote
+        $tn(pp::$tn; kws... ) = reconstruct(pp, kws)
+        $tn(pp::$tn, di ) = reconstruct(pp, di)
+    end
+
     quote
         $typ
         $outer_positional
+        $outer_copy
     end
 end
 
