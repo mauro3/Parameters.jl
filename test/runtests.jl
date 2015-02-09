@@ -4,19 +4,27 @@ using Base.Test
 # parameters.jl
 ###############
 
-# unsupported statements
-@test_throws ErrorException Parameters.with_kw(:(immutable MT1{R}
-    r::R # = 1000.
-    a::R # = 5/4
-    MT1(r,a) = new(r,a) # inner constructor not supported
-end))
+# parameter-less
+@with_kw immutable MT1
+    r::Int = 4
+    c = "sdaf"
+end
+MT1()
+
 
 # parameter-less
-@with_kw immutable MT2
+@with_kw type MT2
     r::Int
     c
     a::Float64
 end
+# @show macroexpand(:(@with_kw immutable MT2
+#     r::Int
+#     c
+#     a::Float64
+# end
+# ))
+# @show methods(MT2)
 MT2(r=4, a=5., c=6)
 MT2(r=4, a=5, c="asdf")
 MT2(4, "dsaf", 5)
@@ -52,7 +60,7 @@ mt4=MT4(5.4, 4) # outer positional
 
 # with type-parameters 2
 abstract AMT{R<:Real}
-@with_kw immutable MT5{R,I<:Integer} <: AMT{R}
+@with_kw type MT5{R,I<:Integer} <: AMT{R}
     r::R=5
     a::I
 end
@@ -61,8 +69,10 @@ MT5{Float32, Int}(r=4, a=5.)
 MT5{Float32, Int}(a=5.)
 MT5{Float32, Int}(5.4, 4)  # inner positional
 mt5=MT5(5.4, 4) # outer positional
-@test MT5(mt5)==mt5 # outer reconstruct
-@test MT5(mt5; a=77)==MT5(5.4, 77)
+@test MT5(mt5).r==mt5.r # outer reconstruct
+@test MT5(mt5).a==mt5.a # outer reconstruct
+@test MT5(mt5; a=77).a==MT5(5.4, 77).a
+@test MT5(mt5; a=77).r==MT5(5.4, 77).r
 @test_throws ErrorException MT5{Float32, Int}()
 @test_throws InexactError MT5{Float32,Int}(a=5.5)
 @test_throws InexactError MT5{Float32,Int}(5.5, 5.5)
@@ -72,9 +82,47 @@ mt5=MT5(5.4, 4) # outer positional
 @test_throws  TypeError MT5{Float64, String}(5., "asdf")
 @test_throws  TypeError MT5{String, Int}("asdf", 6)
 
-# with unused type parameters
-@with_kw immutable MT6{R,I}
+# user defined inner positional constructor
+@with_kw immutable MT6{R,I<:Integer} <: AMT{R}
     r::R=5
-    a
+    a::I
+    MT6(r) = new(r,r)
+    MT6(r,a) = (@assert a>r; new(r,a))
 end
+@test_throws MethodError MT6(r=4, a=5.) # need to specify type parameters
+MT6{Float32, Int}(r=4, a=5.)
+MT6{Float32, Int}(a=6.)
+MT6{Float32, Int}(5.4, 6)  # inner positional
+mt6=MT6(5.4, 6) # outer positional
+@test MT6(mt6)==mt6 # outer reconstruct
+@test MT6(mt6; a=77)==MT6(5.4, 77)
+@test_throws ErrorException MT6{Float32, Int}()
+@test_throws InexactError MT6{Float32,Int}(a=5.5)
+@test_throws InexactError MT6{Float32,Int}(5.5, 6.5)
 
+@test_throws  MethodError MT6(5., "asdf")
+@test_throws  TypeError MT6( "asdf", 5)
+@test_throws  TypeError MT6{Float64, String}(5., "asdf")
+@test_throws  TypeError MT6{String, Int}("asdf", 6)
+
+# user defined BAD inner positional constructor
+@with_kw type MT7{R,I<:Integer} <: AMT{R}
+    r::R=5
+    a::I
+    MT7(r) = new(r,r+8)
+    # no MT7(r,a)
+end
+@test_throws MethodError MT7{Float32, Int}(r=4, a=5.)
+# user defined BAD inner positional constructor
+@test_throws ErrorException Parameters.with_kw(:(immutable MT8{R,I<:Integer} <: AMT{R}
+    r::R=5
+    a::I
+    MT8() = new(5,6) # this would shadow the keyword constructor!
+    MT8(r,a) = new(r,a)
+end))
+@test_throws ErrorException Parameters.with_kw(:(type MT8{R,I<:Integer} <: AMT{R}
+    r::R=5
+    a::I
+    MT8(;a=7) = new(5,a) # this would shadow the keyword constructor!
+    MT8(r,a) = new(r,a)
+end))

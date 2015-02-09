@@ -1,3 +1,6 @@
+# Some discussion on this:
+# https://groups.google.com/forum/#!msg/julia-users/YP31LM3Qto0/ET-XjN-vQuAJ
+
 module Parameters
 if VERSION < v"0.4.0-dev"
     using Docile
@@ -13,8 +16,8 @@ using DataStructures
 # Consider using https://github.com/Keno/SIUnits.jl
 export @with_kw, type2dict, reconstruct
 
-## helpers
-##########
+## Parser helpers
+#################
 
 # To iterate over code blocks dropping the line-number bits:
 immutable Lines
@@ -23,6 +26,9 @@ end
 Base.start(lns::Lines) = 1
 function Base.next(lns::Lines, nr)
     for i=nr:length(lns.block.args)
+        if isa(lns.block.args[i], LineNumberNode)
+            continue
+        end
         if isa(lns.block.args[i], Symbol) || !(lns.block.args[i].head==:line)
             return lns.block.args[i], i+1
         end
@@ -37,23 +43,26 @@ function Base.done(lns::Lines, nr)
     end
 end
 
-# https://groups.google.com/forum/#!msg/julia-users/YP31LM3Qto0/ET-XjN-vQuAJ
+# Transforms :(a::b) -> :a
 decolon2(a::Expr) = (@assert a.head==:(::);  a.args[1])
 decolon2(a::Symbol) = a
 
-function typename(typedef)
+# Returns the name of the type as symbol
+function typename(typedef::Expr)
     if isa(typedef.args[2], Symbol)
         return typedef.args[2]
     elseif isa(typedef.args[2].args[1], Symbol)
         return typedef.args[2].args[1]
-    else
+    elseif isa(typedef.args[2].args[1].args[1], Symbol)
         return typedef.args[2].args[1].args[1]
+    else
+        error("Could not parse type-head from: $typedef")
     end
 end
 
+# Transforms:  Expr(:<:, :A, :B) -> :A
 stripsubtypes(s::Symbol) = s
 function stripsubtypes(e::Expr)
-    # Expr(:<:, :A, :B) => :A
     e.args[1]
 end
 stripsubtypes(vec::Vector) = [stripsubtypes(v) for v in vec]
@@ -61,6 +70,9 @@ stripsubtypes(vec::Vector) = [stripsubtypes(v) for v in vec]
 
 ## exported functions
 #####################
+@doc """
+    Transforms a type-instance into a dictionary.
+    """->
 function type2dict(dt)
     di = Dict{Symbol,Any}()
     for n in names(dt)
@@ -101,6 +113,7 @@ reconstruct{T}(pp::T; kws...) = copyandmodify(pp, kws)
     @with_kw immutable MM{R}
         r::R
         a::R
+        MM(r,a) = new(r,a)
         MM(;r= = 1000., a=error("no default for a") = new(r,a)
     end
     MM(m::MM; kws...) = reconstruct(mm,kws)
@@ -112,6 +125,19 @@ function with_kw(typedef)
     end
     const err1str = "Field \'" 
     const err2str = "\' has no default, supply it with keyword."
+
+    inner_constructors = Any[]
+
+    # a few things
+    tn = typename(typedef) # the name of the type
+    # Returns M{...} (removes any supertypes)
+    if isa(typedef.args[2], Symbol)
+        typparas = Any[]
+    elseif typedef.args[2].head==:<:
+        typparas = typedef.args[2].args[1].args[2:end]
+    else
+        typparas = typedef.args[2].args[2:end]
+    end
     
     # type def
     typ = Expr(:type, deepcopy(typedef.args[1:2])...)
@@ -124,11 +150,19 @@ function with_kw(typedef)
             syms = string(sym)
             kws[sym] = :(error($err1str * $syms * $err2str))
         elseif l.head==:(=)
-            if l.args[1]==:call
-                error("no inner constructors allowed!")
+            if isa(l.args[1], Expr) && l.args[1].head==:call
+                if length(l.args[1].args)==1
+                    error("No inner constructors with zero positional arguments allowed!")
+                elseif (length(l.args[1].args)==2 #1<length(l.args[1].args)<=3
+                        && isa(l.args[1].args[2], Expr)
+                        && l.args[1].args[2].head==:parameters)
+                    error("No inner constructors with zero positional arguments plus keyword arguments allowed!")
+                end
+                push!(inner_constructors, l)
+            else
+                push!(fielddefs.args, l.args[1])
+                kws[decolon2(l.args[1])] = l.args[2]
             end
-            push!(fielddefs.args, l.args[1])
-            kws[decolon2(l.args[1])] = l.args[2]
         else # no default value but with type annotation
             push!(fielddefs.args, l)
             sym = decolon2(l.args[1])
@@ -137,65 +171,72 @@ function with_kw(typedef)
         end
     end
     push!(typ.args, deepcopy(fielddefs))
-    # inner keyword constructor
+    # Inner keyword constructor.  Note that this calls the positional
+    # constructor under the hood and not `new`.  That way a user can
+    # provide a special positional constructor (say enforcing
+    # invariants) which also gets used with the keywords.
     args = Any[]
     kwargs = Expr(:parameters)
     for (k,w) in kws
         push!(args, k)
         push!(kwargs.args, Expr(:kw,k,w))
     end
-    tn = typename(typedef)
-    innerc = :($tn() = new())
+    if length(typparas)>0
+        innerc = :($tn() = $tn{}())
+        append!(innerc.args[2].args[1].args, stripsubtypes(typparas))
+    else
+        innerc = :($tn() = $tn())
+    end
     push!(innerc.args[1].args, kwargs)
     append!(innerc.args[2].args, args)
     push!(typ.args[3].args, innerc)
-
-    # inner positional constructor
-    innerc = :($tn() = new())
-    append!(innerc.args[1].args, args)
-    append!(innerc.args[2].args, args)
-    push!(typ.args[3].args, innerc)
+    
+    # Inner positional constructor: only make it if no inner
+    # constructors are user-defined.  If one or several are defined,
+    # assume that one has the standard positional signature.
+    if length(inner_constructors)==0
+        innerc2 = :($tn() = new())
+        append!(innerc2.args[1].args, args)
+        append!(innerc2.args[2].args, args)
+        push!(typ.args[3].args, innerc2)
+    else
+        append!(typ.args[3].args, inner_constructors)
+    end
 
     # Do not provide an outer keyword-constructor as the type
     # parameters need to be given explicitly anyway.
 
     # Outer positional constructor which does not need explicit
-    # type-parameters.  Only make this constructor if all type
-    # parameters are used in the fields.
-    if isa(typ.args[2], Symbol)
-        outer_positional = :($tn() = $tn())
-        append!(outer_positional.args[1].args, fielddefs.args)
-        append!(outer_positional.args[2].args, args)
-    else        
+    # type-parameters.  Only make this constructor if
+    #  (1) type parameters are used at all
+    #  (2) all type parameters are used in the fields (otherwise get a
+    #      "method is not callable" warning!)
+    if !isa(typedef.args[2], Symbol) # condition (1)
         outer_positional = :($tn{}() = $tn{}())
-        if typ.args[2].head==:<:
-            typhead = typ.args[2].args[1].args[2:end]
-        else
-            typhead = typ.args[2].args[2:end]
-        end
-        append!(outer_positional.args[1].args[1].args, typhead)
-        append!(outer_positional.args[2].args[1].args, stripsubtypes(typhead))
+        append!(outer_positional.args[1].args[1].args, typparas)
+        append!(outer_positional.args[2].args[1].args, stripsubtypes(typparas))
         
         append!(outer_positional.args[1].args, fielddefs.args)
         append!(outer_positional.args[2].args, args)
-        # Check that all type-parameters are used in the constructor
-        # function, otherwise get a "method is not callable" warning!
+        # Check condition (2)
         used_paras = Any[]
         for f in fielddefs.args
             if !isa(f,Symbol) && f.head==:(::)
                 push!(used_paras, f.args[2])
             end
         end
-        if !issubset(stripsubtypes(typhead), used_paras)
+        if !issubset(stripsubtypes(typparas), used_paras)
             outer_positional = :()
         end
+    else
+        outer_positional = :()        
     end
 
     ## outer copy constructor
     ###
     outer_copy = quote
         $tn(pp::$tn; kws... ) = reconstruct(pp, kws)
-        $tn(pp::$tn, di ) = reconstruct(pp, di)
+        $tn(pp::$tn, di::Union(Associative, ((Symbol,Any)...)) ) = reconstruct(pp, di)
     end
 
     quote
