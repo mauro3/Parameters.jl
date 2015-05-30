@@ -44,3 +44,10 @@ MyS(ms, b=-1) # MyS(3,-1)
 try
     MyS(ms, b=6) # this will fail the assertion
 end
+
+# parameter interdependence
+@with_kw immutable Para{R<:Real}
+    a::R = 5
+    b::R
+    c::R = a+b
+end
