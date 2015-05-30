@@ -128,7 +128,7 @@ function with_kw(typedef)
 
     inner_constructors = Any[]
 
-    # a few things
+    # parse a few things
     tn = typename(typedef) # the name of the type
     # Returns M{...} (removes any supertypes)
     if isa(typedef.args[2], Symbol)
@@ -139,9 +139,10 @@ function with_kw(typedef)
         typparas = typedef.args[2].args[2:end]
     end
     
-    # type def
+    # the type def
     typ = Expr(:type, deepcopy(typedef.args[1:2])...)
-    fielddefs = quote end
+    fielddefs = quote end # holds r::R etc
+    unwrap = quote end    # holds r=$struct.r
     kws = OrderedDict{Any, Any}()
     for l in Lines(typedef.args[3]) # loop over body of typedef
         if isa(l, Symbol)  # no default value and no type annotation
@@ -149,8 +150,11 @@ function with_kw(typedef)
             sym = l
             syms = string(sym)
             kws[sym] = :(error($err1str * $syms * $err2str))
+            # unwrap-macro
+            push!(unwrap.args, :($l=aa.$l))
         elseif l.head==:(=)
             if isa(l.args[1], Expr) && l.args[1].head==:call
+                # this is an inner constructors
                 if length(l.args[1].args)==1
                     error("No inner constructors with zero positional arguments allowed!")
                 elseif (length(l.args[1].args)==2 #1<length(l.args[1].args)<=3
@@ -162,14 +166,21 @@ function with_kw(typedef)
             else
                 push!(fielddefs.args, l.args[1])
                 kws[decolon2(l.args[1])] = l.args[2]
+                # unwrap-macro
+                ll = l.args[1].args[1]
+                push!(unwrap.args, :($ll=aa.$ll))
             end
         else # no default value but with type annotation
             push!(fielddefs.args, l)
             sym = decolon2(l.args[1])
             syms = string(sym)
             kws[sym] = :(error($err1str *$syms * $err2str))
+            # unwrap-macro
+            ll = l.args[1]
+            push!(unwrap.args, :($ll=aa.$ll))
         end
     end
+    @show unwrap
     push!(typ.args, deepcopy(fielddefs))
     # Inner keyword constructor.  Note that this calls the positional
     # constructor under the hood and not `new`.  That way a user can
@@ -239,10 +250,24 @@ function with_kw(typedef)
         $tn(pp::$tn, di::Union(Associative, ((Symbol,Any)...)) ) = reconstruct(pp, di)
     end
 
+    # unwrap macro
+    @show name = symbol("unwrap_"*string(tn))
+    unwrap_macro = quote
+        unwrap2=$unwrap
+        macro $name()
+            quote
+                $unwrap2
+            end
+        end
+    end
+    
+
+    # Finish up
     quote
         $typ
         $outer_positional
         $outer_copy
+        $unwrap_macro
     end
 end
 
