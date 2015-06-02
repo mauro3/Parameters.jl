@@ -11,20 +11,12 @@ using Base.Test
 end
 MT1()
 
-
 # parameter-less
 @with_kw type MT2
     r::Int
     c
     a::Float64
 end
-# @show macroexpand(:(@with_kw immutable MT2
-#     r::Int
-#     c
-#     a::Float64
-# end
-# ))
-# @show methods(MT2)
 MT2(r=4, a=5., c=6)
 MT2(r=4, a=5, c="asdf")
 MT2(4, "dsaf", 5)
@@ -76,7 +68,6 @@ mt5=MT5(5.4, 4) # outer positional
 @test_throws ErrorException MT5{Float32, Int}()
 @test_throws InexactError MT5{Float32,Int}(a=5.5)
 @test_throws InexactError MT5{Float32,Int}(5.5, 5.5)
-
 @test_throws  MethodError MT5(5., "asdf")
 @test_throws  TypeError MT5( "asdf", 5)
 @test_throws  TypeError MT5{Float64, String}(5., "asdf")
@@ -99,7 +90,6 @@ mt6=MT6(5.4, 6) # outer positional
 @test_throws ErrorException MT6{Float32, Int}()
 @test_throws InexactError MT6{Float32,Int}(a=5.5)
 @test_throws InexactError MT6{Float32,Int}(5.5, 6.5)
-
 @test_throws  MethodError MT6(5., "asdf")
 if VERSION < v"0.4.0-dev"
     @test_throws  TypeError MT6( "asdf", 5)
@@ -117,6 +107,7 @@ end
     # no MT7(r,a)
 end
 @test_throws MethodError MT7{Float32, Int}(r=4, a=5.)
+
 # user defined BAD inner positional constructor
 @test_throws ErrorException Parameters.with_kw(:(immutable MT8{R,I<:Integer} <: AMT{R}
     r::R=5
@@ -130,6 +121,26 @@ end))
     MT8(;a=7) = new(5,a) # this would shadow the keyword constructor!
     MT8(r,a) = new(r,a)
 end))
+
+
+# parameter interdependence
+# parameter interdependence
+@with_kw immutable MT9{R<:Real}
+    a::R = 5
+    b::R
+    c::R = a+b
+end
+@test MT9{Float64}(b=1).c==6
+@test MT9{Float64}(b=1, c=1).c==1
+
+@with_kw immutable MT10{R<:Real}
+    b::R = 6
+    c::R = a+b
+    a::R = 5
+end
+@test_throws UndefVarError MT10{Float64}() # defaults are evaluated in order
+@test MT10{Float64}(b=1).c==6  # this shouldn't work but does: https://github.com/JuliaLang/julia/issues/9535#issuecomment-73717708
+@test MT10{Float64}(b=1, c=1).c==1
 
 ## (Un)pack
 @with_kw immutable P1
