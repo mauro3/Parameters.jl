@@ -28,3 +28,8 @@ pp2 = PhysicalPara(pp; cw=.11e-7, rw=100.)
 pp3 = PhysicalPara{Float32}(alpha=77, day= 987)
 
 ```
+
+# TODO
+
+- do copy of fields on (re-)construct?
+- think about mutables

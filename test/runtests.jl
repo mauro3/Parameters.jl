@@ -126,3 +126,23 @@ end))
     MT8(;a=7) = new(5,a) # this would shadow the keyword constructor!
     MT8(r,a) = new(r,a)
 end))
+
+## (Un)pack
+@with_kw immutable P1
+    r::Int
+    c
+    a::Float64
+end
+
+let
+    mt = P1(r=4, a=5, c=6)
+    @unpack_P1 mt
+    @test r===4
+    @test c===6
+    @test a===5.
+    r = 1
+    a = 2
+    c = 3
+    @pack_P1 mt
+    @test mt===P1(r=1, a=2, c=3)
+end

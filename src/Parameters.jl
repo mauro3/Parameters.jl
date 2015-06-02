@@ -1,20 +1,18 @@
 # Some discussion on this:
 # https://groups.google.com/forum/#!msg/julia-users/YP31LM3Qto0/ET-XjN-vQuAJ
+#
+# All the model parameters
+#
+# Consider using https://github.com/Keno/SIUnits.jl
 
 module Parameters
 if VERSION < v"0.4.0-dev"
     using Docile
 end
-# for some reason @docstrings cannot be in the same if-end?!
-if VERSION < v"0.4.0-dev"
-    @docstrings
-end
 using DataStructures
+using Compat
 
-# All the model parameters
-#
-# Consider using https://github.com/Keno/SIUnits.jl
-export @with_kw, type2dict, reconstruct
+export @with_kw, type2dict, reconstruct, @unpack, @pack
 
 ## Parser helpers
 #################
@@ -176,9 +174,8 @@ function with_kw(typedef)
             syms = string(sym)
             kws[sym] = :(error($err1str * $syms * $err2str))
             # unwrap-macro
-            @show sym
             push!(unpack_vars, sym)
-        elseif l.head==:(=)
+        elseif l.head==:(=)  # default value and with or without type annotation
             if isa(l.args[1], Expr) && l.args[1].head==:call
                 # this is an inner constructors
                 if length(l.args[1].args)==1
@@ -193,7 +190,12 @@ function with_kw(typedef)
                 push!(fielddefs.args, l.args[1])
                 kws[decolon2(l.args[1])] = l.args[2]
                 # unwrap-macro
-                push!(unpack_vars, l.args[1].args[1])
+                ll = l.args[1]
+                if isa(ll, Symbol)  # default value and without type annotation
+                    push!(unpack_vars, ll)
+                else  # default value and with type annotation
+                    push!(unpack_vars, ll.args[1])
+                end
             end
         else # no default value but with type annotation
             push!(fielddefs.args, l)
