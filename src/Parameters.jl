@@ -73,7 +73,7 @@ stripsubtypes(vec::Vector) = [stripsubtypes(v) for v in vec]
     """->
 function type2dict(dt)
     di = Dict{Symbol,Any}()
-    for n in names(dt)
+    for n in @compat fieldnames(dt)
         di[n] = getfield(dt, n)
     end
     di
@@ -90,7 +90,7 @@ end
     """ ->
 function reconstruct{T}(pp::T, di)
     di = !isa(di, Associative) ? Dict(di) : di
-    ns = names(pp)
+    ns = @compat fieldnames(pp)
     args = Array(Any, length(ns))
     for (i,n) in enumerate(ns)
         args[i] = get(di, n, getfield(pp, n))
@@ -164,7 +164,6 @@ function with_kw(typedef)
     # the vars for the unpack macro
     unpack_vars = Any[]
     # the type def
-    typ = Expr(:type, deepcopy(typedef.args[1:2])...)
     fielddefs = quote end # holds r::R etc
     kws = OrderedDict{Any, Any}()
     for l in Lines(typedef.args[3]) # loop over body of typedef
@@ -206,7 +205,9 @@ function with_kw(typedef)
             push!(unpack_vars, l.args[1])
         end
     end
-    push!(typ.args, deepcopy(fielddefs))
+    # The type definition without inner constructors:
+    typ = Expr(:type, deepcopy(typedef.args[1:2])..., deepcopy(fielddefs))
+    
     # Inner keyword constructor.  Note that this calls the positional
     # constructor under the hood and not `new`.  That way a user can
     # provide a special positional constructor (say enforcing
@@ -218,22 +219,17 @@ function with_kw(typedef)
         push!(kwargs.args, Expr(:kw,k,w))
     end
     if length(typparas)>0
-        innerc = :($tn() = $tn{}())
-        append!(innerc.args[2].args[1].args, stripsubtypes(typparas))
+        innerc = :($tn($kwargs) = $tn{$(stripsubtypes(typparas)...)}($(args...)) )
     else
-        innerc = :($tn() = $tn())
+        innerc = :($tn($kwargs) = $tn($(args...)) )
     end
-    push!(innerc.args[1].args, kwargs)
-    append!(innerc.args[2].args, args)
     push!(typ.args[3].args, innerc)
-    
+
     # Inner positional constructor: only make it if no inner
     # constructors are user-defined.  If one or several are defined,
     # assume that one has the standard positional signature.
     if length(inner_constructors)==0
-        innerc2 = :($tn() = new())
-        append!(innerc2.args[1].args, args)
-        append!(innerc2.args[2].args, args)
+        innerc2 = :($tn($(args...)) = new($(args...)))
         push!(typ.args[3].args, innerc2)
     else
         append!(typ.args[3].args, inner_constructors)
@@ -248,12 +244,8 @@ function with_kw(typedef)
     #  (2) all type parameters are used in the fields (otherwise get a
     #      "method is not callable" warning!)
     if !isa(typedef.args[2], Symbol) # condition (1)
-        outer_positional = :($tn{}() = $tn{}())
-        append!(outer_positional.args[1].args[1].args, typparas)
-        append!(outer_positional.args[2].args[1].args, stripsubtypes(typparas))
-        
-        append!(outer_positional.args[1].args, fielddefs.args)
-        append!(outer_positional.args[2].args, args)
+        outer_positional = :(  $tn{$(typparas...)}($(fielddefs.args...))
+                             = $tn{$(stripsubtypes(typparas)...)}($(args...)))
         # Check condition (2)
         used_paras = Any[]
         for f in fielddefs.args
@@ -270,11 +262,20 @@ function with_kw(typedef)
 
     ## outer copy constructor
     ###
-    outer_copy = quote
-        $tn(pp::$tn; kws... ) = reconstruct(pp, kws)
-        $tn(pp::$tn, di::Union(Associative, ((Symbol,Any)...)) ) = reconstruct(pp, di)
+    if VERSION < v"0.4.0-dev"
+        outer_copy = quote
+            $tn(pp::$tn; kws... ) = reconstruct(pp, kws)
+            $tn(pp::$tn, di::Union(Associative, ((Symbol,Any)...)) ) = reconstruct(pp, di)
+        end
+    else
+        outer_copy = quote
+            $tn(pp::$tn; kws... ) = reconstruct(pp, kws)
+            # $tn(pp::$tn, di::Union(Associative,Vararg{Tuple{Symbol,Any}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
+            # $tn(pp::$tn, di::Union(Associative, Tuple{Vararg{Tuple{Symbol, Any}}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
+            $tn(pp::$tn, di::Associative ) = reconstruct(pp, di)
+            $tn(pp::$tn, di::Vararg{Tuple{Symbol,Any}} ) = reconstruct(pp, di)
+        end
     end
-
 
     # (un)pack macro from https://groups.google.com/d/msg/julia-users/IQS2mT1ITwU/hDtlV7K1elsJ
     unpack_name = symbol("unpack_"*string(tn))

@@ -101,7 +101,11 @@ mt6=MT6(5.4, 6) # outer positional
 @test_throws InexactError MT6{Float32,Int}(5.5, 6.5)
 
 @test_throws  MethodError MT6(5., "asdf")
-@test_throws  TypeError MT6( "asdf", 5)
+if VERSION < v"0.4.0-dev"
+    @test_throws  TypeError MT6( "asdf", 5)
+else
+    @test_throws MethodError MT6( "asdf", 5)
+end
 @test_throws  TypeError MT6{Float64, String}(5., "asdf")
 @test_throws  TypeError MT6{String, Int}("asdf", 6)
 
