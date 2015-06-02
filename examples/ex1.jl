@@ -5,21 +5,18 @@ abstract Paras{R<:Real, I<:Integer}
 @with_kw immutable PhysicalPara{R} <: Paras{R}
     rw::R = 1000.
     ri::R = 900.
-    k::R = 0.05
     L::R = 3.34e5
     g::R = 9.81
     cw::R = 4220.
     day::R = 24*3600.
-    A::R = 2.5e-25
-    alpha::R = 5/4
 end
 
+# create an instance with the defaults
 pp = PhysicalPara{Float64}()
-# make another one with some modifications
+# make another one based on the previous one with some modifications
 pp2 = PhysicalPara(pp; cw=.11e-7, rw=100.)
-
 # make one afresh with some non-defaults
-pp3 = PhysicalPara{Float32}(alpha=77, day= 987)
+pp3 = PhysicalPara{Float32}(cw=77, day= 987)
 
 # Custom inner constructors:
 @with_kw immutable MyS{R}
@@ -30,6 +27,9 @@ pp3 = PhysicalPara{Float32}(alpha=77, day= 987)
     #  - one defining all positional arguments is given
     #  - no zero-positional arguments constructor is defined (as that
     #    would clash with the keyword constructor)
+    #
+    # Note that the keyword constructor goes through the positional
+    # constructor, thus invariants defined there will be honored.
 
     MyS(a,b) = (@assert a>b; new(a,b))  # The keyword constructor
                                         # calls this constructor, so
@@ -51,3 +51,19 @@ end
     b::R
     c::R = a+b
 end
+pa = Para{Int}(b=7)
+
+## (Un)pack macros
+#
+# When working with parameters it is often convenient to unpack (and
+# pack then):
+function fn(var, pa::Para)
+    @unpack_Para pa # the macro is constructed during the @with_kw
+                    # and called @unpack_*
+    out = var + a + b
+    b = 77
+    @pack_Para pa # now pa.b==77
+    return out, pa
+end
+
+out, pa = fn(7, pa)
