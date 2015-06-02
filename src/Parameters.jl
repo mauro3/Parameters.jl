@@ -99,7 +99,20 @@ function reconstruct{T}(pp::T, di)
     end
     T(args...)
 end
-reconstruct{T}(pp::T; kws...) = copyandmodify(pp, kws)
+reconstruct{T}(pp::T; kws...) = reconstruct(pp, kws)
+
+
+# A type with fields (r,a) in variable aa becomes
+# quote 
+#     r = aa.r
+#     a = aa.a
+# end
+_unpack(binding, fields) = Expr(:block, [:($f = $binding.$f) for f in fields]...)
+# Pack fields back into binding using reconstruct:
+function _pack(binding, fields)
+    kws = [Expr(:kw, f, f) for f in fields]
+    :($binding = Parameters.reconstruct($binding, $(kws...)) )
+end
 
 @doc """
     Transforms:
@@ -110,7 +123,7 @@ reconstruct{T}(pp::T; kws...) = copyandmodify(pp, kws)
     
     Into
     
-    @with_kw immutable MM{R}
+    immutable MM{R}
         r::R
         a::R
         MM(r,a) = new(r,a)
@@ -118,6 +131,17 @@ reconstruct{T}(pp::T; kws...) = copyandmodify(pp, kws)
     end
     MM(m::MM; kws...) = reconstruct(mm,kws)
     MM(m::MM, di::Union(Associative, ((Symbol,Any)...))) = reconstruct(mm, di)
+    macro unpack_MM(varname)
+        esc(:(
+        r = varname.r
+        a = varname.a
+        ))
+    end
+    macro pack_MM(varname)
+        esc(:(
+        varname = Parameters.reconstruct(varname,r=r,a=a)
+        ))
+    end
     """ -> 
 function with_kw(typedef)
     if typedef.head!=:type
@@ -138,11 +162,12 @@ function with_kw(typedef)
     else
         typparas = typedef.args[2].args[2:end]
     end
-    
+
+    # the vars for the unpack macro
+    unpack_vars = Any[]
     # the type def
     typ = Expr(:type, deepcopy(typedef.args[1:2])...)
     fielddefs = quote end # holds r::R etc
-    unwrap = quote end    # holds r=$struct.r
     kws = OrderedDict{Any, Any}()
     for l in Lines(typedef.args[3]) # loop over body of typedef
         if isa(l, Symbol)  # no default value and no type annotation
@@ -151,7 +176,8 @@ function with_kw(typedef)
             syms = string(sym)
             kws[sym] = :(error($err1str * $syms * $err2str))
             # unwrap-macro
-            push!(unwrap.args, :($l=aa.$l))
+            @show sym
+            push!(unpack_vars, sym)
         elseif l.head==:(=)
             if isa(l.args[1], Expr) && l.args[1].head==:call
                 # this is an inner constructors
@@ -167,8 +193,7 @@ function with_kw(typedef)
                 push!(fielddefs.args, l.args[1])
                 kws[decolon2(l.args[1])] = l.args[2]
                 # unwrap-macro
-                ll = l.args[1].args[1]
-                push!(unwrap.args, :($ll=aa.$ll))
+                push!(unpack_vars, l.args[1].args[1])
             end
         else # no default value but with type annotation
             push!(fielddefs.args, l)
@@ -176,11 +201,9 @@ function with_kw(typedef)
             syms = string(sym)
             kws[sym] = :(error($err1str *$syms * $err2str))
             # unwrap-macro
-            ll = l.args[1]
-            push!(unwrap.args, :($ll=aa.$ll))
+            push!(unpack_vars, l.args[1])
         end
     end
-    @show unwrap
     push!(typ.args, deepcopy(fielddefs))
     # Inner keyword constructor.  Note that this calls the positional
     # constructor under the hood and not `new`.  That way a user can
@@ -250,24 +273,21 @@ function with_kw(typedef)
         $tn(pp::$tn, di::Union(Associative, ((Symbol,Any)...)) ) = reconstruct(pp, di)
     end
 
-    # unwrap macro
-    @show name = symbol("unwrap_"*string(tn))
-    unwrap_macro = quote
-        unwrap2=$unwrap
-        macro $name()
-            quote
-                $unwrap2
-            end
-        end
-    end
-    
 
+    # (un)pack macro from https://groups.google.com/d/msg/julia-users/IQS2mT1ITwU/hDtlV7K1elsJ
+    unpack_name = symbol("unpack_"*string(tn))
+    pack_name = symbol("pack_"*string(tn))
     # Finish up
     quote
         $typ
         $outer_positional
         $outer_copy
-        $unwrap_macro
+        macro $unpack_name(ex)
+            esc(Parameters._unpack(ex, $unpack_vars))
+        end
+        macro $pack_name(ex)
+            esc(Parameters._pack(ex, $unpack_vars))
+        end
     end
 end
 
