@@ -2,15 +2,26 @@
 
 [![Build Status](https://travis-ci.org/mauro3/Parameters.jl.svg?branch=master)](https://travis-ci.org/mauro3/Parameters.jl)
 
-This is a package to handle numerical model parameters.  Its main
-feature is the macro `@with_kw` which decorates a type definition. 
+This is a package I use to handle numerical-model parameters, thus the
+name.  However, it should be useful otherwise too.  Its main feature
+is the macro `@with_kw` which decorates a type definition and creates:
 
-- adds a keyword constructor to the type
-- it allows creating a type-instance which takes its defaults from
-  another type instance.
-- makes packing and unpacking macros for the type: `@unpack_*` where `*` is
+- a keyword constructor to the type
+- allows setting default values for the fields
+- a constructor which allows creating a type-instance taking its defaults from
+  another type instance
+- packing and unpacking macros for the type: `@unpack_*` where `*` is
   the type name.
 
+The keyword-constructor and default-values functionality will probably
+make it into Julia
+([# 10146](https://github.com/JuliaLang/julia/issues/10146),
+[#533](https://github.com/JuliaLang/julia/issues/5333) and
+[#6122](https://github.com/JuliaLang/julia/pull/6122)) although
+probably not with all the features present in this package.  I suspect
+that this package should stay usable & useful even after this change
+lands in Julia.  Note that keyword functions are currently slow in
+Julia, so these constructors should not be used in hot inner loops.
 
 Manual by example:
 ```julia
@@ -85,7 +96,11 @@ end
 out, pa = fn(7, pa)
 ```
 
-This is [examples/ex1.jl](examples/ex1.jl).
+This is [examples/ex1.jl](examples/ex1.jl).  Note that the
+(un-)packing macros have a few pitfalls, as changing the type
+definition will change what local variables are available in a
+function using `@unpack`.  For instance, adding a field `pi` to a type
+might hijack `Base.pi` usage in a function.
 
 # TODO
 
