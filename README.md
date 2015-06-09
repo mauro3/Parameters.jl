@@ -6,8 +6,8 @@ This is a package I use to handle numerical-model parameters, thus the
 name.  However, it should be useful otherwise too.  Its main feature
 is the macro `@with_kw` which decorates a type definition and creates:
 
-- a keyword constructor to the type
-- allows setting default values for the fields
+- a keyword constructor for the type
+- allows setting default values for the fields inside the type definition
 - a constructor which allows creating a type-instance taking its defaults from
   another type instance
 - packing and unpacking macros for the type: `@unpack_*` where `*` is

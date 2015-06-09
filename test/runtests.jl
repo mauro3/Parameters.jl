@@ -124,7 +124,6 @@ end))
 
 
 # parameter interdependence
-# parameter interdependence
 @with_kw immutable MT9{R<:Real}
     a::R = 5
     b::R
@@ -141,6 +140,21 @@ end
 @test_throws UndefVarError MT10{Float64}() # defaults are evaluated in order
 @test MT10{Float64}(b=1).c==6  # this shouldn't work but does: https://github.com/JuliaLang/julia/issues/9535#issuecomment-73717708
 @test MT10{Float64}(b=1, c=1).c==1
+
+# binding outside variables
+a = 7
+b = [1,2]
+@with_kw immutable MT11
+    aa::Int=a  # a::Int=a is not possible as the outside a gets shadowed
+    bb::Vector{Int}=b
+end
+m = MT11()
+@test m.aa===a
+@test m.bb===b
+a = 5
+b[1] = 2
+@test m.aa===7
+@test m.bb[1]==2
 
 ## (Un)pack
 @with_kw immutable P1
