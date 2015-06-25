@@ -1,6 +1,7 @@
 # Parameters
 
 [![Build Status](https://travis-ci.org/mauro3/Parameters.jl.svg?branch=master)](https://travis-ci.org/mauro3/Parameters.jl)
+[![Parameters](http://pkg.julialang.org/badges/Parameters_0.3.svg)](http://pkg.julialang.org/?pkg=Parameters&ver=release)
 
 This is a package I use to handle numerical-model parameters, thus the
 name.  However, it should be useful otherwise too.  Its main feature
