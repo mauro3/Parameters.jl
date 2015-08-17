@@ -27,6 +27,9 @@ that this package should stay usable & useful even after this change
 lands in Julia.  Note that keyword functions are currently slow in
 Julia, so these constructors should not be used in hot inner loops.
 
+[NEWS.md](https://github.com/mauro3/Parameters.jl/blob/master/NEWS.md)
+keeps tabs on updates.
+
 Manual by example:
 ```julia
 using Parameters
