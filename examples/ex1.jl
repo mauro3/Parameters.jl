@@ -57,7 +57,7 @@ pa = Para{Int}(b=7)
 #
 # When working with parameters it is often convenient to unpack (and
 # pack then):
-function fn(var, pa::Para)
+function fn1(var, pa::Para)
     @unpack_Para pa # the macro is constructed during the @with_kw
                     # and called @unpack_*
     out = var + a + b
@@ -66,4 +66,18 @@ function fn(var, pa::Para)
     return out, pa
 end
 
-out, pa = fn(7, pa)
+out, pa = fn1(7, pa)
+
+# If only a few parameters are needed, or possibly in general, it is
+# more prudent to be explicit which variables are introduced into the
+# local scope:
+
+function fn2(var, pa::Para)
+    @unpack pa: a, b
+    out = var + a + b
+    b = 77
+    @pack pa: b
+    return out, pa
+end
+
+out, pa = fn2(7, pa)

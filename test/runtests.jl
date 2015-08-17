@@ -171,3 +171,54 @@ let
     @pack_P1 mt
     @test mt===P1(r=1, a=2, c=3)
 end
+
+
+###
+# @unpack and @pack
+type UP1
+    a
+    b
+end
+uu = UP1(1,2)
+@test_throws ErrorException @unpack uu: c
+@test_throws ErrorException @unpack uu: a, c
+
+a, b = 0, 0
+@unpack uu: a
+@test a==1
+@test b==0
+a, b = 0, 0
+@unpack uu: a, b
+@test a==1
+@test b==2
+
+
+vv = uu
+a = 99
+@pack uu: a
+@test uu==vv
+@test uu.a==99
+
+immutable UP2
+    a
+    b
+end
+uu = UP2(1,2)
+@test_throws ErrorException @unpack uu: c
+@test_throws ErrorException @unpack uu: a, c
+
+a, b = 0, 0
+@unpack uu: a
+@test a==1
+@test b==0
+a, b = 0, 0
+@unpack uu: a, b
+@test a==1
+@test b==2
+
+vv = uu
+a = 99
+@pack uu: a
+@test uu!=vv
+@test uu.a==99
+@test vv.a==1

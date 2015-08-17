@@ -14,6 +14,8 @@ is the macro `@with_kw` which decorates a type definition and creates:
   another type instance
 - packing and unpacking macros for the type: `@unpack_*` where `*` is
   the type name.
+- generic packing and unpacking macros `@pack`, `@unpack` (work with
+  any types).
 
 The keyword-constructor and default-values functionality will probably
 make it into Julia
@@ -85,7 +87,7 @@ pa = Para{Int}(b=7)
 ## (Un)pack macros
 #
 # When working with parameters it is often convenient to unpack (and
-# pack then):
+# pack) all of them:
 function fn(var, pa::Para)
     @unpack_Para pa # the macro is constructed during the @with_kw
                     # and called @unpack_*
@@ -96,13 +98,37 @@ function fn(var, pa::Para)
 end
 
 out, pa = fn(7, pa)
+
+# If only a few parameters are needed, or possibly in general, it is
+# more prudent to be explicit which variables are introduced into the
+# local scope:
+
+function fn2(var, pa::Para)
+    @unpack pa: a, b
+    out = var + a + b
+    b = 77
+    @pack pa: b
+    return out, pa
+end
+
+out, pa = fn1(7, pa)
 ```
 
-This is [examples/ex1.jl](examples/ex1.jl).  Note that the
-(un-)packing macros have a few pitfalls, as changing the type
-definition will change what local variables are available in a
-function using `@unpack`.  For instance, adding a field `pi` to a type
-might hijack `Base.pi` usage in a function.
+This is [examples/ex1.jl](examples/ex1.jl).
+
+# Warning
+
+Note that the (un-)packing macros which unpack all fields have a few
+pitfalls, as changing the type definition will change what local
+variables are available in a function using `@unpack_*`.  Examples:
+
+- adding a field `pi` to a type might hijack `Base.pi` usage in a
+  function
+- the `@unpack_*` will shadow an input argument
+  of the function.  Which I found perplexing at times.
+
+Thus it is probably better, in general, to use the `@(un)pack` macros.
+
 
 # TODO
 

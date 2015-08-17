@@ -293,9 +293,88 @@ function with_kw(typedef)
         end
     end
 end
-
 macro with_kw(typedef)
     return esc(with_kw(typedef))
+end
+
+## @pack and @unpack are independent of the datatype
+function parse_pack_unpack(arg)
+    if isa(arg, Symbol); error("Need format `t: a, ...`") end
+    h = arg.head
+    if !(h==:(:) || h==:tuple); error("Need format `t: a, ...`") end
+    # var-name of structure
+    v = h==:tuple ? arg.args[1].args[1] : arg.args[1]
+    # vars to unpack
+    up = Any[]
+    if h==:tuple
+        append!(up, arg.args[2:end])
+        push!(up, arg.args[1].args[2])
+    else
+        push!(up, arg.args[2])
+    end
+    return v, up # variable holding the structure, variables to (un)-pack
+end
+
+@doc """
+Unpacks fields from any datatype (no need to create it with @with_kw):
+type A
+    a
+    b
+end
+aa = A(3,4)
+@unpack aa: a,b
+# is equivalent to
+a = aa.a
+b = aa.b
+""" ->
+macro unpack(arg)
+    v, up = parse_pack_unpack(arg)
+    out = quote end
+    for u in up
+        push!(out.args, :($u = $v.$u))
+    end
+    return esc(out)        
+end
+
+@doc """
+
+Packs values into a datatype.  The variables need to have the same
+name as the fields.  If the datatype is mutable, it will be mutated.
+If immutable, a new instance is made with `reconstruct` and assigned
+to the original variable.
+
+type A
+    a
+    b
+end
+aa = A(3,4)
+b = "ha"
+@pack aa: b
+# is equivalent to 
+aa.b = b
+
+""" ->
+macro pack(arg)
+    v, up = parse_pack_unpack(arg)
+    # dict to use with reconstruct:
+    di = :([])
+    for u in up
+        push!(di.args, :($(Base.Meta.quot(u)), $u))
+    end
+    # assignments for mutables
+    ass = quote end
+    for u in up
+        push!(ass.args, :($v.$u = $u))
+    end
+    esc(
+        quote
+        if isimmutable($v)
+            $v = Parameters.reconstruct($v, $di)
+        else
+            $ass
+        end
+        end
+    )
 end
 
 end # module
