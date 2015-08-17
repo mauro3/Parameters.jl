@@ -5,11 +5,15 @@
 #
 # Consider using https://github.com/Keno/SIUnits.jl
 
+if VERSION >= v"0.4-"
+    __precompile__()
+end
+
 module Parameters
 if VERSION < v"0.4.0-dev"
     using Docile
 end
-using DataStructures
+import DataStructures: OrderedDict
 using Compat
 
 export @with_kw, type2dict, reconstruct, @unpack, @pack
