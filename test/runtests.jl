@@ -5,11 +5,18 @@ using Base.Test
 ###############
 
 # parameter-less
+
+## Activate after fix of https://github.com/JuliaLang/julia/issues/12705
+# "Test documentation"
 @with_kw immutable MT1
     r::Int = 4
     c = "sdaf"
 end
 MT1()
+# if VERSION >= v"0.4.0-dev"
+#     @test "Test documentation" = @doc MT1
+# end
+
 
 # parameter-less
 @with_kw type MT2
@@ -222,3 +229,4 @@ a = 99
 @test uu!=vv
 @test uu.a==99
 @test vv.a==1
+
