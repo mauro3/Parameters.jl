@@ -225,6 +225,7 @@ let
     c = 3
     @pack_P1 mt
     @test mt===P1(r=1, a=2, c=3)
+    @test string(mt) == "P1\n  r: 1\n  c: 3\n  a: 2.0"
 end
 
 
