@@ -84,8 +84,8 @@ function type2dict(dt)
 end
 
 @doc """
-    Make a new instance of a type with the same values as 
-    the input type except for the fields given in the associative 
+    Make a new instance of a type with the same values as
+    the input type except for the fields given in the associative
     second argument or as keywords.
 
     type A; a; b end
@@ -105,7 +105,7 @@ reconstruct{T}(pp::T; kws...) = reconstruct(pp, kws)
 
 
 # A type with fields (r,a) in variable aa becomes
-# quote 
+# quote
 #     r = aa.r
 #     a = aa.a
 # end
@@ -120,11 +120,11 @@ end
     Transforms:
     @with_kw immutable MM{R}
         r::R = 1000.
-        a::R 
+        a::R
     end
-    
+
     Into
-    
+
     immutable MM{R}
         r::R
         a::R
@@ -144,12 +144,12 @@ end
         varname = Parameters.reconstruct(varname,r=r,a=a)
         ))
     end
-    """ -> 
+    """ ->
 function with_kw(typedef)
     if typedef.head!=:type
         error("only works on type-defs")
     end
-    const err1str = "Field \'" 
+    const err1str = "Field \'"
     const err2str = "\' has no default, supply it with keyword."
 
     inner_constructors = Any[]
@@ -215,7 +215,7 @@ function with_kw(typedef)
     end
     # The type definition without inner constructors:
     typ = Expr(:type, deepcopy(typedef.args[1:2])..., deepcopy(fielddefs))
-    
+
     # Inner keyword constructor.  Note that this calls the positional
     # constructor under the hood and not `new`.  That way a user can
     # provide a special positional constructor (say enforcing
@@ -265,7 +265,7 @@ function with_kw(typedef)
             outer_positional = :()
         end
     else
-        outer_positional = :()        
+        outer_positional = :()
     end
 
     ## outer copy constructor
@@ -293,6 +293,13 @@ function with_kw(typedef)
         $typ
         $outer_positional
         $outer_copy
+        function Base.show(io::IO, p::$tn)
+            println(io, string(typeof(p)))
+            for (i, var) in enumerate($unpack_vars)
+                print(io, "  " * string(var) * ": $(p.(var))")
+                i == length($unpack_vars) || print(io, "\n")
+            end
+        end
         macro $unpack_name(ex)
             esc(Parameters._unpack(ex, $unpack_vars))
         end
@@ -341,7 +348,7 @@ macro unpack(arg)
     for u in up
         push!(out.args, :($u = $v.$u))
     end
-    return esc(out)        
+    return esc(out)
 end
 
 @doc """
@@ -358,7 +365,7 @@ end
 aa = A(3,4)
 b = "ha"
 @pack aa: b
-# is equivalent to 
+# is equivalent to
 aa.b = b
 
 """ ->
