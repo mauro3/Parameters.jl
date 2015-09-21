@@ -41,6 +41,31 @@ MT3(4,5)
 @test_throws ErrorException MT3(r=4)
 @test_throws ErrorException MT3()
 
+# parameter-less with supertype
+abstract MM1
+abstract MM2{T}
+@with_kw type MT3_1 <: MM1
+    r::Int=5
+    a::Float64
+end
+MT3_1(r=4, a=5.)
+MT3_1(r=4, a=5)
+MT3_1(a=5)
+MT3_1(4,5)
+@test_throws ErrorException MT3_1(r=4)
+@test_throws ErrorException MT3_1()
+
+@with_kw type MT3_2 <: MM2{Int}
+    r::Int=5
+    a::Float64
+end
+MT3_2(r=4, a=5.)
+MT3_2(r=4, a=5)
+MT3_2(a=5)
+MT3_2(4,5)
+@test_throws ErrorException MT3_2(r=4)
+@test_throws ErrorException MT3_2()
+
 # with type-parameters
 @with_kw immutable MT4{R,I}
     r::R=5
@@ -79,6 +104,29 @@ mt5=MT5(5.4, 4) # outer positional
 @test_throws  TypeError MT5( "asdf", 5)
 @test_throws  TypeError MT5{Float64, String}(5., "asdf")
 @test_throws  TypeError MT5{String, Int}("asdf", 6)
+
+# with type parameters and supertype
+@with_kw type MT4_1{T} <: MM1
+    r::Int=5
+    a::T
+end
+MT4_1{Float64}(r=4, a=5.)
+MT4_1{Float64}(r=4, a=5)
+MT4_1{Float64}(a=5)
+MT4_1{Float64}(4,5)
+@test_throws ErrorException MT4_1{Float64}(r=4)
+@test_throws ErrorException MT4_1{Float64}()
+
+@with_kw type MT4_2{T} <: MM2{T}
+    r::Int=5
+    a::T
+end
+MT4_2{Float64}(r=4, a=5.)
+MT4_2{Float64}(r=4, a=5)
+MT4_2{Float64}(a=5)
+MT4_2{Float64}(4,5)
+@test_throws ErrorException MT4_2{Float64}(r=4)
+@test_throws ErrorException MT4_2{Float64}()
 
 # user defined inner positional constructor
 @with_kw immutable MT6{R,I<:Integer} <: AMT{R}

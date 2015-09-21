@@ -160,7 +160,11 @@ function with_kw(typedef)
     if isa(typedef.args[2], Symbol)
         typparas = Any[]
     elseif typedef.args[2].head==:<:
-        typparas = typedef.args[2].args[1].args[2:end]
+        if isa(typedef.args[2].args[1],Symbol)
+            typparas = Any[]
+        else
+            typparas = typedef.args[2].args[1].args[2:end]
+        end
     else
         typparas = typedef.args[2].args[2:end]
     end
@@ -247,7 +251,7 @@ function with_kw(typedef)
     #  (1) type parameters are used at all
     #  (2) all type parameters are used in the fields (otherwise get a
     #      "method is not callable" warning!)
-    if !isa(typedef.args[2], Symbol) # condition (1)
+    if typparas!=Any[] # condition (1)
         outer_positional = :(  $tn{$(typparas...)}($(fielddefs.args...))
                              = $tn{$(stripsubtypes(typparas)...)}($(args...)))
         # Check condition (2)
