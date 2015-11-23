@@ -10,8 +10,13 @@ if VERSION >= v"0.4-"
 end
 
 module Parameters
-if VERSION < v"0.4.0-dev"
+if VERSION < v"0.4.0-"
     using Docile
+    macro __doc__(ex)
+        esc(ex)
+    end
+else
+    import Base: @__doc__
 end
 import DataStructures: OrderedDict
 using Compat
@@ -290,7 +295,7 @@ function with_kw(typedef)
     pack_name = symbol("pack_"*string(tn))
     # Finish up
     quote
-        $typ
+        Parameters.@__doc__ $typ # use Parameters.@__doc__ for 0.3 compatibility
         $outer_positional
         $outer_copy
         function Base.show(io::IO, p::$tn)
