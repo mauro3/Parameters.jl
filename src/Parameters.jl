@@ -11,7 +11,6 @@ end
 
 module Parameters
 if VERSION < v"0.4.0-"
-    using Docile
     macro __doc__(ex)
         esc(ex)
     end
@@ -77,9 +76,9 @@ stripsubtypes(vec::Vector) = [stripsubtypes(v) for v in vec]
 
 ## exported functions
 #####################
-@doc """
-    Transforms a type-instance into a dictionary.
-    """->
+"""
+Transforms a type-instance into a dictionary.
+"""
 function type2dict(dt)
     di = Dict{Symbol,Any}()
     for n in @compat fieldnames(dt)
@@ -88,15 +87,15 @@ function type2dict(dt)
     di
 end
 
-@doc """
-    Make a new instance of a type with the same values as
-    the input type except for the fields given in the associative
-    second argument or as keywords.
+"""
+Make a new instance of a type with the same values as
+the input type except for the fields given in the associative
+second argument or as keywords.
 
-    type A; a; b end
-    a = A(3,4)
-    b = reconstruct(a, [(:b, 99)])
-    """ ->
+type A; a; b end
+a = A(3,4)
+b = reconstruct(a, [(:b, 99)])
+"""
 function reconstruct{T}(pp::T, di)
     di = !isa(di, Associative) ? Dict(di) : di
     ns = @compat fieldnames(pp)
@@ -121,35 +120,35 @@ function _pack(binding, fields)
     :($binding = Parameters.reconstruct($binding, $(kws...)) )
 end
 
-@doc """
-    Transforms:
-    @with_kw immutable MM{R}
-        r::R = 1000.
-        a::R
-    end
+"""
+Transforms:
+@with_kw immutable MM{R}
+    r::R = 1000.
+    a::R
+end
 
-    Into
+Into
 
-    immutable MM{R}
-        r::R
-        a::R
-        MM(r,a) = new(r,a)
-        MM(;r= = 1000., a=error("no default for a") = new(r,a)
-    end
-    MM(m::MM; kws...) = reconstruct(mm,kws)
-    MM(m::MM, di::Union(Associative, ((Symbol,Any)...))) = reconstruct(mm, di)
-    macro unpack_MM(varname)
-        esc(:(
-        r = varname.r
-        a = varname.a
-        ))
-    end
-    macro pack_MM(varname)
-        esc(:(
-        varname = Parameters.reconstruct(varname,r=r,a=a)
-        ))
-    end
-    """ ->
+immutable MM{R}
+    r::R
+    a::R
+    MM(r,a) = new(r,a)
+    MM(;r= = 1000., a=error("no default for a") = new(r,a)
+end
+MM(m::MM; kws...) = reconstruct(mm,kws)
+MM(m::MM, di::Union(Associative, ((Symbol,Any)...))) = reconstruct(mm, di)
+macro unpack_MM(varname)
+    esc(:(
+    r = varname.r
+    a = varname.a
+    ))
+end
+macro pack_MM(varname)
+    esc(:(
+    varname = Parameters.reconstruct(varname,r=r,a=a)
+    ))
+end
+"""
 function with_kw(typedef)
     if typedef.head!=:type
         error("only works on type-defs")
@@ -335,7 +334,7 @@ function parse_pack_unpack(arg)
     return v, up # variable holding the structure, variables to (un)-pack
 end
 
-@doc """
+"""
 Unpacks fields from any datatype (no need to create it with @with_kw):
 type A
     a
@@ -346,7 +345,7 @@ aa = A(3,4)
 # is equivalent to
 a = aa.a
 b = aa.b
-""" ->
+"""
 macro unpack(arg)
     v, up = parse_pack_unpack(arg)
     out = quote end
@@ -356,8 +355,7 @@ macro unpack(arg)
     return esc(out)
 end
 
-@doc """
-
+"""
 Packs values into a datatype.  The variables need to have the same
 name as the fields.  If the datatype is mutable, it will be mutated.
 If immutable, a new instance is made with `reconstruct` and assigned
@@ -372,8 +370,7 @@ b = "ha"
 @pack aa: b
 # is equivalent to
 aa.b = b
-
-""" ->
+"""
 macro pack(arg)
     v, up = parse_pack_unpack(arg)
     # dict to use with reconstruct:
