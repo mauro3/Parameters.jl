@@ -1,3 +1,7 @@
+# 2015-11-24
+
+Added `@deftype` to specify a default type annotation.
+
 # 2015-11-23
 
 Dropped Docile support (on 0.3)

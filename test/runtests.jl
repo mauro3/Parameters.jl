@@ -176,6 +176,33 @@ end))
 end))
 
 
+# default type annotation (adapted from MT6 test above)
+@with_kw immutable MT8{R,I<:Integer} <: AMT{R} @deftype R
+    r=5
+    a::I
+    MT8(r) = new(r,r)
+    MT8(r,a) = (@assert a>r; new(r,a))
+end
+@test_throws MethodError MT8(r=4, a=5.) # need to specify type parameters
+MT8{Float32, Int}(r=4, a=5.)
+MT8{Float32, Int}(a=6.)
+MT8{Float32, Int}(5.4, 6)  # inner positional
+mt6=MT8(5.4, 6) # outer positional
+@test MT8(mt6)==mt6 # outer reconstruct
+@test MT8(mt6; a=77)==MT8(5.4, 77)
+@test_throws ErrorException MT8{Float32, Int}()
+@test_throws InexactError MT8{Float32,Int}(a=5.5)
+@test_throws InexactError MT8{Float32,Int}(5.5, 6.5)
+@test_throws  MethodError MT8(5., "asdf")
+@test_throws  TypeError MT8( "asdf", 5)
+@test_throws  TypeError MT8{Float64, ASCIIString}(5., "asdf")
+@test_throws  TypeError MT8{ASCIIString, Int}("asdf", 6)
+@test MT8.types[1]==TypeVar(:R)
+@test MT8.types[2]==TypeVar(:I, Integer)
+@test MT8{Float32,Int32}.types[1]==Float32
+@test MT8{Float32,Int32}.types[2]==Int32
+
+
 # parameter interdependence
 @with_kw immutable MT9{R<:Real}
     a::R = 5

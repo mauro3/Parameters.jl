@@ -173,14 +173,41 @@ function with_kw(typedef)
         typparas = typedef.args[2].args[2:end]
     end
 
+    # error on types without fields
+    lns = Lines(typedef.args[3])
+    if done(lns, start(lns))
+        error("@with_kw only supported for types which have at least one field.")
+    end
+    # default type @deftype
+    l, i = next(lns, start(lns))
+    if l.head==:macrocall && l.args[1]==symbol("@deftype")
+        has_deftyp = true
+        if length(l.args) != 2
+            error("Malformed `@deftype` line")
+        end
+        deftyp = l.args[2]
+        if done(lns, i)
+            error("@with_kw only supported for types which have at least one field.")
+        end
+    else
+        has_deftyp = false
+    end
+
     # the vars for the unpack macro
     unpack_vars = Any[]
     # the type def
     fielddefs = quote end # holds r::R etc
     kws = OrderedDict{Any, Any}()
-    for l in Lines(typedef.args[3]) # loop over body of typedef
+    for (i,l) in enumerate(lns) # loop over body of typedef
+        if i==1 && has_deftyp
+            continue
+        end
         if isa(l, Symbol)  # no default value and no type annotation
-            push!(fielddefs.args, l)
+            if has_deftyp
+                push!(fielddefs.args, :($l::$deftyp))
+            else
+                push!(fielddefs.args, l)
+            end
             sym = l
             syms = string(sym)
             kws[sym] = :(error($err1str * $syms * $err2str))
@@ -198,15 +225,14 @@ function with_kw(typedef)
                 end
                 push!(inner_constructors, l)
             else
-                push!(fielddefs.args, l.args[1])
-                kws[decolon2(l.args[1])] = l.args[2]
-                # unwrap-macro
-                ll = l.args[1]
-                if isa(ll, Symbol)  # default value and without type annotation
-                    push!(unpack_vars, ll)
-                else  # default value and with type annotation
-                    push!(unpack_vars, ll.args[1])
+                fld = l.args[1]
+                if isa(fld, Symbol) && has_deftyp # no type annotation
+                    fld = :($fld::$deftyp)
                 end
+                push!(fielddefs.args, fld)
+                kws[decolon2(fld)] = l.args[2]
+                # unwrap-macro
+                push!(unpack_vars, decolon2(fld))
             end
         else # no default value but with type annotation
             push!(fielddefs.args, l)

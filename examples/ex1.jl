@@ -22,7 +22,7 @@ pp3 = PhysicalPara{Float32}(cw=77, day= 987)
 @with_kw immutable MyS{R}
     a::R = 5
     b = 4
-    
+
     # Can define inner constructors as long as:
     #  - one defining all positional arguments is given
     #  - no zero-positional arguments constructor is defined (as that
@@ -52,6 +52,22 @@ end
     c::R = a+b
 end
 pa = Para{Int}(b=7)
+
+# Setting a default type annotation, as often the bulk of fields will
+# have the same type.  The last example more compactly:
+@with_kw immutable Para2{R<:Real} @deftype R
+    a = 5
+    b
+    c = a+b
+end
+pa2 = Para2{Int}(b=7)
+# or more pedestrian
+@with_kw immutable Para3 @deftype Float64
+    a = 5
+    b
+    c = a+b
+end
+pa3 = Para3(b=7)
 
 ## (Un)pack macros
 #
