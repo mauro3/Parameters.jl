@@ -93,11 +93,12 @@ end
 pa = Para{Int}(b=7)
 
 # Setting a default type annotation, as often the bulk of fields will
-# have the same type.  The last example more compactly:
+# have the same type.  The last example more compactly (plus an extra field):
 @with_kw immutable Para2{R<:Real} @deftype R
     a = 5
     b
     c = a+b
+    d::Int = 4
 end
 pa2 = Para2{Int}(b=7)
 # or more pedestrian
@@ -105,6 +106,7 @@ pa2 = Para2{Int}(b=7)
     a = 5
     b
     c = a+b
+    d::Int = 4
 end
 pa3 = Para3(b=7)
 
