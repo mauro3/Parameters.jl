@@ -180,7 +180,7 @@ function with_kw(typedef)
     end
     # default type @deftype
     l, i = next(lns, start(lns))
-    if l.head==:macrocall && l.args[1]==symbol("@deftype")
+    if isa(l, Expr) && l.head==:macrocall && l.args[1]==symbol("@deftype")
         has_deftyp = true
         if length(l.args) != 2
             error("Malformed `@deftype` line")
