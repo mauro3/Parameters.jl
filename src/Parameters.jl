@@ -320,7 +320,7 @@ function with_kw(typedef)
     pack_name = symbol("pack_"*string(tn))
     # Finish up
     quote
-        Parameters.@__doc__ $typ # use Parameters.@__doc__ for 0.3 compatibility
+        Main.Parameters.@__doc__ $typ # use Parameters.@__doc__ for 0.3 compatibility
         $outer_positional
         $outer_copy
         function Base.show(io::IO, p::$tn)
