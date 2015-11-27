@@ -117,7 +117,7 @@ _unpack(binding, fields) = Expr(:block, [:($f = $binding.$f) for f in fields]...
 # Pack fields back into binding using reconstruct:
 function _pack(binding, fields)
     kws = [Expr(:kw, f, f) for f in fields]
-    :($binding = Parameters.reconstruct($binding, $(kws...)) )
+    :($binding = Main.Parameters.reconstruct($binding, $(kws...)) )
 end
 
 """
@@ -145,7 +145,7 @@ macro unpack_MM(varname)
 end
 macro pack_MM(varname)
     esc(:(
-    varname = Parameters.reconstruct(varname,r=r,a=a)
+    varname = Main.Parameters.reconstruct(varname,r=r,a=a)
     ))
 end
 """
@@ -320,7 +320,7 @@ function with_kw(typedef)
     pack_name = symbol("pack_"*string(tn))
     # Finish up
     quote
-        Main.Parameters.@__doc__ $typ # use Parameters.@__doc__ for 0.3 compatibility
+        Main.Parameters.@__doc__ $typ # use Main.Parameters.@__doc__ for 0.3 compatibility
         $outer_positional
         $outer_copy
         function Base.show(io::IO, p::$tn)
@@ -331,10 +331,10 @@ function with_kw(typedef)
             end
         end
         macro $unpack_name(ex)
-            esc(Parameters._unpack(ex, $unpack_vars))
+            esc(Main.Parameters._unpack(ex, $unpack_vars))
         end
         macro $pack_name(ex)
-            esc(Parameters._pack(ex, $unpack_vars))
+            esc(Main.Parameters._pack(ex, $unpack_vars))
         end
     end
 end
@@ -412,7 +412,7 @@ macro pack(arg)
     esc(
         quote
         if isimmutable($v)
-            $v = Parameters.reconstruct($v, $di)
+            $v = Main.Parameters.reconstruct($v, $di)
         else
             $ass
         end
