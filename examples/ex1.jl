@@ -1,8 +1,6 @@
 using Parameters
 
-abstract Paras{R<:Real, I<:Integer}
-
-@with_kw immutable PhysicalPara{R} <: Paras{R}
+@with_kw immutable PhysicalPara{R}
     rw::R = 1000.
     ri::R = 900.
     L::R = 3.34e5
@@ -18,6 +16,16 @@ pp2 = PhysicalPara(pp; cw=.11e-7, rw=100.)
 # make one afresh with some non-defaults
 pp3 = PhysicalPara{Float32}(cw=77, day= 987)
 
+# It's possible to use @asserts straight in the type-def.  (Note, as
+# usual, that for mutables, these asserts can be violated by updating
+# the fields.)
+@with_kw immutable PhysicalPara2{R}
+    rw::R = 1000.; @assert rw>0
+    ri::R = 900.
+    @assert rw>ri # Note that the placement of assertions is not
+                  # relevant. (They are moved to the constructor.
+end
+
 # Custom inner constructors:
 @with_kw immutable MyS{R}
     a::R = 5
@@ -27,6 +35,7 @@ pp3 = PhysicalPara{Float32}(cw=77, day= 987)
     #  - one defining all positional arguments is given
     #  - no zero-positional arguments constructor is defined (as that
     #    would clash with the keyword constructor)
+    #  - no @assert are used in the type-def (above example)
     #
     # Note that the keyword constructor goes through the positional
     # constructor, thus invariants defined there will be honored.
@@ -34,6 +43,9 @@ pp3 = PhysicalPara{Float32}(cw=77, day= 987)
     MyS(a,b) = (@assert a>b; new(a,b))  # The keyword constructor
                                         # calls this constructor, so
                                         # the invariant is satisfied.
+                                        # Note that invariants can be
+                                        # done with @asserts as in
+                                        # above example.
     MyS(a) = MyS{R}(a, a-1) # For this provide your own outer constructor:
 end
 MyS{R}(a::R) = MyS{R}(a)

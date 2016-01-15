@@ -1,3 +1,7 @@
+# 2016-01-15
+
+Added support for `@assert` in type-body.
+
 # 2015-11-24
 
 Added `@deftype` to specify a default type annotation.

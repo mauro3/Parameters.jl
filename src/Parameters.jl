@@ -198,6 +198,8 @@ function with_kw(typedef)
     # the type def
     fielddefs = quote end # holds r::R etc
     kws = OrderedDict{Any, Any}()
+    # assertions in the body
+    asserts = Any[]
     for (i,l) in enumerate(lns) # loop over body of typedef
         if i==1 && has_deftyp
             continue
@@ -234,6 +236,9 @@ function with_kw(typedef)
                 # unwrap-macro
                 push!(unpack_vars, decolon2(fld))
             end
+        elseif l.head==:macrocall  && l.args[1]==symbol("@assert")
+            # store all asserts
+            push!(asserts, l)
         else # no default value but with type annotation
             push!(fielddefs.args, l)
             sym = decolon2(l.args[1])
@@ -267,9 +272,17 @@ function with_kw(typedef)
     # constructors are user-defined.  If one or several are defined,
     # assume that one has the standard positional signature.
     if length(inner_constructors)==0
-        innerc2 = :($tn($(args...)) = new($(args...)))
+        if VERSION < v"0.4.0-"
+            innerc2 = :($tn($(args...)) = (1;new($(args...))))
+        else
+            innerc2 = :($tn($(args...)) = new($(args...)))
+        end
+        prepend!(innerc2.args[2].args, asserts)
         push!(typ.args[3].args, innerc2)
     else
+        if length(asserts)>0
+            error("Assertions are only allowed in type-definitions with no inner constructors.")
+        end
         append!(typ.args[3].args, inner_constructors)
     end
 

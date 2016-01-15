@@ -257,6 +257,27 @@ let
     @test string(mt) == "P1\n  r: 1\n  c: 3\n  a: 2.0"
 end
 
+### Assertions
+@with_kw immutable MT12
+    a=5; @assert a>=5
+    b
+    @assert b>a
+end
+
+if VERSION < v"0.4.0-"
+    @test_throws ErrorException MT12(b=2)
+    @test_throws ErrorException MT12(a=1,b=2)
+else
+    @test_throws AssertionError MT12(b=2)
+    @test_throws AssertionError MT12(a=1,b=2)
+end
+@test MT12(b=6)==MT12(5,6)
+
+# only asserts allowed if no inner constructors
+@test_throws ErrorException Parameters.with_kw(:(immutable MT13
+                                                 a=5; @assert a>=5
+                                                 MT13(a) = new(8)
+                                                 end))
 
 ###
 # @unpack and @pack

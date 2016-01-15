@@ -12,7 +12,9 @@ name.  However, it should be useful otherwise too.  Its main feature
 is the macro `@with_kw` which decorates a type definition and creates:
 
 - a keyword constructor for the type
-- allows setting default values for the fields inside the type definition
+- allows setting default values for the fields inside the type
+  definition
+- allows assertions on field values inside the type definition
 - a constructor which allows creating a type-instance taking its defaults from
   another type instance
 - packing and unpacking macros for the type: `@unpack_*` where `*` is
@@ -35,13 +37,11 @@ used in performance critical code.
 [NEWS.md](https://github.com/mauro3/Parameters.jl/blob/master/NEWS.md)
 keeps tabs on updates.
 
-Manual by example:
+Manual by example ([examples/ex1.jl](examples/ex1.jl)):
 ```julia
 using Parameters
 
-abstract Paras{R<:Real, I<:Integer}
-
-@with_kw immutable PhysicalPara{R} <: Paras{R}
+@with_kw immutable PhysicalPara{R}
     rw::R = 1000.
     ri::R = 900.
     L::R = 3.34e5
@@ -56,6 +56,16 @@ pp = PhysicalPara{Float64}()
 pp2 = PhysicalPara(pp; cw=.11e-7, rw=100.)
 # make one afresh with some non-defaults
 pp3 = PhysicalPara{Float32}(cw=77, day= 987)
+
+# It's possible to use @asserts straight in the type-def.  (Note, as
+# usual, that for mutables, these asserts can be violated by updating
+# the fields.)
+@with_kw immutable PhysicalPara2{R}
+    rw::R = 1000.; @assert rw>0
+    ri::R = 900.
+    @assert rw>ri # Note that the placement of assertions is not
+                  # relevant. (They are moved to the constructor.
+end
 
 # Custom inner constructors:
 @with_kw immutable MyS{R}
@@ -73,6 +83,9 @@ pp3 = PhysicalPara{Float32}(cw=77, day= 987)
     MyS(a,b) = (@assert a>b; new(a,b))  # The keyword constructor
                                         # calls this constructor, so
                                         # the invariant is satisfied.
+                                        # Note that invariants can be
+                                        # done with @asserts as in
+                                        # above example.
     MyS(a) = MyS{R}(a, a-1) # For this provide your own outer constructor:
 end
 MyS{R}(a::R) = MyS{R}(a)
@@ -140,8 +153,6 @@ end
 
 out, pa = fn1(7, pa)
 ```
-
-This is [examples/ex1.jl](examples/ex1.jl).
 
 # Warning
 
