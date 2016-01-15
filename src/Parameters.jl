@@ -3,7 +3,7 @@
 #
 # All the model parameters
 #
-# Consider using https://github.com/Keno/SIUnits.jl
+# TODO: improve macro hygiene.
 
 if VERSION >= v"0.4-"
     __precompile__()
@@ -338,6 +338,19 @@ function with_kw(typedef)
         end
     end
 end
+
+"""
+Macro which allows default values for field types and a few other features.
+
+Basic usage:
+
+@with_kw immutable MM{R}
+    r::R = 1000.
+    a::Int = 4
+end
+
+For more details see README.md
+"""
 macro with_kw(typedef)
     return esc(with_kw(typedef))
 end
