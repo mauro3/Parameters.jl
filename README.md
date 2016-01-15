@@ -5,6 +5,7 @@
 
 [![Parameters](http://pkg.julialang.org/badges/Parameters_0.3.svg)](http://pkg.julialang.org/?pkg=Parameters&ver=0.3)
 [![Parameters](http://pkg.julialang.org/badges/Parameters_0.4.svg)](http://pkg.julialang.org/?pkg=Parameters&ver=0.4)
+[![Parameters](http://pkg.julialang.org/badges/Parameters_0.5.svg)](http://pkg.julialang.org/?pkg=Parameters&ver=0.5)
 
 
 This is a package I use to handle numerical-model parameters, thus the
