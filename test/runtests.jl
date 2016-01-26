@@ -197,8 +197,9 @@ mt6=MT8(5.4, 6) # outer positional
 @test_throws  TypeError MT8( "asdf", 5)
 @test_throws  TypeError MT8{Float64, ASCIIString}(5., "asdf")
 @test_throws  TypeError MT8{ASCIIString, Int}("asdf", 6)
-@test MT8.types[1]==TypeVar(:R)
-@test MT8.types[2]==TypeVar(:I, Integer)
+@test MT8.types[1].name==:R
+@test MT8.types[2].name==:I
+@test MT8.types[2].ub==Integer
 @test MT8{Float32,Int32}.types[1]==Float32
 @test MT8{Float32,Int32}.types[2]==Int32
 
