@@ -1,5 +1,6 @@
 using Parameters
 
+## Create a type which has default values:
 @with_kw immutable PhysicalPara{R}
     rw::R = 1000.
     ri::R = 900.
@@ -9,14 +10,14 @@ using Parameters
     day::R = 24*3600.
 end
 
-# create an instance with the defaults
+# Create an instance with the defaults
 pp = PhysicalPara{Float64}()
-# make another one based on the previous one with some modifications
-pp2 = PhysicalPara(pp; cw=.11e-7, rw=100.)
-# make one afresh with some non-defaults
-pp3 = PhysicalPara{Float32}(cw=77, day= 987)
+# Make one with some non-defaults
+pp2 = PhysicalPara{Float32}(cw=77, day= 987)
+# Make another one based on the previous one with some modifications
+pp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)
 
-# It's possible to use @asserts straight in the type-def.  (Note, as
+## It's possible to use @asserts straight in the type-def.  (Note, as
 # usual, that for mutables, these asserts can be violated by updating
 # the fields.)
 @with_kw immutable PhysicalPara2{R}
@@ -26,7 +27,32 @@ pp3 = PhysicalPara{Float32}(cw=77, day= 987)
                   # relevant. (They are moved to the constructor.
 end
 
-# Custom inner constructors:
+
+## Parameter interdependence
+@with_kw immutable Para{R<:Real}
+    a::R = 5
+    b::R
+    c::R = a+b
+end
+pa = Para{Int}(b=7)
+
+## Setting a default type annotation, as often the bulk of fields will
+# have the same type.  The last example more compactly:
+@with_kw immutable Para2{R<:Real} @deftype R
+    a = 5
+    b
+    c = a+b
+end
+pa2 = Para2{Int}(b=7)
+# or more pedestrian
+@with_kw immutable Para3 @deftype Float64
+    a = 5
+    b
+    c = a+b
+end
+pa3 = Para3(b=7)
+
+## Custom inner constructors:
 @with_kw immutable MyS{R}
     a::R = 5
     b = 4
@@ -57,29 +83,6 @@ try
     MyS(ms, b=6) # this will fail the assertion
 end
 
-# parameter interdependence
-@with_kw immutable Para{R<:Real}
-    a::R = 5
-    b::R
-    c::R = a+b
-end
-pa = Para{Int}(b=7)
-
-# Setting a default type annotation, as often the bulk of fields will
-# have the same type.  The last example more compactly:
-@with_kw immutable Para2{R<:Real} @deftype R
-    a = 5
-    b
-    c = a+b
-end
-pa2 = Para2{Int}(b=7)
-# or more pedestrian
-@with_kw immutable Para3 @deftype Float64
-    a = 5
-    b
-    c = a+b
-end
-pa3 = Para3(b=7)
 
 ## (Un)pack macros
 #

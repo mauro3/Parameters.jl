@@ -78,6 +78,18 @@ stripsubtypes(vec::Vector) = [stripsubtypes(v) for v in vec]
 #####################
 """
 Transforms a type-instance into a dictionary.
+
+```
+julia> type T
+           a
+           b
+       end
+
+julia> type2dict(T(4,5))
+Dict{Symbol,Any} with 2 entries:
+  :a => 4
+  :b => 5
+```
 """
 function type2dict(dt)
     di = Dict{Symbol,Any}()
@@ -92,9 +104,11 @@ Make a new instance of a type with the same values as
 the input type except for the fields given in the associative
 second argument or as keywords.
 
+```julia
 type A; a; b end
 a = A(3,4)
-b = reconstruct(a, [(:b, 99)])
+b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
+```
 """
 function reconstruct{T}(pp::T, di)
     di = !isa(di, Associative) ? Dict(di) : di
@@ -121,33 +135,38 @@ function _pack(binding, fields)
 end
 
 """
-Transforms:
+This function is called by the `@with_kw` macro and does the AST transformation from:
+
+```julia
 @with_kw immutable MM{R}
     r::R = 1000.
     a::R
 end
+```
 
-Into
+into
 
+```julia
 immutable MM{R}
     r::R
     a::R
     MM(r,a) = new(r,a)
-    MM(;r= = 1000., a=error("no default for a") = new(r,a)
+    MM(;r=1000., a=error("no default for a")) = new(r,a)
 end
 MM(m::MM; kws...) = reconstruct(mm,kws)
-MM(m::MM, di::Union(Associative, ((Symbol,Any)...))) = reconstruct(mm, di)
+MM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)
 macro unpack_MM(varname)
-    esc(:(
+    esc(quote
     r = varname.r
     a = varname.a
-    ))
+    end)
 end
 macro pack_MM(varname)
-    esc(:(
+    esc(quote
     varname = Main.Parameters.reconstruct(varname,r=r,a=a)
-    ))
+    end)
 end
+```
 """
 function with_kw(typedef)
     if typedef.head!=:type
@@ -357,12 +376,14 @@ Macro which allows default values for field types and a few other features.
 
 Basic usage:
 
+```julia
 @with_kw immutable MM{R}
     r::R = 1000.
     a::Int = 4
 end
+```
 
-For more details see README.md
+For more details see manual.
 """
 macro with_kw(typedef)
     return esc(with_kw(typedef))
@@ -388,6 +409,8 @@ end
 
 """
 Unpacks fields from any datatype (no need to create it with @with_kw):
+
+```julia
 type A
     a
     b
@@ -397,6 +420,7 @@ aa = A(3,4)
 # is equivalent to
 a = aa.a
 b = aa.b
+```
 """
 macro unpack(arg)
     v, up = parse_pack_unpack(arg)
@@ -413,6 +437,7 @@ name as the fields.  If the datatype is mutable, it will be mutated.
 If immutable, a new instance is made with `reconstruct` and assigned
 to the original variable.
 
+```julia
 type A
     a
     b
@@ -422,6 +447,7 @@ b = "ha"
 @pack aa: b
 # is equivalent to
 aa.b = b
+```
 """
 macro pack(arg)
     v, up = parse_pack_unpack(arg)
