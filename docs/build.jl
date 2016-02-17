@@ -1,3 +1,5 @@
+# Adapted from https://github.com/MichaelHatherly/Docile.jl
+# (C) Michael Hatherly, under MIT-license
 using Lexicon, Parameters
 
 const api_directory = "api"
@@ -11,7 +13,7 @@ cd(dirname(@__FILE__)) do
         if !isempty(failures.results)
             println("\nDoctests failed, aborting commit.\n")
             display(failures)
-#            exit(1) # Bail when doctests fail.
+            exit(1) # Bail when doctests fail.
         end
     end
     # also execute examples
