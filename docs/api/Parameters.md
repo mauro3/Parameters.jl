@@ -18,7 +18,7 @@ b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 
 
 *source:*
-[Parameters/src/Parameters.jl:119](file:///home/mauro/.julia/v0.4/Parameters/src/Parameters.jl)
+[Parameters/src/Parameters.jl:119](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L119)
 
 ---
 
@@ -40,7 +40,7 @@ Dict{Symbol,Any} with 2 entries:
 
 
 *source:*
-[Parameters/src/Parameters.jl:103](file:///home/mauro/.julia/v0.4/Parameters/src/Parameters.jl)
+[Parameters/src/Parameters.jl:103](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L103)
 
 ---
 
@@ -65,7 +65,7 @@ aa.b = b
 
 
 *source:*
-[Parameters/src/Parameters.jl:465](file:///home/mauro/.julia/v0.4/Parameters/src/Parameters.jl)
+[Parameters/src/Parameters.jl:465](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L465)
 
 ---
 
@@ -87,7 +87,7 @@ b = aa.b
 
 
 *source:*
-[Parameters/src/Parameters.jl:435](file:///home/mauro/.julia/v0.4/Parameters/src/Parameters.jl)
+[Parameters/src/Parameters.jl:435](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L435)
 
 ---
 
@@ -108,7 +108,7 @@ For more details see manual.
 
 
 *source:*
-[Parameters/src/Parameters.jl:395](file:///home/mauro/.julia/v0.4/Parameters/src/Parameters.jl)
+[Parameters/src/Parameters.jl:395](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L395)
 
 ## Internal
 
@@ -151,5 +151,5 @@ end
 
 
 *source:*
-[Parameters/src/Parameters.jl:198](file:///home/mauro/.julia/v0.4/Parameters/src/Parameters.jl)
+[Parameters/src/Parameters.jl:198](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L198)
 
