@@ -111,10 +111,10 @@ assertions and simple calculations, are more easily achieved with
 # (Un)pack macros
 
 When working with parameters it is often convenient to unpack (and
-pack) all of them, in particular inside functions.
+pack) some or all of them, in particular inside functions.
 
-The preferred and safer way to do this is using the generic `@unpack` and
-`@pack` macros (these also work with non-`@with_kw` types):
+The preferred and safer way to do this is using the `@unpack` and
+`@pack` macros (which are generic and also work with non-`@with_kw` types):
 ```julia
 function fn2(var, pa::Para)
     @unpack pa: a, b # equivalent to: a,b = pa.a,pa.b
@@ -149,7 +149,8 @@ local variables are available in a function using `@unpack_*`.  Examples:
 
 - adding a field `pi` to a type would hijack `Base.pi` usage in any
   function using `@unpack_*`
-- the `@unpack_*` will shadow an input argument
-  of the function.  Which I found perplexing at times.
+- the `@unpack_*` will shadow an input argument of the function with
+  the same name as a type-fieldname.  This I found very perplexing at
+  times.
 
 Thus, in general, it is probably better to use the `@(un)pack` macros instead.

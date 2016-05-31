@@ -18,7 +18,7 @@ b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 
 
 *source:*
-[Parameters/src/Parameters.jl:119](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L119)
+[Parameters/src/Parameters.jl:119](https://github.com/mauro3/Parameters.jl/tree/a0724f3a5779d25a60a18abda02d736cdc260bb3/src/Parameters.jl#L119)
 
 ---
 
@@ -40,7 +40,7 @@ Dict{Symbol,Any} with 2 entries:
 
 
 *source:*
-[Parameters/src/Parameters.jl:103](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L103)
+[Parameters/src/Parameters.jl:103](https://github.com/mauro3/Parameters.jl/tree/a0724f3a5779d25a60a18abda02d736cdc260bb3/src/Parameters.jl#L103)
 
 ---
 
@@ -65,7 +65,7 @@ aa.b = b
 
 
 *source:*
-[Parameters/src/Parameters.jl:465](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L465)
+[Parameters/src/Parameters.jl:465](https://github.com/mauro3/Parameters.jl/tree/a0724f3a5779d25a60a18abda02d736cdc260bb3/src/Parameters.jl#L465)
 
 ---
 
@@ -87,7 +87,7 @@ b = aa.b
 
 
 *source:*
-[Parameters/src/Parameters.jl:435](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L435)
+[Parameters/src/Parameters.jl:435](https://github.com/mauro3/Parameters.jl/tree/a0724f3a5779d25a60a18abda02d736cdc260bb3/src/Parameters.jl#L435)
 
 ---
 
@@ -108,7 +108,7 @@ For more details see manual.
 
 
 *source:*
-[Parameters/src/Parameters.jl:395](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L395)
+[Parameters/src/Parameters.jl:395](https://github.com/mauro3/Parameters.jl/tree/a0724f3a5779d25a60a18abda02d736cdc260bb3/src/Parameters.jl#L395)
 
 ## Internal
 
@@ -132,7 +132,7 @@ immutable MM{R}
     r::R
     a::R
     MM(r,a) = new(r,a)
-    MM(;r=1000., a=error("no default for a")) = new(r,a)
+    MM(;r=1000., a=error("no default for a")) = MM{R}(r,a)
 end
 MM(m::MM; kws...) = reconstruct(mm,kws)
 MM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)
@@ -151,5 +151,5 @@ end
 
 
 *source:*
-[Parameters/src/Parameters.jl:198](https://github.com/mauro3/Parameters.jl/tree/9e14db595166abda0859291819566e0cc6d0e1fc/src/Parameters.jl#L198)
+[Parameters/src/Parameters.jl:198](https://github.com/mauro3/Parameters.jl/tree/a0724f3a5779d25a60a18abda02d736cdc260bb3/src/Parameters.jl#L198)
 
