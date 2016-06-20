@@ -6,21 +6,13 @@ import Compat.String
 # parameters.jl
 ###############
 
-if VERSION < v"0.4.0-"
-    macro doc(ex)
-        esc(ex)
-    end
-end
-
 "Test documentation"
 @with_kw immutable MT1
     r::Int = 4
     c = "sdaf"
 end
 MT1()
-if VERSION >= v"0.4.0-"
-    @test "Test documentation\n" == Markdown.plain(@doc MT1)
-end
+@test "Test documentation\n" == Markdown.plain(@doc MT1)
 
 # parameter-less
 @with_kw type MT2
@@ -267,13 +259,8 @@ end
     @assert b>a
 end
 
-if VERSION < v"0.4.0-"
-    @test_throws ErrorException MT12(b=2)
-    @test_throws ErrorException MT12(a=1,b=2)
-else
-    @test_throws AssertionError MT12(b=2)
-    @test_throws AssertionError MT12(a=1,b=2)
-end
+@test_throws AssertionError MT12(b=2)
+@test_throws AssertionError MT12(a=1,b=2)
 @test MT12(b=6)==MT12(5,6)
 
 # only asserts allowed if no inner constructors

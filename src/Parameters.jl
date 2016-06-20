@@ -5,18 +5,10 @@
 #
 # TODO: improve macro hygiene.
 
-if VERSION >= v"0.4-"
-    __precompile__()
-end
+__precompile__()
 
 module Parameters
-if VERSION < v"0.4.0-"
-    macro __doc__(ex)
-        esc(ex)
-    end
-else
-    import Base: @__doc__
-end
+import Base: @__doc__
 import DataStructures: OrderedDict
 using Compat
 
@@ -298,11 +290,7 @@ function with_kw(typedef)
     # constructors are user-defined.  If one or several are defined,
     # assume that one has the standard positional signature.
     if length(inner_constructors)==0
-        if VERSION < v"0.4.0-"
-            innerc2 = :($tn($(args...)) = (1;new($(args...))))
-        else
-            innerc2 = :($tn($(args...)) = new($(args...)))
-        end
+        innerc2 = :($tn($(args...)) = new($(args...)))
         prepend!(innerc2.args[2].args, asserts)
         push!(typ.args[3].args, innerc2)
     else
@@ -339,19 +327,12 @@ function with_kw(typedef)
 
     ## outer copy constructor
     ###
-    if VERSION < v"0.4.0-dev"
-        outer_copy = quote
-            $tn(pp::$tn; kws... ) = reconstruct(pp, kws)
-            $tn(pp::$tn, di::Union(Associative, ((Symbol,Any)...)) ) = reconstruct(pp, di)
-        end
-    else
-        outer_copy = quote
-            $tn(pp::$tn; kws... ) = reconstruct(pp, kws)
-            # $tn(pp::$tn, di::Union(Associative,Vararg{Tuple{Symbol,Any}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
-            # $tn(pp::$tn, di::Union(Associative, Tuple{Vararg{Tuple{Symbol, Any}}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
-            $tn(pp::$tn, di::Associative ) = reconstruct(pp, di)
-            $tn(pp::$tn, di::Vararg{Tuple{Symbol,Any}} ) = reconstruct(pp, di)
-        end
+    outer_copy = quote
+        $tn(pp::$tn; kws... ) = reconstruct(pp, kws)
+        # $tn(pp::$tn, di::Union(Associative,Vararg{Tuple{Symbol,Any}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
+        # $tn(pp::$tn, di::Union(Associative, Tuple{Vararg{Tuple{Symbol, Any}}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
+        $tn(pp::$tn, di::Associative ) = reconstruct(pp, di)
+        $tn(pp::$tn, di::Vararg{Tuple{Symbol,Any}} ) = reconstruct(pp, di)
     end
 
     # (un)pack macro from https://groups.google.com/d/msg/julia-users/IQS2mT1ITwU/hDtlV7K1elsJ
