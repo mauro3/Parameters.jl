@@ -73,6 +73,16 @@ function stripsubtypes(e::Expr)
 end
 stripsubtypes(vec::Vector) = [stripsubtypes(v) for v in vec]
 
+function check_inner_constructor(l)
+    if length(l.args[1].args)==1
+        error("No inner constructors with zero positional arguments allowed!")
+    elseif (length(l.args[1].args)==2 #1<length(l.args[1].args)<=3
+            && isa(l.args[1].args[2], Expr)
+            && l.args[1].args[2].head==:parameters)
+        error("No inner constructors with zero positional arguments plus keyword arguments allowed!")
+    end
+    nothing
+end
 
 ## exported functions
 #####################
@@ -235,15 +245,8 @@ function with_kw(typedef)
             # unwrap-macro
             push!(unpack_vars, sym)
         elseif l.head==:(=)  # default value and with or without type annotation
-            if isa(l.args[1], Expr) && l.args[1].head==:call
-                # this is an inner constructors
-                if length(l.args[1].args)==1
-                    error("No inner constructors with zero positional arguments allowed!")
-                elseif (length(l.args[1].args)==2 #1<length(l.args[1].args)<=3
-                        && isa(l.args[1].args[2], Expr)
-                        && l.args[1].args[2].head==:parameters)
-                    error("No inner constructors with zero positional arguments plus keyword arguments allowed!")
-                end
+            if isa(l.args[1], Expr) && l.args[1].head==:call # inner constructors
+                check_inner_constructor(l)
                 push!(inner_constructors, l)
             else
                 fld = l.args[1]
@@ -258,6 +261,9 @@ function with_kw(typedef)
         elseif l.head==:macrocall  && l.args[1]==symbol("@assert")
             # store all asserts
             push!(asserts, l)
+        elseif l.head==:function # inner constructor
+            check_inner_constructor(l)
+            push!(inner_constructors, l)
         else # no default value but with type annotation
             push!(fielddefs.args, l)
             sym = decolon2(l.args[1])

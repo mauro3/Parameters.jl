@@ -329,3 +329,14 @@ a = 99
 @test uu!=vv
 @test uu.a==99
 @test vv.a==1
+
+
+# issue #12: only one-liner inner constructors were parsed correctly.
+@with_kw immutable T9867
+    r::Int
+    function T9867(r)
+        new(r)
+    end
+end
+@test_throws ErrorException T9867()
+@test T9867(r=2).r == 2
