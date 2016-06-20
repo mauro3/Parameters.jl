@@ -53,7 +53,7 @@ end
 decolon2(a::Expr) = (@assert a.head==:(::);  a.args[1])
 decolon2(a::Symbol) = a
 
-# Returns the name of the type as symbol
+# Returns the name of the type as Symbol
 function typename(typedef::Expr)
     if isa(typedef.args[2], Symbol)
         return typedef.args[2]
@@ -209,7 +209,7 @@ function with_kw(typedef)
     end
     # default type @deftype
     l, i = next(lns, start(lns))
-    if isa(l, Expr) && l.head==:macrocall && l.args[1]==symbol("@deftype")
+    if isa(l, Expr) && l.head==:macrocall && l.args[1]==Symbol("@deftype")
         has_deftyp = true
         if length(l.args) != 2
             error("Malformed `@deftype` line")
@@ -226,6 +226,7 @@ function with_kw(typedef)
     unpack_vars = Any[]
     # the type def
     fielddefs = quote end # holds r::R etc
+    fielddefs.args = Any[] # in julia 0.5 this is [:( # /home/mauro/.julia/v0.5/Parameters/src/Parameters.jl, line 228:)]
     kws = OrderedDict{Any, Any}()
     # assertions in the body
     asserts = Any[]
@@ -258,7 +259,7 @@ function with_kw(typedef)
                 # unwrap-macro
                 push!(unpack_vars, decolon2(fld))
             end
-        elseif l.head==:macrocall  && l.args[1]==symbol("@assert")
+        elseif l.head==:macrocall  && l.args[1]==Symbol("@assert")
             # store all asserts
             push!(asserts, l)
         elseif l.head==:function # inner constructor
@@ -315,7 +316,7 @@ function with_kw(typedef)
     # parameters need to be given explicitly anyway.
 
     # Outer positional constructor which does not need explicit
-    # type-parameters.  Only make this constructor if
+    # type-parameters when called.  Only make this constructor if
     #  (1) type parameters are used at all
     #  (2) all type parameters are used in the fields (otherwise get a
     #      "method is not callable" warning!)
@@ -354,8 +355,8 @@ function with_kw(typedef)
     end
 
     # (un)pack macro from https://groups.google.com/d/msg/julia-users/IQS2mT1ITwU/hDtlV7K1elsJ
-    unpack_name = symbol("unpack_"*string(tn))
-    pack_name = symbol("pack_"*string(tn))
+    unpack_name = Symbol("unpack_"*string(tn))
+    pack_name = Symbol("pack_"*string(tn))
     # Finish up
     quote
         Main.Parameters.@__doc__ $typ # use Main.Parameters.@__doc__ for 0.3 compatibility
@@ -364,7 +365,7 @@ function with_kw(typedef)
         function Base.show(io::IO, p::$tn)
             println(io, string(typeof(p)))
             for (i, var) in enumerate($unpack_vars)
-                print(io, "  " * string(var) * ": $(p.(var))")
+                print(io, "  " * string(var) * ": $(getfield(p,var))")
                 i == length($unpack_vars) || print(io, "\n")
             end
         end

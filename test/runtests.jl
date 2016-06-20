@@ -1,5 +1,7 @@
 using Parameters
 using Base.Test
+using Compat
+import Compat.String
 
 # parameters.jl
 ###############
@@ -104,8 +106,8 @@ mt5=MT5(5.4, 4) # outer positional
 @test_throws InexactError MT5{Float32,Int}(5.5, 5.5)
 @test_throws  MethodError MT5(5., "asdf")
 @test_throws  TypeError MT5( "asdf", 5)
-@test_throws  TypeError MT5{Float64, ASCIIString}(5., "asdf")
-@test_throws  TypeError MT5{ASCIIString, Int}("asdf", 6)
+@test_throws  TypeError MT5{Float64, @compat String}(5., "asdf")
+@test_throws  TypeError MT5{@compat String, Int}("asdf", 6)
 
 # with type parameters and supertype
 @with_kw type MT4_1{T} <: MM1
@@ -149,8 +151,8 @@ mt6=MT6(5.4, 6) # outer positional
 @test_throws InexactError MT6{Float32,Int}(5.5, 6.5)
 @test_throws  MethodError MT6(5., "asdf")
 @test_throws  TypeError MT6( "asdf", 5)
-@test_throws  TypeError MT6{Float64, ASCIIString}(5., "asdf")
-@test_throws  TypeError MT6{ASCIIString, Int}("asdf", 6)
+@test_throws  TypeError MT6{Float64, @compat String}(5., "asdf")
+@test_throws  TypeError MT6{@compat String, Int}("asdf", 6)
 
 # user defined BAD inner positional constructor
 @with_kw type MT7{R,I<:Integer} <: AMT{R}
@@ -195,8 +197,8 @@ mt6=MT8(5.4, 6) # outer positional
 @test_throws InexactError MT8{Float32,Int}(5.5, 6.5)
 @test_throws  MethodError MT8(5., "asdf")
 @test_throws  TypeError MT8( "asdf", 5)
-@test_throws  TypeError MT8{Float64, ASCIIString}(5., "asdf")
-@test_throws  TypeError MT8{ASCIIString, Int}("asdf", 6)
+@test_throws  TypeError MT8{Float64, @compat String}(5., "asdf")
+@test_throws  TypeError MT8{@compat String, Int}("asdf", 6)
 @test MT8.types[1].name==:R
 @test MT8.types[2].name==:I
 @test MT8.types[2].ub==Integer
