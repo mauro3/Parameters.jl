@@ -12,7 +12,7 @@ import Base: @__doc__
 import DataStructures: OrderedDict
 using Compat
 
-export @with_kw, type2dict, reconstruct, @unpack, @pack
+export @with_kw, type2dict, reconstruct, @unpack, @pack, @materialize
 
 ## Parser helpers
 #################
@@ -458,6 +458,27 @@ macro pack(arg)
         end
         end
     )
+end
+
+"""
+Splats keys from a dict into variables
+
+```
+@materialize a, b, c = dict
+```
+
+"""
+macro materialize(dict_splat)
+    keynames, dict = dict_splat.args
+    keynames = isa(keynames, Symbol) ? [keynames] : keynames.args
+    dict_instance = gensym()
+    kd = [:($key = $dict_instance[$(Expr(:quote, key))]) for key in keynames]
+    kdblock = Expr(:block, kd...)
+    expr = quote
+        $dict_instance = $dict # handle if dict is not a variable but an expression
+        $kdblock
+    end
+    esc(expr)
 end
 
 end # module
