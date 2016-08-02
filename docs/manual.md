@@ -154,3 +154,16 @@ local variables are available in a function using `@unpack_*`.  Examples:
   times.
 
 Thus, in general, it is probably better to use the `@(un)pack` macros instead.
+
+# Materialize macro
+
+The materialize macro is simply an `unpack` macro for Dictionaries. You can use it on `Dict{Symbol,Any}`. It's best shown by example:
+
+```julia 
+d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
+@materialize a, b, c = d
+a == 5.0 #true
+b == 2 #true
+c == "Hi!" #true
+```
+
