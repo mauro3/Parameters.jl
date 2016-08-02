@@ -469,8 +469,8 @@ Splats keys from a dict into variables
 
 Example:
 
-d = Dict{Symbol,Any}(:a=5.0,:b=2,:c="Hi!")
-@materialize a, b, c = d
+d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
+DifferentialEquations.@materialize a, b, c = d
 a == 5.0 #true
 b == 2 #true
 c == "Hi!" #true
