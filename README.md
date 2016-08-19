@@ -51,7 +51,8 @@ The features are:
 - packing and unpacking macros for the type: `@unpack_*` where `*` is
   the type name.
 - generic packing and unpacking macros `@pack`, `@unpack` (work with
-  any types).
+  any types).  Note that the syntax will be overhauled sometime
+  soon-ish, see [PR #13](https://github.com/mauro3/Parameters.jl/pull/13).
 
 The keyword-constructor and default-values functionality will probably
 make it into Julia
