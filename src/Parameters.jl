@@ -153,9 +153,10 @@ immutable MM{R}
     r::R
     a::R
     MM(r,a) = new(r,a)
-    MM(;r=1000., a=error("no default for a")) = MM{R}(r,a)
+    MM(;r=1000., a=error("no default for a")) = MM{R}(r,a) # inner kw, type-paras are required when calling
 end
 MM{R}(r::R,a::R) = MM{R}(r,a) # default outer positional constructor
+MM(;r=1000,a=error("no default for a")) =  MM(r,a) # outer kw, so no type-paras are needed when calling
 MM(m::MM; kws...) = reconstruct(mm,kws)
 MM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)
 macro unpack_MM(varname)
@@ -301,14 +302,12 @@ function with_kw(typedef)
         append!(typ.args[3].args, inner_constructors)
     end
 
-    # Do not provide an outer keyword-constructor as the type
-    # parameters need to be given explicitly anyway.
-
     # Outer positional constructor which does not need explicit
     # type-parameters when called.  Only make this constructor if
     #  (1) type parameters are used at all
     #  (2) all type parameters are used in the fields (otherwise get a
     #      "method is not callable" warning!)
+    #       See also https://github.com/JuliaLang/julia/issues/17186
     if typparas!=Any[] # condition (1)
         outer_positional = :(  $tn{$(typparas...)}($(fielddefs.args...))
                              = $tn{$(stripsubtypes(typparas)...)}($(args...)))
@@ -324,6 +323,16 @@ function with_kw(typedef)
         end
     else
         outer_positional = :()
+    end
+
+
+    # Outer keyword constructor, useful to infer the type parameter
+    # automatically.  This calls the outer positional constructor.
+    # only create if type parameters are used.
+    if typparas==Any[]
+        outer_kw=:()
+    else
+        outer_kw = :($tn($kwargs) = $tn($(args...)) )
     end
 
     ## outer copy constructor
@@ -343,6 +352,7 @@ function with_kw(typedef)
     quote
         Main.Parameters.@__doc__ $typ # use Main.Parameters.@__doc__ for 0.3 compatibility
         $outer_positional
+        $outer_kw
         $outer_copy
         function Base.show(io::IO, p::$tn)
             println(io, string(typeof(p)))

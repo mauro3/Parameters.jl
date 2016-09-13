@@ -67,7 +67,7 @@ MT3_2(4,5)
     r::R=5
     a::I
 end
-@test_throws MethodError MT4(r=4, a=5.) # need to specify type parameters
+@test MT4(r=4, a=5.0)==MT4{Int,Float64}(4,5.0)
 MT4{Float32, Int}(r=4, a=5.)
 MT4{Float32, Int}(a=5.)
 MT4{Float32, Int}(5.4, 4)  # inner positional
@@ -268,6 +268,24 @@ end
                                                  a=5; @assert a>=5
                                                  MT13(a) = new(8)
                                                  end))
+
+####
+# issue 10: infer type parameters from kw-args
+
+@with_kw immutable I10{T} @deftype Int
+    a::T
+    b = 10
+    c::T="aaa"
+end
+@test_throws ErrorException I10()
+@test I10(1,2,3)==I10{Int}(1,2,3)
+@test_throws MethodError I10(a=10) # typeof(a)!=typeof(c)
+a =  I10(a="asd")
+b = I10{String}("asd",10,"aaa")
+for fn in fieldnames(a)
+    # complicated testing because of mutable T
+    @test getfield(a, fn)==getfield(b, fn)
+end
 
 ###
 # @unpack and @pack
