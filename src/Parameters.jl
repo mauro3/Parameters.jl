@@ -155,6 +155,7 @@ immutable MM{R}
     MM(r,a) = new(r,a)
     MM(;r=1000., a=error("no default for a")) = MM{R}(r,a)
 end
+MM(;r=1000,a=error("no default for a")) = MM{promote_type(typeof(r), typeof(a))}(r,a)
 MM(m::MM; kws...) = reconstruct(mm,kws)
 MM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)
 macro unpack_MM(varname)
@@ -356,6 +357,7 @@ function with_kw(typedef)
         macro $pack_name(ex)
             esc(Main.Parameters._pack(ex, $unpack_vars))
         end
+        $tn
     end
 end
 
