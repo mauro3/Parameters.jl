@@ -1,3 +1,8 @@
+# 2016-09-14
+
+Now keyword constructor calls can be done without
+type-parameters. Fixes issue #10.
+
 # 2016-01-15
 
 Added support for `@assert` in type-body.

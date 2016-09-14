@@ -24,11 +24,15 @@ Now the type can be constructed using the default values, or with
 non-defaults specified with keywords:
 ```julia
 # Create an instance with the defaults
-pp = PhysicalPara{Float64}()
+pp = PhysicalPara()
+pp_f32 = PhysicalPara{Float32}() # the type parameter can be chosen explicitly
 # Make one with some non-defaults
-pp2 = PhysicalPara{Float32}(cw=77, day= 987)
+pp2 = PhysicalPara(cw=77.0, day= 987.0)
 # Make another one based on the previous one with some modifications
 pp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)
+# the normal positional constructor can also be used
+# (and should be used in hot inner loops)
+pp4 = PhysicalPara(1,2,3,4,5,6)
 ```
 &nbsp;
 
@@ -52,7 +56,7 @@ Parameter interdependence is possible (note that they needn't appear in order):
     b::R
     c::R = a+b
 end
-pa = Para{Int}(b=7)
+pa = Para(b=7)
 ```
 &nbsp;
 
@@ -66,7 +70,7 @@ additional field `d`) can be written more compactly as:
     c = a+b
     d::Int = 4 # adding a type overrides the @deftype
 end
-pa2 = Para2{Int}(b=7)
+pa2 = Para2(b=7)
 
 # or more pedestrian
 @with_kw immutable Para3 @deftype Float64
@@ -86,8 +90,8 @@ Custom inner constructors can be defined as long as:
   would clash with the keyword constructor)
 - no `@assert`s (as in above example) are used within the type body.
 
-The keyword constructor goes through the positional constructor, thus
-invariants or any other calculation will be honored.
+The keyword constructor goes through the inner positional constructor,
+thus invariants or any other calculation will be honored.
 ```julia
 @with_kw immutable MyS{R}
     a::R = 5
