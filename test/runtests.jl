@@ -347,3 +347,11 @@ a = 99
 end
 @test_throws ErrorException T9867()
 @test T9867(r=2).r == 2
+
+# Materialize tests
+
+d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
+@materialize a, b, c = d
+@test a == 5.0
+@test b == 2
+@test c == "Hi!"
