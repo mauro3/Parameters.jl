@@ -155,7 +155,7 @@ immutable MM{R}
     MM(r,a) = new(r,a)
     MM(;r=1000., a=error("no default for a")) = MM{R}(r,a)
 end
-MM(;r=1000,a=error("no default for a")) = MM{promote_type(typeof(r), typeof(a))}(r,a)
+MM{R}(r::R,a::R) = MM{R}(r,a) # default outer positional constructor
 MM(m::MM; kws...) = reconstruct(mm,kws)
 MM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)
 macro unpack_MM(varname)
