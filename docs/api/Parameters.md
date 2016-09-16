@@ -18,7 +18,7 @@ b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 
 
 *source:*
-[Parameters/src/Parameters.jl:121](https://github.com/mauro3/Parameters.jl/tree/d47268be8183101ba96fd82a7622be331dd1ab17/src/Parameters.jl#L121)
+[Parameters/src/Parameters.jl:121](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L121)
 
 ---
 
@@ -40,54 +40,70 @@ Dict{Symbol,Any} with 2 entries:
 
 
 *source:*
-[Parameters/src/Parameters.jl:105](https://github.com/mauro3/Parameters.jl/tree/d47268be8183101ba96fd82a7622be331dd1ab17/src/Parameters.jl#L105)
+[Parameters/src/Parameters.jl:105](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L105)
 
 ---
 
 <a id="macro___pack.1" class="lexicon_definition"></a>
-#### @pack(arg) [¶](#macro___pack.1)
-Packs values into a datatype.  The variables need to have the same
-name as the fields.  If the datatype is mutable, it will be mutated.
-If immutable, a new instance is made with `reconstruct` and assigned
-to the original variable.
+#### @pack(args) [¶](#macro___pack.1)
+Packs variables into a composite type or a `Dict{Symbol}`
+```julia_skip
+@pack dict_or_typeinstance = a, b, c
+```
 
+Example with dict:
 ```julia
-type A
-    a
-    b
-end
-aa = A(3,4)
-b = "ha"
-@pack aa: b
-# is equivalent to
-aa.b = b
+a = 5.0
+c = "Hi!"
+d = Dict{Symbol,Any}()
+@pack d = a, c
+d # Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
+```
+
+Example with type:
+```julia
+a = 99
+c = "HaHa"
+type A; a; b; c; end
+d = A(4,7.0,"Hi")
+@pack d = a, c
+d.a == 99 #true
+d.c == "HaHa" #true
 ```
 
 
 *source:*
-[Parameters/src/Parameters.jl:465](https://github.com/mauro3/Parameters.jl/tree/d47268be8183101ba96fd82a7622be331dd1ab17/src/Parameters.jl#L465)
+[Parameters/src/Parameters.jl:531](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L531)
 
 ---
 
 <a id="macro___unpack.1" class="lexicon_definition"></a>
-#### @unpack(arg) [¶](#macro___unpack.1)
-Unpacks fields from any datatype (no need to create it with @with_kw):
+#### @unpack(args) [¶](#macro___unpack.1)
+Unpacks fields/keys from a composite type or a `Dict{Symbol}` into variables
+```julia_skip
+@unpack a, b, c = dict_or_typeinstance
+```
 
+Example with dict:
 ```julia
-type A
-    a
-    b
-end
-aa = A(3,4)
-@unpack aa: a,b
-# is equivalent to
-a = aa.a
-b = aa.b
+d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
+@unpack a, c = d
+a == 5.0 #true
+c == "Hi!" #true
+```
+
+Example with type:
+```julia
+type A; a; b; c; end
+d = A(4,7.0,"Hi")
+@unpack a, c = d
+a == 4 #true
+c == "Hi!" #true
 ```
 
 
 *source:*
-[Parameters/src/Parameters.jl:435](https://github.com/mauro3/Parameters.jl/tree/d47268be8183101ba96fd82a7622be331dd1ab17/src/Parameters.jl#L435)
+[Parameters/src/Parameters.jl:487](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L487)
 
 ---
 
@@ -108,15 +124,66 @@ For more details see manual.
 
 
 *source:*
-[Parameters/src/Parameters.jl:395](https://github.com/mauro3/Parameters.jl/tree/d47268be8183101ba96fd82a7622be331dd1ab17/src/Parameters.jl#L395)
+[Parameters/src/Parameters.jl:400](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L400)
 
 ## Internal
 
 ---
 
+<a id="function__pack.1" class="lexicon_definition"></a>
+#### Parameters.pack! [¶](#function__pack.1)
+This function is invoked to pack one entity into some DataType and has
+signature:
+
+`pack!(x, field, value) -> value
+
+Two definitions are included in the package to pack into a composite
+type or into a dictionary:
+
+```
+@inline pack!(x, field, val) = setfield!(x, field, val)
+@inline pack!(x::Associative{Symbol}, key, val) = x[key]=val
+```
+
+More methods can be added to allow for specialized packing of other
+datatypes.
+
+See also `unpack`.
+
+
+*source:*
+[Parameters/src/Parameters.jl:453](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L453)
+
+---
+
+<a id="function__unpack.1" class="lexicon_definition"></a>
+#### Parameters.unpack [¶](#function__unpack.1)
+This function is invoked to unpack one entity of some DataType and has
+signature:
+
+`unpack(x, field) -> value of field`
+
+Two definitions are included in the package to unpack a composite type
+or a dictionary:
+```
+@inline unpack(x, field) = getfield(x, field)
+@inline unpack(x::Associative{Symbol}, key) = x[key]
+```
+
+More methods can be added to allow for specialized unpacking of other datatypes.
+
+See also `pack!`.
+
+
+*source:*
+[Parameters/src/Parameters.jl:429](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L429)
+
+---
+
 <a id="method__with_kw.1" class="lexicon_definition"></a>
 #### with_kw(typedef) [¶](#method__with_kw.1)
-This function is called by the `@with_kw` macro and does the AST transformation from:
+This function is called by the `@with_kw` macro and does the syntax
+transformation from:
 
 ```julia
 @with_kw immutable MM{R}
@@ -153,5 +220,5 @@ end
 
 
 *source:*
-[Parameters/src/Parameters.jl:204](https://github.com/mauro3/Parameters.jl/tree/d47268be8183101ba96fd82a7622be331dd1ab17/src/Parameters.jl#L204)
+[Parameters/src/Parameters.jl:210](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L210)
 

@@ -104,10 +104,10 @@ out, pa = fn1(7, pa)
 # local scope:
 
 function fn2(var, pa::Para)
-    @unpack pa: a, b
+    @unpack a, b = pa
     out = var + a + b
     b = 77
-    @pack pa: b
+    #@pack pa = b # doesn't work with immutable type
     return out, pa
 end
 

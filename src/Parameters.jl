@@ -76,7 +76,7 @@ function check_inner_constructor(l)
     nothing
 end
 
-## exported functions
+## Exported helper functions
 #####################
 """
 Transforms a type-instance into a dictionary.
@@ -124,6 +124,10 @@ end
 reconstruct{T}(pp::T; kws...) = reconstruct(pp, kws)
 
 
+###########################
+# Keyword constructors with @with_kw
+##########################
+
 # A type with fields (r,a) in variable aa becomes
 # quote
 #     r = aa.r
@@ -137,7 +141,8 @@ function _pack(binding, fields)
 end
 
 """
-This function is called by the `@with_kw` macro and does the AST transformation from:
+This function is called by the `@with_kw` macro and does the syntax
+transformation from:
 
 ```julia
 @with_kw immutable MM{R}
@@ -389,87 +394,135 @@ macro with_kw(typedef)
     return esc(with_kw(typedef))
 end
 
-## @pack and @unpack are independent of the datatype
-function parse_pack_unpack(arg)
-    if isa(arg, Symbol); error("Need format `t: a, ...`") end
-    h = arg.head
-    if !(h==:(:) || h==:tuple); error("Need format `t: a, ...`") end
-    # var-name of structure
-    v = h==:tuple ? arg.args[1].args[1] : arg.args[1]
-    # vars to unpack
-    up = Any[]
-    if h==:tuple
-        append!(up, arg.args[2:end])
-        push!(up, arg.args[1].args[2])
-    else
-        push!(up, arg.args[2])
-    end
-    return v, up # variable holding the structure, variables to (un)-pack
-end
+###########################
+# Packing and unpacking @unpack, @pack
+##########################
+# Below code slightly adapted from Simon Danisch's GLVisualize via PR
+# https://github.com/mauro3/Parameters.jl/pull/13
 
 """
-Unpacks fields from any datatype (no need to create it with @with_kw):
+This function is invoked to unpack one entity of some DataType and has
+signature:
 
+`unpack(x, field) -> value of field`
+
+Two definitions are included in the package to unpack a composite type
+or a dictionary:
+```
+@inline unpack(x, field) = getfield(x, field)
+@inline unpack(x::Associative{Symbol}, key) = x[key]
+```
+
+More methods can be added to allow for specialized unpacking of other datatypes.
+
+See also `pack!`.
+"""
+function unpack end
+@inline unpack(x, field) = getfield(x, field)
+@inline unpack(x::Associative{Symbol}, key) = x[key]
+
+"""
+This function is invoked to pack one entity into some DataType and has
+signature:
+
+`pack!(x, field, value) -> value`
+
+Two definitions are included in the package to pack into a composite
+type or into a dictionary:
+
+```
+@inline pack!(x, field, val) = setfield!(x, field, val)
+@inline pack!(x::Associative{Symbol}, key, val) = x[key]=val
+```
+
+More methods can be added to allow for specialized packing of other
+datatypes.
+
+See also `unpack`.
+"""
+function pack! end
+@inline pack!(x, field, val) = setfield!(x, field, val)
+@inline pack!(x::Associative{Symbol}, key, val) = x[key]=val
+
+"""
+Unpacks fields/keys from a composite type or a `Dict{Symbol}` into variables
+```julia_skip
+@unpack a, b, c = dict_or_typeinstance
+```
+
+Example with dict:
 ```julia
-type A
-    a
-    b
-end
-aa = A(3,4)
-@unpack aa: a,b
-# is equivalent to
-a = aa.a
-b = aa.b
+d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
+@unpack a, c = d
+a == 5.0 #true
+c == "Hi!" #true
+```
+
+Example with type:
+```julia
+type A; a; b; c; end
+d = A(4,7.0,"Hi")
+@unpack a, c = d
+a == 4 #true
+c == "Hi!" #true
 ```
 """
-macro unpack(arg)
-    v, up = parse_pack_unpack(arg)
-    out = quote end
-    for u in up
-        push!(out.args, :($u = $v.$u))
+macro unpack(args)
+    args.head!=:(=) && error("Expression needs to be of form `a, b = c`")
+    items, suitecase = args.args
+    items = isa(items, Symbol) ? [items] : items.args
+    suitecase_instance = gensym()
+    kd = [:( $key = Parameters.unpack($suitecase_instance, $(Expr(:quote, key))) )for key in items]
+    kdblock = Expr(:block, kd...)
+    expr = quote
+        $suitecase_instance = $suitecase # handle if suitecase is not a variable but an expression
+        $kdblock
     end
-    return esc(out)
+    esc(expr)
 end
+
 
 """
-Packs values into a datatype.  The variables need to have the same
-name as the fields.  If the datatype is mutable, it will be mutated.
-If immutable, a new instance is made with `reconstruct` and assigned
-to the original variable.
+Packs variables into a composite type or a `Dict{Symbol}`
+```julia_skip
+@pack dict_or_typeinstance = a, b, c
+```
 
+Example with dict:
 ```julia
-type A
-    a
-    b
-end
-aa = A(3,4)
-b = "ha"
-@pack aa: b
-# is equivalent to
-aa.b = b
+a = 5.0
+c = "Hi!"
+d = Dict{Symbol,Any}()
+@pack d = a, c
+d # Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
+```
+
+Example with type:
+```julia
+a = 99
+c = "HaHa"
+type A; a; b; c; end
+d = A(4,7.0,"Hi")
+@pack d = a, c
+d.a == 99 #true
+d.c == "HaHa" #true
 ```
 """
-macro pack(arg)
-    v, up = parse_pack_unpack(arg)
-    # dict to use with reconstruct:
-    di = :([])
-    for u in up
-        push!(di.args, :($(Base.Meta.quot(u)), $u))
+macro pack(args)
+    args.head!=:(=) && error("Expression needs to be of form `a = b,c`")
+    suitecase, items = args.args
+    items = isa(items, Symbol) ? [items] : items.args
+    suitecase_instance = gensym()
+    kd = [:( Parameters.pack!($suitecase_instance, $(Expr(:quote, key)), $key) ) for key in items]
+    kdblock = Expr(:block, kd...)
+    expr = quote
+        $suitecase_instance = $suitecase # handle if suitecase is not a variable but an expression
+        $kdblock
     end
-    # assignments for mutables
-    ass = quote end
-    for u in up
-        push!(ass.args, :($v.$u = $u))
-    end
-    esc(
-        quote
-        if isimmutable($v)
-            $v = Main.Parameters.reconstruct($v, $di)
-        else
-            $ass
-        end
-        end
-    )
+    esc(expr)
 end
+
+# TODO: maybe add @pack_new for packing into a new instance.  Could be
+# used with immutables also.
 
 end # module

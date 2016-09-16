@@ -287,56 +287,6 @@ for fn in fieldnames(a)
     @test getfield(a, fn)==getfield(b, fn)
 end
 
-###
-# @unpack and @pack
-type UP1
-    a
-    b
-end
-uu = UP1(1,2)
-@test_throws ErrorException @unpack uu: c
-@test_throws ErrorException @unpack uu: a, c
-
-a, b = 0, 0
-@unpack uu: a
-@test a==1
-@test b==0
-a, b = 0, 0
-@unpack uu: a, b
-@test a==1
-@test b==2
-
-
-vv = uu
-a = 99
-@pack uu: a
-@test uu==vv
-@test uu.a==99
-
-immutable UP2
-    a
-    b
-end
-uu = UP2(1,2)
-@test_throws ErrorException @unpack uu: c
-@test_throws ErrorException @unpack uu: a, c
-
-a, b = 0, 0
-@unpack uu: a
-@test a==1
-@test b==0
-a, b = 0, 0
-@unpack uu: a, b
-@test a==1
-@test b==2
-
-vv = uu
-a = 99
-@pack uu: a
-@test uu!=vv
-@test uu.a==99
-@test vv.a==1
-
 
 # issue #12: only one-liner inner constructors were parsed correctly.
 @with_kw immutable T9867
@@ -347,3 +297,87 @@ a = 99
 end
 @test_throws ErrorException T9867()
 @test T9867(r=2).r == 2
+
+###########################
+# Packing and unpacking @unpack, @pack
+##########################
+# Example with dict:
+d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
+@unpack a, c = d
+@test a == 5.0 #true
+@test c == "Hi!" #true
+
+
+# Example with type:
+type A; a; b; c; end
+d = A(4,7.0,"Hi!")
+@unpack a, c = d
+@test a == 4 #true
+@test c == "Hi!" #true
+
+
+## Packing
+
+# Example with dict:
+a = 5.0
+c = "Hi!"
+d = Dict{Symbol,Any}()
+@pack d = a, c
+@test d==Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
+
+
+# Example with type:
+a = 99
+c = "HaHa"
+d = A(4,7.0,"Hi")
+@pack d = a, c
+@test d.a == 99
+@test d.c == "HaHa"
+
+
+### Tests ported from Parameters.jl
+
+# @unpack and @pack
+type UP1
+    a
+    b
+end
+uu = UP1(1,2)
+@test_throws ErrorException @unpack c = uu
+@test_throws ErrorException @unpack a, c = uu
+
+a, b = 0, 0
+@unpack a = uu
+@test a==1
+@test b==0
+a, b = 0, 0
+@unpack a, b = uu
+@test a==1
+@test b==2
+
+
+vv = uu
+a = 99
+@pack uu = a
+@test uu==vv
+@test uu.a==99
+
+immutable UP2
+    a
+    b
+end
+uu = UP2(1,2)
+@test_throws ErrorException @unpack c = uu
+@test_throws ErrorException @unpack a, c = uu
+
+a, b = 0, 0
+@unpack a = uu
+@test a==1
+@test b==0
+a, b = 0, 0
+@unpack a,b = uu
+@test a==1
+@test b==2
+
+a = 99
+@test_throws ErrorException @pack uu = a

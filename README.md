@@ -11,10 +11,14 @@
 
 
 This is a package I use to handle numerical-model parameters, thus the
-name.  However, it should be useful otherwise too.  Its main feature
-is the macro `@with_kw` which decorates a type definition to allow
-default values and a keyword constructor:
+name.  However, it should be useful otherwise too.  It has two main
+features:
 
+- keyword type constructors with default values, and
+- unpacking and packing of composite types and dicts.
+
+The macro `@with_kw` which decorates a type definition to
+allow default values and a keyword constructor:
 ```julia
 julia> using Parameters
 
@@ -40,6 +44,20 @@ A
   c: 4
 ```
 
+Unpacking is done with `@unpack` (`@pack` is similar):
+```julia
+type A
+    a
+    b
+    c
+end
+@unpack a, c = A(4,5,6)
+# is equivalent to
+AA = A(4,5,6)
+a = AA.a
+c = AA.c
+```
+
 The features are:
 
 - a keyword constructor for the type
@@ -51,8 +69,7 @@ The features are:
 - packing and unpacking macros for the type: `@unpack_*` where `*` is
   the type name.
 - generic packing and unpacking macros `@pack`, `@unpack` (work with
-  any types).  Note that the syntax will be overhauled sometime
-  soon-ish, see [PR #13](https://github.com/mauro3/Parameters.jl/pull/13).
+  any types).
 
 The keyword-constructor and default-values functionality will probably
 make it into Julia

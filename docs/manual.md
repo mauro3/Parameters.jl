@@ -3,7 +3,7 @@
 This is a manual by example
 ([examples/ex1.jl](https://github.com/mauro3/Parameters.jl/blob/master/examples/ex1.jl)).
 
-# Types with default values
+# Types with default values & keyword constructors
 
 Create a type which has default values:
 ```julia
@@ -114,17 +114,21 @@ assertions and simple calculations, are more easily achieved with
 
 # (Un)pack macros
 
-When working with parameters it is often convenient to unpack (and
-pack) some or all of them, in particular inside functions.
+When working with parameters, or otherwise, it is often convenient to
+unpack (and pack) some or all of the fields of a type.  This is often
+the case when passed into a function.
 
-The preferred and safer way to do this is using the `@unpack` and
-`@pack` macros (which are generic and also work with non-`@with_kw` types):
+The preferred to do this is using the `@unpack` and `@pack` macros
+which are generic and also work with non-`@with_kw` types and
+dictionaries (and can be customized for other types too).  Continuing
+with the `Para` type defined above:
+
 ```julia
 function fn2(var, pa::Para)
-    @unpack pa: a, b # equivalent to: a,b = pa.a,pa.b
+    @unpack a, b = pa # equivalent to: a,b = pa.a,pa.b
     out = var + a + b
     b = 77
-    @pack pa: b # equivalent to: pa.b=b
+    @pack pa = b # equivalent to: pa.b = b
     return out, pa
 end
 
@@ -132,8 +136,58 @@ out, pa = fn1(7, pa)
 ```
 &nbsp;
 
+
+Example with a dictionary:
+```julia
+d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
+@unpack a, c = d
+a == 5.0 #true
+c == "Hi!" #true
+
+d = Dict{Symbol,Any}()
+@pack d = a, c
+d # Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
+```
+&nbsp;
+
+
+## Customization of `@unpack` and `@pack`
+
+What happens during the (un-)packing of a particular datatype is
+determined by the functions `Parameters.unpack` and `Parameters.pack!`.
+
+The `Parameters.unpack` function is invoked to unpack one entity of some
+`DataType` and has signature:
+
+`unpack(x, field) -> value of field`
+
+Two definitions are included in the package to unpack a composite type
+or a dictionary:
+```
+@inline unpack(x, field) = getfield(x, field)
+@inline unpack(x::Associative{Symbol}, key) = x[key]
+```
+
+The `Parameters.pack!` function is invoked to pack one entity into some
+`DataType` and has signature:
+
+`pack!(x, field, value) -> value`
+
+Two definitions are included in the package to pack into a composite
+type or into a dictionary:
+
+```
+@inline pack!(x, field, val) = setfield!(x, field, val)
+@inline pack!(x::Associative{Symbol}, key, val) = x[key]=val
+```
+
+More methods can be added to `unpack` and `pack!` to allow for
+specialized packing of datatypes.
+
+## The type-specific (un)pack macros (somewhat dangerous)
+
 The `@with_kw` macro automatically produces type-specific (un-)pack
-macros which unpack all fields:
+macros of form `@unpack_TypeName` which unpack all fields:
 ```julia
 function fn(var, pa::Para)
     @unpack_Para pa # the macro is constructed during the @with_kw

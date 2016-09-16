@@ -15,15 +15,23 @@
 
 ## Macros [Exported]
 
-[@pack(arg)](Parameters.md#macro___pack.1)  Packs values into a datatype.  The variables need to have the same
+[@pack(args)](Parameters.md#macro___pack.1)  Packs variables into a composite type or a `Dict{Symbol}`
 
-[@unpack(arg)](Parameters.md#macro___unpack.1)  Unpacks fields from any datatype (no need to create it with @with_kw):
+[@unpack(args)](Parameters.md#macro___unpack.1)  Unpacks fields/keys from a composite type or a `Dict{Symbol}` into variables
 
 [@with_kw(typedef)](Parameters.md#macro___with_kw.1)  Macro which allows default values for field types and a few other features.
 
 ---
 
+## Functions [Internal]
+
+[Parameters.pack!](Parameters.md#function__pack.1)  This function is invoked to pack one entity into some DataType and has
+
+[Parameters.unpack](Parameters.md#function__unpack.1)  This function is invoked to unpack one entity of some DataType and has
+
+---
+
 ## Methods [Internal]
 
-[with_kw(typedef)](Parameters.md#method__with_kw.1)  This function is called by the `@with_kw` macro and does the AST transformation from:
+[with_kw(typedef)](Parameters.md#method__with_kw.1)  This function is called by the `@with_kw` macro and does the syntax
 

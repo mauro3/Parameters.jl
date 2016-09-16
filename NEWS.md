@@ -1,7 +1,16 @@
+# 2016-09-16
+
+Updated packing and unpacking macro syntax according to PR
+[#13](https://github.com/mauro3/Parameters.jl/pull/13).  Before
+`@pack` was supported for immutable (via invoking `reconstruct`), this
+has been dropped.
+
+This is a breaking change!
+
 # 2016-09-14
 
 Now keyword constructor calls can be done without
-type-parameters. Fixes issue #10.
+type-parameters. Fixes issue [#10](https://github.com/mauro3/Parameters.jl/issues/10).
 
 # 2016-01-15
 
