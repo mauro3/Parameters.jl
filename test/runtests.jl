@@ -334,10 +334,7 @@ d = A(4,7.0,"Hi")
 @test d.a == 99
 @test d.c == "HaHa"
 
-
-### Tests ported from Parameters.jl
-
-# @unpack and @pack
+# older tests ported
 type UP1
     a
     b
@@ -381,3 +378,16 @@ a, b = 0, 0
 
 a = 99
 @test_throws ErrorException @pack uu = a
+
+# check that inference works
+immutable UP3
+    a::Float64
+    b::Int
+end
+function f(u::UP3)
+    @unpack a,b = u
+    a,b
+end
+if VERSION>v"0.5-"
+    @inferred f(UP3(1,2))
+end

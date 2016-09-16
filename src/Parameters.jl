@@ -404,13 +404,16 @@ end
 This function is invoked to unpack one entity of some DataType and has
 signature:
 
-`unpack(x, field) -> value of field`
+`unpack(dt::Any, ::Val{field}) -> value of field`
+
+Note that this means the only symbols or immutable field-descriptors
+are allowed, as they are used as type parameter in `Val`.
 
 Two definitions are included in the package to unpack a composite type
 or a dictionary:
 ```
-@inline unpack(x, field) = getfield(x, field)
-@inline unpack(x::Associative{Symbol}, key) = x[key]
+@inline unpack{f}(x, ::Val{f}) = getfield(x, f)
+@inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
 ```
 
 More methods can be added to allow for specialized unpacking of other datatypes.
@@ -418,21 +421,24 @@ More methods can be added to allow for specialized unpacking of other datatypes.
 See also `pack!`.
 """
 function unpack end
-@inline unpack(x, field) = getfield(x, field)
-@inline unpack(x::Associative{Symbol}, key) = x[key]
+@inline unpack{f}(x, ::Val{f}) = getfield(x, f)
+@inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
 
 """
 This function is invoked to pack one entity into some DataType and has
 signature:
 
-`pack!(x, field, value) -> value`
+`pack!(dt::Any, ::Val{field}, value) -> value`
+
+Note that this means the only symbols or immutable field-descriptors
+are allowed, as they are used as type parameter in `Val`.
 
 Two definitions are included in the package to pack into a composite
 type or into a dictionary:
 
 ```
-@inline pack!(x, field, val) = setfield!(x, field, val)
-@inline pack!(x::Associative{Symbol}, key, val) = x[key]=val
+@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
+@inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
 ```
 
 More methods can be added to allow for specialized packing of other
@@ -441,8 +447,8 @@ datatypes.
 See also `unpack`.
 """
 function pack! end
-@inline pack!(x, field, val) = setfield!(x, field, val)
-@inline pack!(x::Associative{Symbol}, key, val) = x[key]=val
+@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
+@inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
 
 """
 Unpacks fields/keys from a composite type or a `Dict{Symbol}` into variables
@@ -472,7 +478,7 @@ macro unpack(args)
     items, suitecase = args.args
     items = isa(items, Symbol) ? [items] : items.args
     suitecase_instance = gensym()
-    kd = [:( $key = Parameters.unpack($suitecase_instance, $(Expr(:quote, key))) )for key in items]
+    kd = [:( $key = Parameters.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()) )for key in items]
     kdblock = Expr(:block, kd...)
     expr = quote
         $suitecase_instance = $suitecase # handle if suitecase is not a variable but an expression
@@ -513,7 +519,7 @@ macro pack(args)
     suitecase, items = args.args
     items = isa(items, Symbol) ? [items] : items.args
     suitecase_instance = gensym()
-    kd = [:( Parameters.pack!($suitecase_instance, $(Expr(:quote, key)), $key) ) for key in items]
+    kd = [:( Parameters.pack!($suitecase_instance, Val{$(Expr(:quote, key))}(), $key) ) for key in items]
     kdblock = Expr(:block, kd...)
     expr = quote
         $suitecase_instance = $suitecase # handle if suitecase is not a variable but an expression

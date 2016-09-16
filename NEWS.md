@@ -1,13 +1,16 @@
-# 2016-09-16
+# 2016-09-16 v0.5.0
 
 Updated packing and unpacking macro syntax according to PR
 [#13](https://github.com/mauro3/Parameters.jl/pull/13).  Before
 `@pack` was supported for immutable (via invoking `reconstruct`), this
 has been dropped.
 
+Also, `@unpack` performance on Julia-0.4 will be sub-par with this
+change as it is type unstable.
+
 This is a breaking change!
 
-# 2016-09-14
+# 2016-09-14 v0.4.0
 
 Now keyword constructor calls can be done without
 type-parameters. Fixes issue [#10](https://github.com/mauro3/Parameters.jl/issues/10).

@@ -159,26 +159,26 @@ determined by the functions `Parameters.unpack` and `Parameters.pack!`.
 The `Parameters.unpack` function is invoked to unpack one entity of some
 `DataType` and has signature:
 
-`unpack(x, field) -> value of field`
+`unpack(dt::Any, ::Val{field}) -> value of field`
 
 Two definitions are included in the package to unpack a composite type
 or a dictionary:
 ```
-@inline unpack(x, field) = getfield(x, field)
-@inline unpack(x::Associative{Symbol}, key) = x[key]
+@inline unpack{f}(x, ::Val{f}) = getfield(x, f)
+@inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
 ```
 
 The `Parameters.pack!` function is invoked to pack one entity into some
 `DataType` and has signature:
 
-`pack!(x, field, value) -> value`
+`pack!(dt::Any, ::Val{field}, value) -> value`
 
 Two definitions are included in the package to pack into a composite
 type or into a dictionary:
 
 ```
-@inline pack!(x, field, val) = setfield!(x, field, val)
-@inline pack!(x::Associative{Symbol}, key, val) = x[key]=val
+@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
+@inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
 ```
 
 More methods can be added to `unpack` and `pack!` to allow for

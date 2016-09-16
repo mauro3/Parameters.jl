@@ -18,7 +18,7 @@ b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 
 
 *source:*
-[Parameters/src/Parameters.jl:121](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L121)
+[Parameters/src/Parameters.jl:121](https://github.com/mauro3/Parameters.jl/tree/046efbd2a984684b74dfc989de039e2f2441a16c/src/Parameters.jl#L121)
 
 ---
 
@@ -40,7 +40,7 @@ Dict{Symbol,Any} with 2 entries:
 
 
 *source:*
-[Parameters/src/Parameters.jl:105](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L105)
+[Parameters/src/Parameters.jl:105](https://github.com/mauro3/Parameters.jl/tree/046efbd2a984684b74dfc989de039e2f2441a16c/src/Parameters.jl#L105)
 
 ---
 
@@ -73,7 +73,7 @@ d.c == "HaHa" #true
 
 
 *source:*
-[Parameters/src/Parameters.jl:531](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L531)
+[Parameters/src/Parameters.jl:537](https://github.com/mauro3/Parameters.jl/tree/046efbd2a984684b74dfc989de039e2f2441a16c/src/Parameters.jl#L537)
 
 ---
 
@@ -103,7 +103,7 @@ c == "Hi!" #true
 
 
 *source:*
-[Parameters/src/Parameters.jl:487](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L487)
+[Parameters/src/Parameters.jl:493](https://github.com/mauro3/Parameters.jl/tree/046efbd2a984684b74dfc989de039e2f2441a16c/src/Parameters.jl#L493)
 
 ---
 
@@ -124,7 +124,7 @@ For more details see manual.
 
 
 *source:*
-[Parameters/src/Parameters.jl:400](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L400)
+[Parameters/src/Parameters.jl:400](https://github.com/mauro3/Parameters.jl/tree/046efbd2a984684b74dfc989de039e2f2441a16c/src/Parameters.jl#L400)
 
 ## Internal
 
@@ -135,14 +135,17 @@ For more details see manual.
 This function is invoked to pack one entity into some DataType and has
 signature:
 
-`pack!(x, field, value) -> value
+`pack!(dt::Any, ::Val{field}, value) -> value`
+
+Note that this means the only symbols or immutable field-descriptors
+are allowed, as they are used as type parameter in `Val`.
 
 Two definitions are included in the package to pack into a composite
 type or into a dictionary:
 
 ```
-@inline pack!(x, field, val) = setfield!(x, field, val)
-@inline pack!(x::Associative{Symbol}, key, val) = x[key]=val
+@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
+@inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
 ```
 
 More methods can be added to allow for specialized packing of other
@@ -152,7 +155,7 @@ See also `unpack`.
 
 
 *source:*
-[Parameters/src/Parameters.jl:453](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L453)
+[Parameters/src/Parameters.jl:461](https://github.com/mauro3/Parameters.jl/tree/046efbd2a984684b74dfc989de039e2f2441a16c/src/Parameters.jl#L461)
 
 ---
 
@@ -161,13 +164,16 @@ See also `unpack`.
 This function is invoked to unpack one entity of some DataType and has
 signature:
 
-`unpack(x, field) -> value of field`
+`unpack(dt::Any, ::Val{field}) -> value of field`
+
+Note that this means the only symbols or immutable field-descriptors
+are allowed, as they are used as type parameter in `Val`.
 
 Two definitions are included in the package to unpack a composite type
 or a dictionary:
 ```
-@inline unpack(x, field) = getfield(x, field)
-@inline unpack(x::Associative{Symbol}, key) = x[key]
+@inline unpack{f}(x, ::Val{f}) = getfield(x, f)
+@inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
 ```
 
 More methods can be added to allow for specialized unpacking of other datatypes.
@@ -176,7 +182,7 @@ See also `pack!`.
 
 
 *source:*
-[Parameters/src/Parameters.jl:429](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L429)
+[Parameters/src/Parameters.jl:434](https://github.com/mauro3/Parameters.jl/tree/046efbd2a984684b74dfc989de039e2f2441a16c/src/Parameters.jl#L434)
 
 ---
 
@@ -220,5 +226,5 @@ end
 
 
 *source:*
-[Parameters/src/Parameters.jl:210](https://github.com/mauro3/Parameters.jl/tree/0924d8773c785e6e88ebe5cc3f4daad243e2b40e/src/Parameters.jl#L210)
+[Parameters/src/Parameters.jl:210](https://github.com/mauro3/Parameters.jl/tree/046efbd2a984684b74dfc989de039e2f2441a16c/src/Parameters.jl#L210)
 
