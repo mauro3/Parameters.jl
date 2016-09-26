@@ -22,7 +22,6 @@ end
 module Parameters
 import Base: @__doc__
 import DataStructures: OrderedDict
-using Compat
 import Compat.String
 
 export @with_kw, type2dict, reconstruct, @unpack, @pack
@@ -108,7 +107,7 @@ Dict{Symbol,Any} with 2 entries:
 """
 function type2dict(dt)
     di = Dict{Symbol,Any}()
-    for n in @compat fieldnames(dt)
+    for n in fieldnames(dt)
         di[n] = getfield(dt, n)
     end
     di
@@ -127,7 +126,7 @@ b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 """
 function reconstruct{T}(pp::T, di)
     di = !isa(di, Associative) ? Dict(di) : di
-    ns = @compat fieldnames(pp)
+    ns = fieldnames(pp)
     args = Array(Any, length(ns))
     for (i,n) in enumerate(ns)
         args[i] = get(di, n, getfield(pp, n))
@@ -368,7 +367,7 @@ function with_kw(typedef)
     pack_name = Symbol("pack_"*string(tn))
     # Finish up
     quote
-        Main.Parameters.@__doc__ $typ # use Main.Parameters.@__doc__ for 0.3 compatibility
+        Base.@__doc__ $typ
         $outer_positional
         $outer_kw
         $outer_copy
