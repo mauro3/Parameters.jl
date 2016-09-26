@@ -5,10 +5,12 @@ os:
 julia:
   - 0.4
   - 0.5
-#  - nightly
+  - nightly
+matrix:
+  allow_failures:
+    - nightly
 notifications:
   email: false
-
 # https://github.com/travis-ci/travis-ci/issues/4942
 git:
   depth: 99999
