@@ -11,6 +11,7 @@ module Parameters
 import Base: @__doc__
 import DataStructures: OrderedDict
 using Compat
+import Compat.String
 
 export @with_kw, type2dict, reconstruct, @unpack, @pack
 
@@ -401,19 +402,19 @@ end
 # https://github.com/mauro3/Parameters.jl/pull/13
 
 """
-This function is invoked to unpack one entity of some DataType and has
-signature:
+This function is invoked to unpack one field/entry of some DataType
+`dt` and has signature:
 
 `unpack(dt::Any, ::Val{field}) -> value of field`
 
-Note that this means the only symbols or immutable field-descriptors
-are allowed, as they are used as type parameter in `Val`.
+The `field` is the symbol of the assigned variable.
 
-Two definitions are included in the package to unpack a composite type
-or a dictionary:
+Three definitions are included in the package to unpack a composite type
+or a dictionary with Symbol or string keys:
 ```
 @inline unpack{f}(x, ::Val{f}) = getfield(x, f)
 @inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
+@inline unpack{S<:AbstractString,k}(x::Associative{S}, ::Val{k}) = x[string(k)]
 ```
 
 More methods can be added to allow for specialized unpacking of other datatypes.
@@ -423,6 +424,7 @@ See also `pack!`.
 function unpack end
 @inline unpack{f}(x, ::Val{f}) = getfield(x, f)
 @inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
+@inline unpack{S<:AbstractString,k}(x::Associative{S}, ::Val{k}) = x[string(k)]
 
 """
 This function is invoked to pack one entity into some DataType and has
@@ -434,11 +436,12 @@ Note that this means the only symbols or immutable field-descriptors
 are allowed, as they are used as type parameter in `Val`.
 
 Two definitions are included in the package to pack into a composite
-type or into a dictionary:
+type or into a dictionary with Symbol or string keys:
 
 ```
 @inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
 @inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
+@inline pack!{S<:AbstractString,k}(x::Associative{S}, ::Val{k}, val) = x[string(k)]=val
 ```
 
 More methods can be added to allow for specialized packing of other
@@ -449,6 +452,7 @@ See also `unpack`.
 function pack! end
 @inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
 @inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
+@inline pack!{S<:AbstractString,k}(x::Associative{S}, ::Val{k}, val) = x[string(k)]=val
 
 """
 Unpacks fields/keys from a composite type or a `Dict{Symbol}` into variables

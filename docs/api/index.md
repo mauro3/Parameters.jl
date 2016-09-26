@@ -27,7 +27,7 @@
 
 [Parameters.pack!](Parameters.md#function__pack.1)  This function is invoked to pack one entity into some DataType and has
 
-[Parameters.unpack](Parameters.md#function__unpack.1)  This function is invoked to unpack one entity of some DataType and has
+[Parameters.unpack](Parameters.md#function__unpack.1)  This function is invoked to unpack one field/entry of some DataType
 
 ---
 

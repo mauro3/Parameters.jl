@@ -307,6 +307,12 @@ d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
 @test a == 5.0 #true
 @test c == "Hi!" #true
 
+d = Dict("a"=>5.0,"b"=>2,"c"=>"Hi!")
+@unpack a, c = d
+@test a == 5.0 #true
+@test c == "Hi!" #true
+
+# TODO add test with non String string
 
 # Example with type:
 type A; a; b; c; end
@@ -324,6 +330,10 @@ c = "Hi!"
 d = Dict{Symbol,Any}()
 @pack d = a, c
 @test d==Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
+
+d = Dict{String,Any}()
+@pack d = a, c
+@test d==Dict{String,Any}("a"=>5.0,"c"=>"Hi!")
 
 
 # Example with type:
