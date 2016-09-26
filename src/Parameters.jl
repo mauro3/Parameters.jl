@@ -7,6 +7,18 @@
 
 __precompile__()
 
+if VERSION<v"0.5-"
+    warn(""" from Parameters.jl:
+
+         On Julia 0.4: the macros @unpack and @pack in Parameters.jl ≥v0.5
+         lead to type-unstable code.  If that is a problem either
+         upgrade to Julia 0.5 or downgrade Parameters.jl to v0.4 and
+         use the old unpack syntax.
+
+         (This warning should only show once during pre-compilation)
+         """)
+end
+
 module Parameters
 import Base: @__doc__
 import DataStructures: OrderedDict
