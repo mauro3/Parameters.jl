@@ -539,6 +539,7 @@ macro pack(args)
     expr = quote
         $suitecase_instance = $suitecase # handle if suitecase is not a variable but an expression
         $kdblock
+        $suitecase
     end
     esc(expr)
 end
