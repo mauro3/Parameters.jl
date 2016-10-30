@@ -91,6 +91,17 @@ keeps tabs on updates.
 
 Documentation is [here](http://parametersjl.readthedocs.org/en/latest/?badge=latest).
 
+# Related packages
+
+- [QuickTypes.jl](https://github.com/cstjean/QuickTypes.jl) also
+  provides key-word constructors and default values.  Provides a more
+  compact format.  I'd say QuickTypes.jl is more suited for REPL and
+  other write-only code, whereas Parameters.jl may be more suited for
+  code which is also read.
+- [SimpleStructs.jl](https://github.com/pluskid/SimpleStructs.jl) also
+  provides key-word constructors, default values and assertions.  But
+  the syntax is less nice than Parameters.jl.
+
 # TODO
 
 - do copy of fields on (re-)construct?
