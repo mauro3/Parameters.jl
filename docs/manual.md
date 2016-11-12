@@ -49,7 +49,7 @@ end
 ```
 &nbsp;
 
-Parameter interdependence is possible (note that they needn't appear in order):
+Parameter interdependence is possible:
 ```julia
 @with_kw immutable Para{R<:Real}
     a::R = 5
