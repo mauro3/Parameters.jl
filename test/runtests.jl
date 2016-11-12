@@ -400,3 +400,12 @@ end
 if VERSION>v"0.5-"
     @inferred f(UP3(1,2))
 end
+
+#
+@with_kw immutable UP4{T}
+    g::T=9
+    a::Float64=4
+end
+@test typeof(UP4())==UP4{Int}
+@test UP4().g===9
+@test UP4().a===4.0

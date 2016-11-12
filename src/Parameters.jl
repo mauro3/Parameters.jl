@@ -57,6 +57,22 @@ end
 decolon2(a::Expr) = (@assert a.head==:(::);  a.args[1])
 decolon2(a::Symbol) = a
 
+# Keeps only the ::T in args if T ∈ typparas
+function keep_only_typparas(args, typparas)
+    args = deepcopy(args)
+    typparas_ = map(stripsubtypes, typparas)
+    for i=1:length(args)
+        isa(args[i],Symbol) && continue
+        T = args[i].args[2]
+        if !(T in typparas_)
+            args[i] = decolon2(args[i])
+        end
+    end
+    args
+end
+
+
+
 # Returns the name of the type as Symbol
 function typename(typedef::Expr)
     if isa(typedef.args[2], Symbol)
@@ -326,7 +342,8 @@ function with_kw(typedef)
     #      "method is not callable" warning!)
     #       See also https://github.com/JuliaLang/julia/issues/17186
     if typparas!=Any[] # condition (1)
-        outer_positional = :(  $tn{$(typparas...)}($(fielddefs.args...))
+        args_onlyT = keep_only_typparas(fielddefs.args, typparas)
+        outer_positional = :(  $tn{$(typparas...)}($(args_onlyT...))
                              = $tn{$(stripsubtypes(typparas)...)}($(args...)))
         # Check condition (2)
         used_paras = Any[]
