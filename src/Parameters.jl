@@ -389,11 +389,8 @@ function with_kw(typedef)
         $outer_kw
         $outer_copy
         function Base.show(io::IO, p::$tn)
-            println(io, string(typeof(p)))
-            for (i, var) in enumerate($unpack_vars)
-                print(io, "  " * string(var) * ": $(getfield(p,var))")
-                i == length($unpack_vars) || print(io, "\n")
-            end
+            # just dumping seems to give ok output, in particular for big data-sets:
+            dump(IOContext(io, :limit => true), p, maxdepth=1)
         end
         macro $unpack_name(ex)
             esc(Main.Parameters._unpack(ex, $unpack_vars))
