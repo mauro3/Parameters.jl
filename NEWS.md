@@ -1,3 +1,7 @@
+# 2017-01-09
+
+Dropping Julia 0.4 support
+
 # 2016-09-16 v0.5.0
 
 Updated packing and unpacking macro syntax according to PR

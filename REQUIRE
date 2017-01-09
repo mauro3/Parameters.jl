@@ -1,3 +1,2 @@
-julia 0.4
+julia 0.5
 DataStructures 0.4.3
-Compat 0.7.15

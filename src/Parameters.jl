@@ -22,7 +22,6 @@ end
 module Parameters
 import Base: @__doc__
 import DataStructures: OrderedDict
-import Compat.String
 
 export @with_kw, type2dict, reconstruct, @unpack, @pack
 
@@ -51,6 +50,23 @@ function Base.done(lns::Lines, nr)
     else
         false
     end
+end
+# This is not O(1) but hey...
+function Base.setindex!(lns::Lines, val, ind)
+    ii = 1
+    for i=1:length(lns.block.args)
+        if isa(lns.block.args[i], LineNumberNode)
+            continue
+        end
+        if isa(lns.block.args[i], Symbol) || !(lns.block.args[i].head==:line)
+            if ind==ii
+                lns.block.args[i] = val
+                return nothing
+            end
+            ii +=1
+        end
+    end
+    throw(BoundsError("Attempted to set line $ind of $(ii-1) length code-block"))
 end
 
 # Transforms :(a::b) -> :a
@@ -249,6 +265,34 @@ function with_kw(typedef)
         has_deftyp = false
     end
 
+    # Expand all macros in body now (only works at top-level)
+    # See issue https://github.com/mauro3/Parameters.jl/issues/21
+    lns2 = Any[] # need new lines as expanded macros may have many lines
+    for (i,l) in enumerate(lns) # loop over body of typedef
+        if i==1 && has_deftyp
+            push!(lns2, l)
+            continue
+        end
+        if isa(l, Symbol)
+            push!(lns2, l)
+            continue
+        end
+        if l.head==:macrocall && l.args[1]!=Symbol("@assert")
+            tmp = macroexpand(l)
+            if tmp.head==:block
+                llns = Lines(tmp)
+                for ll in llns
+                    push!(lns2, ll)
+                end
+            else
+                push!(lns2,tmp)
+            end
+        else
+            push!(lns2, l)
+        end
+    end
+    lns = lns2
+
     # the vars for the unpack macro
     unpack_vars = Any[]
     # the type def
@@ -292,6 +336,8 @@ function with_kw(typedef)
         elseif l.head==:function # inner constructor
             check_inner_constructor(l)
             push!(inner_constructors, l)
+        elseif l.head==:block
+            error("No nested begin-end allowed in type defintion")
         else # no default value but with type annotation
             push!(fielddefs.args, l)
             sym = decolon2(l.args[1])

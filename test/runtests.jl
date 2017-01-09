@@ -1,6 +1,5 @@
 using Parameters
 using Base.Test
-import Compat.String
 
 # parameters.jl
 ###############
@@ -248,7 +247,11 @@ let
     c = 3
     @pack_P1 mt
     @test mt===P1(r=1, a=2, c=3)
-    @test string(mt) == "P1\n  r: Int64 1\n  c: Int64 3\n  a: Float64 2.0\n"
+    if Int==Int64
+        @test string(mt) == "P1\n  r: Int64 1\n  c: Int64 3\n  a: Float64 2.0\n"
+    else
+        @test string(mt) == "P1\n  r: Int32 1\n  c: Int32 3\n  a: Float64 2.0\n"
+    end
 end
 
 ### Assertions
@@ -409,3 +412,48 @@ end
 @test typeof(UP4())==UP4{Int}
 @test UP4().g===9
 @test UP4().a===4.0
+
+
+# Issue 21
+macro def(name, definition)
+    return quote
+        macro $(esc(name))()
+            esc($(Expr(:quote, definition)))
+        end
+    end
+end
+@def sharedparams1 begin
+    a::Float64  = 1.0
+    b::Int = 1
+end
+
+@def sharedparams2 begin
+    c::Float64  = 1.0
+    d::Int = 1
+end
+
+@with_kw immutable MyType1
+    @sharedparams1
+    @sharedparams2
+end
+
+@test MyType1()==MyType1(1,1,1,1)
+
+@def sharedparams3 begin
+    e::Float64  = 1.0
+    @assert x>0  # nested macros which shouldn't be expanded are not allowed
+end
+
+@test_throws AssertionError Parameters.with_kw(:(immutable MyType2
+    @sharedparams1
+    @sharedparams2
+    @sharedparams3
+end))
+
+@def sharedparams4 begin
+    e::Float64  = 1.0
+    @sharedparams1 # not allowed as it will lead to nested begin-end block
+end
+@test_throws ErrorException Parameters.with_kw(:(immutable MyType2
+    @sharedparams4
+end))

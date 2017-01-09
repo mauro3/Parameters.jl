@@ -8,8 +8,7 @@
 [![Parameters](http://pkg.julialang.org/badges/Parameters_0.4.svg)](http://pkg.julialang.org/?pkg=Parameters&ver=0.4)
 [![Parameters](http://pkg.julialang.org/badges/Parameters_0.5.svg)](http://pkg.julialang.org/?pkg=Parameters&ver=0.5)
 
-***Breaking news: `@unpack` and `@pack` have new syntax but also lead
-   to type-unstable code in Julia 0.4.***
+***Breaking news: Julia 0.4 support dropped.***
 
 This is a package I use to handle numerical-model parameters, thus the
 name.  However, it should be useful otherwise too.  It has two main
