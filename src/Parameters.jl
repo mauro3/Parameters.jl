@@ -159,7 +159,7 @@ b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 function reconstruct{T}(pp::T, di)
     di = !isa(di, Associative) ? Dict(di) : di
     ns = fieldnames(pp)
-    args = Array(Any, length(ns))
+    args = Vector{Any}(length(ns))
     for (i,n) in enumerate(ns)
         args[i] = get(di, n, getfield(pp, n))
     end

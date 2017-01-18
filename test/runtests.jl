@@ -189,9 +189,15 @@ mt6=MT8(5.4, 6) # outer positional
 @test_throws  TypeError MT8( "asdf", 5)
 @test_throws  TypeError MT8{Float64, String}(5., "asdf")
 @test_throws  TypeError MT8{String, Int}("asdf", 6)
-@test MT8.types[1].name==:R
-@test MT8.types[2].name==:I
-@test MT8.types[2].ub==Integer
+if VERSION<v"0.6-dev"
+    @test MT8.types[1].name==:R
+    @test MT8.types[2].name==:I
+    @test MT8.types[2].ub==Integer
+else
+    @test MT8.var.name==:R
+    @test MT8.body.var.name==:I
+    @test MT8.body.var.ub==Integer
+end
 @test MT8{Float32,Int32}.types[1]==Float32
 @test MT8{Float32,Int32}.types[2]==Int32
 
