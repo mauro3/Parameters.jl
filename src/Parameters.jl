@@ -110,11 +110,16 @@ end
 stripsubtypes(vec::Vector) = [stripsubtypes(v) for v in vec]
 
 function check_inner_constructor(l)
-    if length(l.args[1].args)==1
+    if l.args[1].head==:where
+        fnhead = l.args[1].args[1]
+    else
+        fnhead = l.args[1]
+    end
+    if length(fnhead.args)==1
         error("No inner constructors with zero positional arguments allowed!")
-    elseif (length(l.args[1].args)==2 #1<length(l.args[1].args)<=3
-            && isa(l.args[1].args[2], Expr)
-            && l.args[1].args[2].head==:parameters)
+    elseif (length(fnhead.args)==2 #1<length(fnhead.args)<=3
+            && isa(fnhead.args[2], Expr)
+            && fnhead.args[2].head==:parameters)
         error("No inner constructors with zero positional arguments plus keyword arguments allowed!")
     end
     nothing
@@ -317,7 +322,8 @@ function with_kw(typedef)
             # unwrap-macro
             push!(unpack_vars, sym)
         elseif l.head==:(=)  # default value and with or without type annotation
-            if isa(l.args[1], Expr) && l.args[1].head==:call # inner constructors
+            if isa(l.args[1], Expr) && (l.args[1].head==:call || # inner constructor
+                                        l.args[1].head==:where && l.args[1].args[1].head==:call) # inner constructor with `where`
                 check_inner_constructor(l)
                 push!(inner_constructors, l)
             else
@@ -361,7 +367,10 @@ function with_kw(typedef)
         push!(kwargs.args, Expr(:kw,k,w))
     end
     if length(typparas)>0
-        innerc = :($tn($kwargs) = $tn{$(stripsubtypes(typparas)...)}($(args...)) )
+        tps = stripsubtypes(typparas)
+        innerc = :(@compat (::Type{$tn{$(tps...)}}){$(tps...)}($kwargs) = $tn{$(tps...)}($(args...)) )
+        # 0.6 only:
+        # innerc = :($tn{$(tps...)}($kwargs) where {$(tps...)} = $tn{$(tps...)}($(args...)))
     else
         innerc = :($tn($kwargs) = $tn($(args...)) )
     end
@@ -371,7 +380,14 @@ function with_kw(typedef)
     # constructors are user-defined.  If one or several are defined,
     # assume that one has the standard positional signature.
     if length(inner_constructors)==0
-        innerc2 = :($tn($(args...)) = new($(args...)))
+        if length(typparas)>0
+            tps = stripsubtypes(typparas)
+            innerc2 = :(@compat (::Type{$tn{$(tps...)}}){$(tps...)}($(args...)) = new{$(tps...)}($(args...)))
+            # 0.6 only:
+            # innerc2 = :($tn{$(tps...)}($(args...)) where {$(tps...)} = new($(args...)))
+        else
+            innerc2 = :($tn($(args...)) = new($(args...)))
+        end
         prepend!(innerc2.args[2].args, asserts)
         push!(typ.args[3].args, innerc2)
     else

@@ -1,5 +1,6 @@
 using Parameters
 using Base.Test
+using Compat
 
 # parameters.jl
 ###############
@@ -36,8 +37,8 @@ MT3(4,5)
 @test_throws ErrorException MT3()
 
 # parameter-less with supertype
-abstract MM1
-abstract MM2{T}
+@compat abstract type MM1 end
+@compat abstract type MM2{T} end
 @with_kw type MT3_1 <: MM1
     r::Int=5
     a::Float64
@@ -77,7 +78,7 @@ mt4=MT4(5.4, 4) # outer positional
 @test_throws InexactError MT4{Float32,Int}(5.5, 5.5)
 
 # with type-parameters 2
-abstract AMT{R<:Real}
+@compat abstract type AMT{R<:Real} end
 @with_kw type MT5{R,I<:Integer} <: AMT{R}
     r::R=5
     a::I
@@ -126,8 +127,8 @@ MT4_2{Float64}(4,5)
 @with_kw immutable MT6{R,I<:Integer} <: AMT{R}
     r::R=5
     a::I
-    MT6(r) = new(r,r)
-    MT6(r,a) = (@assert a>r; new(r,a))
+    @compat (::Type{MT6{R,I}}){R,I}(r) = new{R,I}(r,r)
+    @compat (::Type{MT6{R,I}}){R,I}(r,a) = (@assert a>r; new{R,I}(r,a))
 end
 @test_throws MethodError MT6(r=4, a=5.) # need to specify type parameters
 MT6{Float32, Int}(r=4, a=5.)
@@ -148,32 +149,33 @@ mt6=MT6(5.4, 6) # outer positional
 @with_kw type MT7{R,I<:Integer} <: AMT{R}
     r::R=5
     a::I
-    MT7(r) = new(r,r+8)
+    @compat (::Type{MT7{R,R}}){R}(r::R) = new{R,R}(r,r+8)
     # no MT7(r,a)
 end
 @test_throws MethodError MT7{Float32, Int}(r=4, a=5.)
 
 # user defined BAD inner positional constructor
-@test_throws ErrorException Parameters.with_kw(:(immutable MT8{R,I<:Integer} <: AMT{R}
-    r::R=5
-    a::I
-    MT8() = new(5,6) # this would shadow the keyword constructor!
-    MT8(r,a) = new(r,a)
-end))
-@test_throws ErrorException Parameters.with_kw(:(type MT8{R,I<:Integer} <: AMT{R}
-    r::R=5
-    a::I
-    MT8(;a=7) = new(5,a) # this would shadow the keyword constructor!
-    MT8(r,a) = new(r,a)
-end))
-
+tmp = :(immutable MT8{R,I<:Integer} <: AMT{R}
+        r::R=5
+        a::I
+        @compat (::Type{MT8})() = new{Int,Int}(5,6) # this would shadow the keyword constructor!
+        @compat (::Type{MT8{R,I}}){R,I}(r,a) = new{R,I}(r,a)
+        end)
+@test_throws ErrorException Parameters.with_kw(tmp)
+tmp = :(type MT8{R,I<:Integer} <: AMT{R}
+        r::R=5
+        a::I
+        @compat (::Type{MT8})(;a=7) = new{Int,Int}(5,a) # this would shadow the keyword constructor!
+        @compat (::Type{MT8{R,I}}){R,I}(r,a) = new{R,I}(r,a)
+        end)
+@test_throws ErrorException Parameters.with_kw(tmp)
 
 # default type annotation (adapted from MT6 test above)
 @with_kw immutable MT8{R,I<:Integer} <: AMT{R} @deftype R
     r=5
     a::I
-    MT8(r) = new(r,r)
-    MT8(r,a) = (@assert a>r; new(r,a))
+    @compat (::Type{MT8{R,R}}){R}(r::R) = new{R,R}(r,r)
+    @compat (::Type{MT8{R,I}}){R,I}(r,a) = (@assert a>r; new{R,I}(r,a))
 end
 @test_throws MethodError MT8(r=4, a=5.) # need to specify type parameters
 MT8{Float32, Int}(r=4, a=5.)
@@ -406,9 +408,7 @@ function f(u::UP3)
     @unpack a,b = u
     a,b
 end
-if VERSION>v"0.5-"
-    @inferred f(UP3(1,2))
-end
+@inferred f(UP3(1,2))
 
 #
 @with_kw immutable UP4{T}
@@ -421,6 +421,7 @@ end
 
 
 # Issue 21
+# A macro to create the same fields in several types:
 macro def(name, definition)
     return quote
         macro $(esc(name))()
@@ -463,3 +464,17 @@ end
 @test_throws ErrorException Parameters.with_kw(:(immutable MyType2
     @sharedparams4
 end))
+
+### New 0.6 type system
+if VERSION>=v"0.6-dev"
+    eval(parse("""
+    @with_kw immutable V06{T} @deftype Array{I,1} where I<:Integer
+        a::T
+        b = [10]
+        c::Vector{S} where S<:AbstractString=["aaa"]
+    end
+    """))
+    V06(a=88)
+    V06(a=88, b=[1], c=["a"])
+    V06(88, [1], ["a"])
+end
