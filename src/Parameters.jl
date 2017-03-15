@@ -11,6 +11,8 @@ module Parameters
 import Base: @__doc__
 import DataStructures: OrderedDict
 
+using Compat
+
 export @with_kw, type2dict, reconstruct, @unpack, @pack
 
 ## Parser helpers
@@ -174,7 +176,7 @@ _unpack(binding, fields) = Expr(:block, [:($f = $binding.$f) for f in fields]...
 # Pack fields back into binding using reconstruct:
 function _pack(binding, fields)
     kws = [Expr(:kw, f, f) for f in fields]
-    :($binding = Main.Parameters.reconstruct($binding, $(kws...)) )
+    :($binding = $Parameters.reconstruct($binding, $(kws...)) )
 end
 
 """
@@ -209,7 +211,7 @@ macro unpack_MM(varname)
 end
 macro pack_MM(varname)
     esc(quote
-    varname = Main.Parameters.reconstruct(varname,r=r,a=a)
+    varname = $Parameters.reconstruct(varname,r=r,a=a)
     end)
 end
 ```
@@ -356,7 +358,7 @@ function with_kw(typedef)
     end
     if length(typparas)>0
         tps = stripsubtypes(typparas)
-        innerc = :(@compat (::Type{$tn{$(tps...)}}){$(tps...)}($kwargs) = $tn{$(tps...)}($(args...)) )
+        innerc = :($Compat.@compat (::Type{$tn{$(tps...)}}){$(tps...)}($kwargs) = $tn{$(tps...)}($(args...)) )
         # 0.6 only:
         # innerc = :($tn{$(tps...)}($kwargs) where {$(tps...)} = $tn{$(tps...)}($(args...)))
     else
@@ -370,7 +372,7 @@ function with_kw(typedef)
     if length(inner_constructors)==0
         if length(typparas)>0
             tps = stripsubtypes(typparas)
-            innerc2 = :(@compat (::Type{$tn{$(tps...)}}){$(tps...)}($(args...)) = new{$(tps...)}($(args...)))
+            innerc2 = :($Compat.@compat (::Type{$tn{$(tps...)}}){$(tps...)}($(args...)) = new{$(tps...)}($(args...)))
             # 0.6 only:
             # innerc2 = :($tn{$(tps...)}($(args...)) where {$(tps...)} = new($(args...)))
         else
@@ -443,10 +445,10 @@ function with_kw(typedef)
             dump(IOContext(io, :limit => true), p, maxdepth=1)
         end
         macro $unpack_name(ex)
-            esc(Main.Parameters._unpack(ex, $unpack_vars))
+            esc($Parameters._unpack(ex, $unpack_vars))
         end
         macro $pack_name(ex)
-            esc(Main.Parameters._pack(ex, $unpack_vars))
+            esc($Parameters._pack(ex, $unpack_vars))
         end
         $tn
     end
