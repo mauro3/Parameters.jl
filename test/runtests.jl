@@ -191,7 +191,7 @@ mt6=MT8(5.4, 6) # outer positional
 @test_throws  TypeError MT8( "asdf", 5)
 @test_throws  TypeError MT8{Float64, String}(5., "asdf")
 @test_throws  TypeError MT8{String, Int}("asdf", 6)
-if VERSION<v"0.6.0-dev.2123"
+if VERSION<v"0.6.0-dev.2123" # merge of jb/subtypes https://github.com/JuliaLang/julia/pull/18457
     @test MT8.types[1].name==:R
     @test MT8.types[2].name==:I
     @test MT8.types[2].ub==Integer
@@ -466,7 +466,7 @@ end
 end))
 
 ### New 0.6 type system
-if VERSION>=v"0.6.0-dev.1671"
+if VERSION>=v"0.6.0-dev.2123" # merge of jb/subtypes https://github.com/JuliaLang/julia/pull/18457
     eval(parse("""
     @with_kw immutable V06{T} @deftype Array{I,1} where I<:Integer
         a::T
