@@ -281,7 +281,6 @@ end
 
 ####
 # issue 10: infer type parameters from kw-args
-
 @with_kw immutable I10{T} @deftype Int
     a::T
     b = 10
@@ -297,6 +296,16 @@ for fn in fieldnames(a)
     @test getfield(a, fn)==getfield(b, fn)
 end
 
+@with_kw immutable I10a{T}
+    a::T
+end
+@test I10a([1]).a==I10a(a=[1]).a
+@test I10a(1)==I10a(a=1)
+@with_kw immutable I10b{T}
+    a::Vector{T}
+end
+@test I10b([1]).a==I10b(a=[1]).a
+@test_throws MethodError I10b(a=1)
 
 # issue #12: only one-liner inner constructors were parsed correctly.
 @with_kw immutable T9867

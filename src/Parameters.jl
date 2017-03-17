@@ -63,21 +63,32 @@ end
 decolon2(a::Expr) = (@assert a.head==:(::);  a.args[1])
 decolon2(a::Symbol) = a
 
-# Keeps only the ::T in args if T ∈ typparas
+# Keeps the ::T of the args if T ∈ typparas
 function keep_only_typparas(args, typparas)
     args = deepcopy(args)
     typparas_ = map(stripsubtypes, typparas)
     for i=1:length(args)
         isa(args[i],Symbol) && continue
+        @assert args[i].head==:(::)
         T = args[i].args[2]
-        if !(T in typparas_)
+        if !(symbol_in(typparas_, T))
             args[i] = decolon2(args[i])
         end
     end
     args
 end
 
-
+# check whether a symbol is contained in an expression
+symbol_in(s::Symbol, ex::Symbol) = s==ex
+symbol_in(s::Symbol, ex) = false
+function symbol_in(s::Symbol, ex::Expr)
+    for a in ex.args
+        symbol_in(s,a) && return true
+    end
+    return false
+end
+symbol_in(s::Symbol, ex::Vector) = any(map(e->symbol_in(s, e), ex))
+symbol_in(s::Vector, ex) = any(map(ss->symbol_in(ss, ex), s))
 
 # Returns the name of the type as Symbol
 function typename(typedef::Expr)
@@ -394,23 +405,21 @@ function with_kw(typedef)
     #      "method is not callable" warning!)
     #       See also https://github.com/JuliaLang/julia/issues/17186
     if typparas!=Any[] # condition (1)
-        args_onlyT = keep_only_typparas(fielddefs.args, typparas)
-        outer_positional = :(  $tn{$(typparas...)}($(args_onlyT...))
+        # fields definitions stripped of ::Int etc., only keep ::T if T∈typparas :
+        fielddef_strip_contT = keep_only_typparas(fielddefs.args, typparas)
+        outer_positional = :(  $tn{$(typparas...)}($(fielddef_strip_contT...))
                              = $tn{$(stripsubtypes(typparas)...)}($(args...)))
         # Check condition (2)
-        used_paras = Any[]
-        for f in fielddefs.args
-            if !isa(f,Symbol) && f.head==:(::)
-                push!(used_paras, f.args[2])
-            end
+        checks = true
+        for tp in stripsubtypes(typparas)
+            checks = checks && symbol_in(tp, fielddefs.args)
         end
-        if !issubset(stripsubtypes(typparas), used_paras)
+        if !checks
             outer_positional = :()
         end
     else
         outer_positional = :()
     end
-
 
     # Outer keyword constructor, useful to infer the type parameter
     # automatically.  This calls the outer positional constructor.
