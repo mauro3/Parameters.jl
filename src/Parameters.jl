@@ -11,8 +11,6 @@ module Parameters
 import Base: @__doc__
 import DataStructures: OrderedDict
 
-using Compat
-
 export @with_kw, type2dict, reconstruct, @unpack, @pack
 
 ## Parser helpers
