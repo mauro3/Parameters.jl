@@ -279,6 +279,14 @@ end
                                                  MT13(a) = new(8)
                                                  end))
 
+# issue #29: assertions with parameterized types
+@with_kw immutable MT12a{R}
+    a::Array{R,1}
+    @assert 1 == length(a)
+end
+@test_throws AssertionError MT12a([1,2])
+@test MT12a([1]).a==MT12a(a=[1]).a
+
 ####
 # issue 10: infer type parameters from kw-args
 @with_kw immutable I10{T} @deftype Int

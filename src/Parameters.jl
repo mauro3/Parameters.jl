@@ -271,7 +271,8 @@ function with_kw(typedef)
         has_deftyp = false
     end
 
-    # Expand all macros in body now (only works at top-level)
+    # Expand all macros (except @assert) in body now (only works at
+    # top-level)
     # See issue https://github.com/mauro3/Parameters.jl/issues/21
     lns2 = Any[] # need new lines as expanded macros may have many lines
     for (i,l) in enumerate(lns) # loop over body of typedef
@@ -309,6 +310,7 @@ function with_kw(typedef)
     asserts = Any[]
     for (i,l) in enumerate(lns) # loop over body of typedef
         if i==1 && has_deftyp
+            # ignore @deftype line
             continue
         end
         if isa(l, Symbol)  # no default value and no type annotation
@@ -369,7 +371,7 @@ function with_kw(typedef)
     end
     if length(typparas)>0
         tps = stripsubtypes(typparas)
-        innerc = :($Compat.@compat (::Type{$tn{$(tps...)}}){$(tps...)}($kwargs) = $tn{$(tps...)}($(args...)) )
+        innerc = :( (::Type{$tn{$(tps...)}}){$(tps...)}($kwargs) = $tn{$(tps...)}($(args...)))
         # 0.6 only:
         # innerc = :($tn{$(tps...)}($kwargs) where {$(tps...)} = $tn{$(tps...)}($(args...)))
     else
@@ -383,7 +385,7 @@ function with_kw(typedef)
     if length(inner_constructors)==0
         if length(typparas)>0
             tps = stripsubtypes(typparas)
-            innerc2 = :($Compat.@compat (::Type{$tn{$(tps...)}}){$(tps...)}($(args...)) = new{$(tps...)}($(args...)))
+            innerc2 = :( (::Type{$tn{$(tps...)}}){$(tps...)}($(args...)) = new{$(tps...)}($(args...)) )
             # 0.6 only:
             # innerc2 = :($tn{$(tps...)}($(args...)) where {$(tps...)} = new($(args...)))
         else
