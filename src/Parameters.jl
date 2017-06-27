@@ -429,6 +429,10 @@ function with_kw(typedef)
     else
         outer_kw = :($tn($kwargs) = $tn($(args...)) )
     end
+    # NOTE: The reason to have both outer and inner keyword
+    # constructors are to allow both calls:
+    #   `MT4(r=4, a=5.0)` (outer kwarg-constructor) and
+    #   `MT4{Float32, Int}(r=4, a=5.)` (inner kwarg constructor).
 
     ## outer copy constructor
     ###
