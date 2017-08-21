@@ -14,7 +14,7 @@ MT1()
 @test "Test documentation\n" == Markdown.plain(@doc MT1)
 
 # parameter-less
-@with_kw type MT2
+@with_kw_noshow type MT2
     r::Int
     c
     a::Float64

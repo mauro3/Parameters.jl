@@ -11,7 +11,7 @@ module Parameters
 import Base: @__doc__
 import DataStructures: OrderedDict
 
-export @with_kw, type2dict, reconstruct, @unpack, @pack
+export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack
 
 ## Parser helpers
 #################
@@ -225,7 +225,7 @@ macro pack_MM(varname)
 end
 ```
 """
-function with_kw(typedef)
+function with_kw(typedef, withshow=true)
     if typedef.head!=:type
         error("only works on type-defs")
     end
@@ -447,16 +447,22 @@ function with_kw(typedef)
     # (un)pack macro from https://groups.google.com/d/msg/julia-users/IQS2mT1ITwU/hDtlV7K1elsJ
     unpack_name = Symbol("unpack_"*string(tn))
     pack_name = Symbol("pack_"*string(tn))
+    showfn = if withshow
+        :(function Base.show(io::IO, p::$tn)
+                # just dumping seems to give ok output, in particular for big data-sets:
+                dump(IOContext(io, :limit => true), p, maxdepth=1)
+            end)
+    else
+        :nothing
+    end
+
     # Finish up
     quote
         Base.@__doc__ $typ
         $outer_positional
         $outer_kw
         $outer_copy
-        function Base.show(io::IO, p::$tn)
-            # just dumping seems to give ok output, in particular for big data-sets:
-            dump(IOContext(io, :limit => true), p, maxdepth=1)
-        end
+        $showfn
         macro $unpack_name(ex)
             esc($Parameters._unpack(ex, $unpack_vars))
         end
@@ -482,8 +488,26 @@ end
 For more details see manual.
 """
 macro with_kw(typedef)
-    return esc(with_kw(typedef))
+    return esc(with_kw(typedef, true))
 end
+
+"""
+As `@with_kw` but does not define a `show` method to avoid annoying
+redefinition warnings.
+
+```julia
+@with_kw_noshow immutable MM{R}
+    r::R = 1000.
+    a::Int = 4
+end
+```
+
+For more details see manual.
+"""
+macro with_kw_noshow(typedef)
+    return esc(with_kw(typedef, false))
+end
+
 
 ###########################
 # Packing and unpacking @unpack, @pack
