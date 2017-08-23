@@ -1,3 +1,11 @@
+# 2017-08-23
+
+Docs now use Documenter.jl
+
+# 2017-08-21
+
+Added `@with_kw_noshow` to omit the `Base.show` definition.
+
 # 2017-01-09
 
 Dropping Julia 0.4 support

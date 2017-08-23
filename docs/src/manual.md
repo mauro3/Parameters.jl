@@ -5,7 +5,7 @@ This is a manual by example
 
 # Types with default values & keyword constructors
 
-Create a type which has default values:
+Create a type which has default values using [`@with_kw`](@ref):
 ```julia
 using Parameters
 
@@ -112,13 +112,29 @@ Note that two of the main reasons to have an inner constructor,
 assertions and simple calculations, are more easily achieved with
 `@assert`s and parameter interdependence.
 
+The macro `@with_kw` defines a show-method which is, hopefully, more informative than the
+standard one.  For example the printing of the first example is:
+```julia
+julia> PhysicalPara()
+PhysicalPara{Float64}
+  rw: Float64 1000.0
+  ri: Float64 900.0
+  L: Float64 334000.0
+  g: Float64 9.81
+  cw: Float64 4220.0
+  day: Float64 86400.0
+```
+
+If this `show` method definition is not desired, for instance because of method
+re-definition warnings, then use [`@with_kw_noshow`](@ref).
+
 # (Un)pack macros
 
 When working with parameters, or otherwise, it is often convenient to
 unpack (and pack) some or all of the fields of a type.  This is often
 the case when passed into a function.
 
-The preferred to do this is using the `@unpack` and `@pack` macros
+The preferred to do this is using the [`@unpack`](@ref) and [`@pack`](@ref) macros
 which are generic and also work with non-`@with_kw` types and
 dictionaries (and can be customized for other types too).  Continuing
 with the `Para` type defined above:
@@ -154,7 +170,8 @@ d # Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
 ## Customization of `@unpack` and `@pack`
 
 What happens during the (un-)packing of a particular datatype is
-determined by the functions `Parameters.unpack` and `Parameters.pack!`.
+determined by the functions [`Parameters.unpack`](@ref) and
+[`Parameters.pack!`](@ref).
 
 The `Parameters.unpack` function is invoked to unpack one entity of some
 `DataType` and has signature:
