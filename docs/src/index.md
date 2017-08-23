@@ -21,6 +21,3 @@ be used in performance critical code.
 
 [NEWS.md](https://github.com/mauro3/Parameters.jl/blob/master/NEWS.md)
 keeps tabs on updates.
-
-***Breaking news: `@unpack` and `@pack` have new syntax but also lead
-   to type-unstable code in Julia 0.4.***

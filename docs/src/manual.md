@@ -18,7 +18,7 @@ using Parameters
     day::R = 24*3600.
 end
 ```
-&nbsp;
+
 
 Now the type can be constructed using the default values, or with
 non-defaults specified with keywords:
@@ -34,7 +34,7 @@ pp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)
 # (and should be used in hot inner loops)
 pp4 = PhysicalPara(1,2,3,4,5,6)
 ```
-&nbsp;
+
 
 To enforce constraints on the values, it's possible to use `@assert`s
 straight inside the type-def.  (As usual, for mutables these
@@ -47,7 +47,7 @@ asserts can be violated by updating the fields after type construction.)
                   # relevant. (They are moved to the constructor.
 end
 ```
-&nbsp;
+
 
 Parameter interdependence is possible:
 ```julia
@@ -58,7 +58,7 @@ Parameter interdependence is possible:
 end
 pa = Para(b=7)
 ```
-&nbsp;
+
 
 Often the bulk of fields will have the same type.  To help with this,
 a default type can be set.  Using this feature, the last example (with
@@ -81,7 +81,7 @@ pa2 = Para2(b=7)
 end
 pa3 = Para3(b=7)
 ```
-&nbsp;
+
 
 Custom inner constructors can be defined as long as:
 
@@ -134,7 +134,7 @@ end
 
 out, pa = fn1(7, pa)
 ```
-&nbsp;
+
 
 
 Example with a dictionary:
@@ -148,7 +148,7 @@ d = Dict{Symbol,Any}()
 @pack d = a, c
 d # Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
 ```
-&nbsp;
+
 
 
 ## Customization of `@unpack` and `@pack`
