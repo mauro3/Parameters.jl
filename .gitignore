@@ -1,4 +1,4 @@
 *.jl.cov
 *.jl.mem
-docs/build
+docs/build/
 tmp*

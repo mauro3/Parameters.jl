@@ -8,3 +8,11 @@ makedocs(
         "manual.md",
         "api.md"]
 )
+
+deploydocs(
+    repo = "github.com/mauro3/Parameters.jl.git",
+    julia  = "0.6",
+    target = "build",
+    deps = nothing,
+    make = nothing
+)

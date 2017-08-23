@@ -18,3 +18,7 @@ git:
 #script:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("Parameters"); Pkg.test("Parameters"; coverage=true)'
+## Documeter.jl
+after_success:
+  - julia -e 'Pkg.add("Documenter")'
+  - julia -e 'cd(Pkg.dir("Parameters")); include(joinpath("docs", "make.jl"))'
