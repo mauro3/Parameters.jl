@@ -1,6 +1,7 @@
 # Parameters
 
-[![Documentation Status](https://readthedocs.org/projects/parametersjl/badge/?version=latest)](http://parametersjl.readthedocs.org/en/latest/?badge=latest)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://mauro3.github.io/Parameters.jl/stable)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://mauro3.github.io/Parameters.jl/latest)
 
 [![Build Status](https://travis-ci.org/mauro3/Parameters.jl.svg?branch=master)](https://travis-ci.org/mauro3/Parameters.jl)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/mauro3/Parameters.jl?branch=master&svg=true)](https://ci.appveyor.com/project/mauro3/parameters-jl/branch/master)
@@ -86,7 +87,7 @@ keeps tabs on updates.
 
 # Documentation
 
-Documentation is [here](http://parametersjl.readthedocs.org/en/latest/?badge=latest).
+Documentation is here: [stable](https://mauro3.github.io/Parameters.jl/stable) and [latest](https://mauro3.github.io/Parameters.jl/latest).
 
 # Related packages
 
