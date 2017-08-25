@@ -155,7 +155,7 @@ the input type except for the fields given in the associative
 second argument or as keywords.
 
 ```julia
-type A; a; b end
+mutable struct A; a; b end
 a = A(3,4)
 b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 ```
@@ -193,7 +193,7 @@ This function is called by the `@with_kw` macro and does the syntax
 transformation from:
 
 ```julia
-@with_kw immutable MM{R}
+@with_kw struct MM{R}
     r::R = 1000.
     a::R
 end
@@ -202,13 +202,13 @@ end
 into
 
 ```julia
-immutable MM{R}
+struct MM{R}
     r::R
     a::R
-    MM(r,a) = new(r,a)
-    MM(;r=1000., a=error("no default for a")) = MM{R}(r,a) # inner kw, type-paras are required when calling
+    MM{R}(r,a) where {R} = new(r,a)
+    MM{R}(;r=1000., a=error("no default for a")) where {R} = MM{R}(r,a) # inner kw, type-paras are required when calling
 end
-MM{R}(r::R,a::R) = MM{R}(r,a) # default outer positional constructor
+MM(r::R,a::R) where {R} = MM{R}(r,a) # default outer positional constructor
 MM(;r=1000,a=error("no default for a")) =  MM(r,a) # outer kw, so no type-paras are needed when calling
 MM(m::MM; kws...) = reconstruct(mm,kws)
 MM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)
@@ -479,7 +479,7 @@ Macro which allows default values for field types and a few other features.
 Basic usage:
 
 ```julia
-@with_kw immutable MM{R}
+@with_kw struct MM{R}
     r::R = 1000.
     a::Int = 4
 end
@@ -496,7 +496,7 @@ As `@with_kw` but does not define a `show` method to avoid annoying
 redefinition warnings.
 
 ```julia
-@with_kw_noshow immutable MM{R}
+@with_kw_noshow struct MM{R}
     r::R = 1000.
     a::Int = 4
 end
@@ -584,7 +584,7 @@ c == "Hi!" #true
 
 Example with type:
 ```julia
-type A; a; b; c; end
+mutable struct A; a; b; c; end
 d = A(4,7.0,"Hi")
 @unpack a, c = d
 a == 4 #true
@@ -626,7 +626,7 @@ Example with type:
 ```julia
 a = 99
 c = "HaHa"
-type A; a; b; c; end
+mutable struct A; a; b; c; end
 d = A(4,7.0,"Hi")
 @pack d = a, c
 d.a == 99 #true
