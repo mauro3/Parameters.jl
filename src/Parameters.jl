@@ -143,7 +143,7 @@ Dict{Symbol,Any} with 2 entries:
 """
 function type2dict(dt)
     di = Dict{Symbol,Any}()
-    for n in fieldnames(dt)
+    for n in fieldnames(typeof(dt))
         di[n] = getfield(dt, n)
     end
     di
@@ -162,7 +162,7 @@ b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 """
 function reconstruct{T}(pp::T, di)
     di = !isa(di, Associative) ? Dict(di) : di
-    ns = fieldnames(pp)
+    ns = fieldnames(T)
     args = Vector{Any}(length(ns))
     for (i,n) in enumerate(ns)
         args[i] = get(di, n, getfield(pp, n))
@@ -187,6 +187,9 @@ function _pack(binding, fields)
     kws = [Expr(:kw, f, f) for f in fields]
     :($binding = $Parameters.reconstruct($binding, $(kws...)) )
 end
+
+const typedef_head = VERSION >= v"0.7.0-DEV.1263" ? :struct : :type
+const macro_hidden_nargs = length(:(@m).args) - 1
 
 """
 This function is called by the `@with_kw` macro and does the syntax
@@ -225,12 +228,12 @@ macro pack_MM(varname)
 end
 ```
 """
-function with_kw(typedef, withshow=true)
-    if typedef.head!=:type
+function with_kw(typedef, mod::Module, withshow=true)
+    if typedef.head != typedef_head
         error("only works on type-defs")
     end
-    const err1str = "Field \'"
-    const err2str = "\' has no default, supply it with keyword."
+    err1str = "Field \'"
+    err2str = "\' has no default, supply it with keyword."
 
     inner_constructors = Any[]
 
@@ -256,12 +259,12 @@ function with_kw(typedef, withshow=true)
     end
     # default type @deftype
     l, i = next(lns, start(lns))
-    if isa(l, Expr) && l.head==:macrocall && l.args[1]==Symbol("@deftype")
+    if isa(l, Expr) && l.head == :macrocall && l.args[1] == Symbol("@deftype")
         has_deftyp = true
-        if length(l.args) != 2
-            error("Malformed `@deftype` line")
+        if length(l.args) != (2 + macro_hidden_nargs)
+            error("Malformed `@deftype` line $l")
         end
-        deftyp = l.args[2]
+        deftyp = l.args[2 + macro_hidden_nargs]
         if done(lns, i)
             error("@with_kw only supported for types which have at least one field.")
         end
@@ -283,7 +286,7 @@ function with_kw(typedef, withshow=true)
             continue
         end
         if l.head==:macrocall && l.args[1]!=Symbol("@assert")
-            tmp = macroexpand(l)
+            tmp = macroexpand(mod, l)
             if tmp.head==:block
                 llns = Lines(tmp)
                 for ll in llns
@@ -355,7 +358,7 @@ function with_kw(typedef, withshow=true)
         end
     end
     # The type definition without inner constructors:
-    typ = Expr(:type, deepcopy(typedef.args[1:2])..., deepcopy(fielddefs))
+    typ = Expr(typedef_head, deepcopy(typedef.args[1:2])..., deepcopy(fielddefs))
 
     # Inner keyword constructor.  Note that this calls the positional
     # constructor under the hood and not `new`.  That way a user can
@@ -472,6 +475,11 @@ function with_kw(typedef, withshow=true)
         $tn
     end
 end
+@static if isdefined(Base, Symbol("@__MODULE__"))
+    @deprecate with_kw(typedef, withshow=true) with_kw(typedef, @__MODULE__, withshow=true)
+else
+    @deprecate with_kw(typedef, withshow=true) with_kw(typedef, current_module(), withshow=true)
+end
 
 """
 Macro which allows default values for field types and a few other features.
@@ -488,7 +496,11 @@ end
 For more details see manual.
 """
 macro with_kw(typedef)
-    return esc(with_kw(typedef, true))
+    @static if isdefined(Base, Symbol("@__MODULE__"))
+        return esc(with_kw(typedef, __module__, true))
+    else
+        return esc(with_kw(typedef, current_module(), true))
+    end
 end
 
 """
@@ -505,7 +517,11 @@ end
 For more details see manual.
 """
 macro with_kw_noshow(typedef)
-    return esc(with_kw(typedef, false))
+    @static if isdefined(Base, Symbol("@__MODULE__"))
+        return esc(with_kw(typedef, __module__, false))
+    else
+        return esc(with_kw(typedef, current_module(), false))
+    end
 end
 
 
