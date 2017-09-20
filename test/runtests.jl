@@ -161,14 +161,14 @@ tmp = :(immutable MT8{R,I<:Integer} <: AMT{R}
         @compat (::Type{MT8})() = new{Int,Int}(5,6) # this would shadow the keyword constructor!
         @compat (::Type{MT8{R,I}}){R,I}(r,a) = new{R,I}(r,a)
         end)
-@test_throws ErrorException Parameters.with_kw(tmp)
+@test_throws ErrorException Parameters.with_kw(tmp, @__MODULE__)
 tmp = :(type MT8{R,I<:Integer} <: AMT{R}
         r::R=5
         a::I
         @compat (::Type{MT8})(;a=7) = new{Int,Int}(5,a) # this would shadow the keyword constructor!
         @compat (::Type{MT8{R,I}}){R,I}(r,a) = new{R,I}(r,a)
         end)
-@test_throws ErrorException Parameters.with_kw(tmp)
+@test_throws ErrorException Parameters.with_kw(tmp, @__MODULE__)
 
 # default type annotation (adapted from MT6 test above)
 @with_kw immutable MT8{R,I<:Integer} <: AMT{R} @deftype R
@@ -219,7 +219,12 @@ end
     a::R = 5
 end
 @test_throws UndefVarError MT10{Float64}() # defaults are evaluated in order
-@test MT10{Float64}(b=1).c==6  # this shouldn't work but does: https://github.com/JuliaLang/julia/issues/9535#issuecomment-73717708
+if VERSION >= v"0.7.0-DEV.1219"
+    @test_throws UndefVarError MT10{Float64}(b=1).c
+else
+    # Ref https://github.com/JuliaLang/julia/issues/9535#issuecomment-73717708
+    @test MT10{Float64}(b=1).c==6
+end
 @test MT10{Float64}(b=1, c=1).c==1
 
 # binding outside variables
@@ -277,7 +282,7 @@ end
 @test_throws ErrorException Parameters.with_kw(:(immutable MT13
                                                  a=5; @assert a>=5
                                                  MT13(a) = new(8)
-                                                 end))
+                                                 end), @__MODULE__)
 
 # issue #29: assertions with parameterized types
 @with_kw immutable MT12a{R}
@@ -299,7 +304,7 @@ end
 @test_throws MethodError I10(a=10) # typeof(a)!=typeof(c)
 a =  I10(a="asd")
 b = I10{String}("asd",10,"aaa")
-for fn in fieldnames(a)
+for fn in fieldnames(typeof(a))
     # complicated testing because of mutable T
     @test getfield(a, fn)==getfield(b, fn)
 end
@@ -472,7 +477,7 @@ end
     @sharedparams1
     @sharedparams2
     @sharedparams3
-end))
+end), @__MODULE__)
 
 @def sharedparams4 begin
     e::Float64  = 1.0
@@ -480,7 +485,7 @@ end))
 end
 @test_throws ErrorException Parameters.with_kw(:(immutable MyType2
     @sharedparams4
-end))
+end), @__MODULE__)
 
 ### New 0.6 type system
 if VERSION>=v"0.6.0-dev.2123" # merge of jb/subtypes https://github.com/JuliaLang/julia/pull/18457
