@@ -17,7 +17,7 @@ export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack
 #################
 
 # To iterate over code blocks dropping the line-number bits:
-immutable Lines
+struct Lines
     block::Expr
 end
 Base.start(lns::Lines) = 1
@@ -155,12 +155,12 @@ the input type except for the fields given in the associative
 second argument or as keywords.
 
 ```julia
-type A; a; b end
+mutable struct A; a; b end
 a = A(3,4)
 b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 ```
 """
-function reconstruct{T}(pp::T, di)
+function reconstruct(pp::T, di) where T
     di = !isa(di, Associative) ? Dict(di) : di
     ns = fieldnames(T)
     args = Vector{Any}(length(ns))
@@ -169,7 +169,7 @@ function reconstruct{T}(pp::T, di)
     end
     T(args...)
 end
-reconstruct{T}(pp::T; kws...) = reconstruct(pp, kws)
+reconstruct(pp::T; kws...) where {T} = reconstruct(pp, kws)
 
 
 ###########################
@@ -196,7 +196,7 @@ This function is called by the `@with_kw` macro and does the syntax
 transformation from:
 
 ```julia
-@with_kw immutable MM{R}
+@with_kw struct MM{R}
     r::R = 1000.
     a::R
 end
@@ -205,13 +205,13 @@ end
 into
 
 ```julia
-immutable MM{R}
+struct MM{R}
     r::R
     a::R
-    MM(r,a) = new(r,a)
-    MM(;r=1000., a=error("no default for a")) = MM{R}(r,a) # inner kw, type-paras are required when calling
+    MM{R}(r,a) where {R} = new(r,a)
+    MM{R}(;r=1000., a=error("no default for a")) where {R} = MM{R}(r,a) # inner kw, type-paras are required when calling
 end
-MM{R}(r::R,a::R) = MM{R}(r,a) # default outer positional constructor
+MM(r::R,a::R) where {R} = MM{R}(r,a) # default outer positional constructor
 MM(;r=1000,a=error("no default for a")) =  MM(r,a) # outer kw, so no type-paras are needed when calling
 MM(m::MM; kws...) = reconstruct(mm,kws)
 MM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)
@@ -372,7 +372,7 @@ function with_kw(typedef, mod::Module, withshow=true)
     end
     if length(typparas)>0
         tps = stripsubtypes(typparas)
-        innerc = :( (::Type{$tn{$(tps...)}}){$(tps...)}($kwargs) = $tn{$(tps...)}($(args...)))
+        innerc = :( $tn{$(tps...)}($kwargs) where {$(tps...)} = $tn{$(tps...)}($(args...)))
         # 0.6 only:
         # innerc = :($tn{$(tps...)}($kwargs) where {$(tps...)} = $tn{$(tps...)}($(args...)))
     else
@@ -386,7 +386,7 @@ function with_kw(typedef, mod::Module, withshow=true)
     if length(inner_constructors)==0
         if length(typparas)>0
             tps = stripsubtypes(typparas)
-            innerc2 = :( (::Type{$tn{$(tps...)}}){$(tps...)}($(args...)) = new{$(tps...)}($(args...)) )
+            innerc2 = :( $tn{$(tps...)}($(args...)) where {$(tps...)} = new{$(tps...)}($(args...)) )
             # 0.6 only:
             # innerc2 = :($tn{$(tps...)}($(args...)) where {$(tps...)} = new($(args...)))
         else
@@ -410,7 +410,7 @@ function with_kw(typedef, mod::Module, withshow=true)
     if typparas!=Any[] # condition (1)
         # fields definitions stripped of ::Int etc., only keep ::T if T∈typparas :
         fielddef_strip_contT = keep_only_typparas(fielddefs.args, typparas)
-        outer_positional = :(  $tn{$(typparas...)}($(fielddef_strip_contT...))
+        outer_positional = :(  $tn($(fielddef_strip_contT...)) where {$(typparas...)}
                              = $tn{$(stripsubtypes(typparas)...)}($(args...)))
         # Check condition (2)
         checks = true
@@ -487,7 +487,7 @@ Macro which allows default values for field types and a few other features.
 Basic usage:
 
 ```julia
-@with_kw immutable MM{R}
+@with_kw struct MM{R}
     r::R = 1000.
     a::Int = 4
 end
@@ -508,7 +508,7 @@ As `@with_kw` but does not define a `show` method to avoid annoying
 redefinition warnings.
 
 ```julia
-@with_kw_noshow immutable MM{R}
+@with_kw_noshow struct MM{R}
     r::R = 1000.
     a::Int = 4
 end
@@ -552,9 +552,9 @@ More methods can be added to allow for specialized unpacking of other datatypes.
 See also `pack!`.
 """
 function unpack end
-@inline unpack{f}(x, ::Val{f}) = getfield(x, f)
-@inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
-@inline unpack{S<:AbstractString,k}(x::Associative{S}, ::Val{k}) = x[string(k)]
+@inline unpack(x, ::Val{f}) where {f} = getfield(x, f)
+@inline unpack(x::Associative{Symbol}, ::Val{k}) where {k} = x[k]
+@inline unpack(x::Associative{S}, ::Val{k}) where {S<:AbstractString,k} = x[string(k)]
 
 """
 This function is invoked to pack one entity into some DataType and has
@@ -580,9 +580,9 @@ datatypes.
 See also `unpack`.
 """
 function pack! end
-@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
-@inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
-@inline pack!{S<:AbstractString,k}(x::Associative{S}, ::Val{k}, val) = x[string(k)]=val
+@inline pack!(x, ::Val{f}, val) where {f} = setfield!(x, f, val)
+@inline pack!(x::Associative{Symbol}, ::Val{k}, val) where {k} = x[k]=val
+@inline pack!(x::Associative{S}, ::Val{k}, val) where {S<:AbstractString,k} = x[string(k)]=val
 
 """
 Unpacks fields/keys from a composite type or a `Dict{Symbol}` into variables
@@ -600,7 +600,7 @@ c == "Hi!" #true
 
 Example with type:
 ```julia
-type A; a; b; c; end
+mutable struct A; a; b; c; end
 d = A(4,7.0,"Hi")
 @unpack a, c = d
 a == 4 #true
@@ -642,7 +642,7 @@ Example with type:
 ```julia
 a = 99
 c = "HaHa"
-type A; a; b; c; end
+mutable struct A; a; b; c; end
 d = A(4,7.0,"Hi")
 @pack d = a, c
 d.a == 99 #true
