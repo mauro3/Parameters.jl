@@ -46,7 +46,7 @@ Allowing documenting types created with `@with_kw`
 Added `@pack` and `@unpack` macros:
 
 ```julia
-type A
+mutable struct A
     a
     b
 end

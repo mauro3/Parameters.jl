@@ -1,7 +1,7 @@
 using Parameters
 
 ## Create a type which has default values:
-@with_kw immutable PhysicalPara{R}
+@with_kw struct PhysicalPara{R}
     rw::R = 1000.
     ri::R = 900.
     L::R = 3.34e5
@@ -20,7 +20,7 @@ pp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)
 ## It's possible to use @asserts straight in the type-def.  (Note, as
 # usual, that for mutables, these asserts can be violated by updating
 # the fields.)
-@with_kw immutable PhysicalPara2{R}
+@with_kw struct PhysicalPara2{R}
     rw::R = 1000.; @assert rw>0
     ri::R = 900.
     @assert rw>ri # Note that the placement of assertions is not
@@ -29,7 +29,7 @@ end
 
 
 ## Parameter interdependence
-@with_kw immutable Para{R<:Real}
+@with_kw struct Para{R<:Real}
     a::R = 5
     b::R
     c::R = a+b
@@ -38,14 +38,14 @@ pa = Para{Int}(b=7)
 
 ## Setting a default type annotation, as often the bulk of fields will
 # have the same type.  The last example more compactly:
-@with_kw immutable Para2{R<:Real} @deftype R
+@with_kw struct Para2{R<:Real} @deftype R
     a = 5
     b
     c = a+b
 end
 pa2 = Para2{Int}(b=7)
 # or more pedestrian
-@with_kw immutable Para3 @deftype Float64
+@with_kw struct Para3 @deftype Float64
     a = 5
     b
     c = a+b
@@ -53,7 +53,7 @@ end
 pa3 = Para3(b=7)
 
 ## Custom inner constructors:
-@with_kw immutable MyS{R}
+@with_kw struct MyS{R}
     a::R = 5
     b = 4
 
@@ -66,15 +66,15 @@ pa3 = Para3(b=7)
     # Note that the keyword constructor goes through the positional
     # constructor, thus invariants defined there will be honored.
 
-    MyS(a,b) = (@assert a>b; new(a,b))  # The keyword constructor
+    MyS{R}(a,b) where {R} = (@assert a>b; new(a,b))  # The keyword constructor
                                         # calls this constructor, so
                                         # the invariant is satisfied.
                                         # Note that invariants can be
                                         # done with @asserts as in
                                         # above example.
-    MyS(a) = MyS{R}(a, a-1) # For this provide your own outer constructor:
+    MyS{R}(a) where {R} = MyS{R}(a, a-1) # For this provide your own outer constructor:
 end
-MyS{R}(a::R) = MyS{R}(a)
+MyS(a::R) where {R} = MyS{R}(a)
 
 MyS{Int}() # MyS(5,4)
 ms = MyS(3) # MyS(3,2)

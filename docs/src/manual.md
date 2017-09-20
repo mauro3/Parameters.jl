@@ -9,7 +9,7 @@ Create a type which has default values using [`@with_kw`](@ref):
 ```julia
 using Parameters
 
-@with_kw immutable PhysicalPara{R}
+@with_kw struct PhysicalPara{R}
     rw::R = 1000.
     ri::R = 900.
     L::R = 3.34e5
@@ -40,7 +40,7 @@ To enforce constraints on the values, it's possible to use `@assert`s
 straight inside the type-def.  (As usual, for mutables these
 asserts can be violated by updating the fields after type construction.)
 ```julia
-@with_kw immutable PhysicalPara2{R}
+@with_kw struct PhysicalPara2{R}
     rw::R = 1000.; @assert rw>0
     ri::R = 900.
     @assert rw>ri # Note that the placement of assertions is not
@@ -51,7 +51,7 @@ end
 
 Parameter interdependence is possible:
 ```julia
-@with_kw immutable Para{R<:Real}
+@with_kw struct Para{R<:Real}
     a::R = 5
     b::R
     c::R = a+b
@@ -64,7 +64,7 @@ Often the bulk of fields will have the same type.  To help with this,
 a default type can be set.  Using this feature, the last example (with
 additional field `d`) can be written more compactly as:
 ```julia
-@with_kw immutable Para2{R<:Real} @deftype R
+@with_kw struct Para2{R<:Real} @deftype R
     a = 5
     b
     c = a+b
@@ -73,7 +73,7 @@ end
 pa2 = Para2(b=7)
 
 # or more pedestrian
-@with_kw immutable Para3 @deftype Float64
+@with_kw struct Para3 @deftype Float64
     a = 5
     b
     c = a+b
@@ -93,13 +93,13 @@ Custom inner constructors can be defined as long as:
 The keyword constructor goes through the inner positional constructor,
 thus invariants or any other calculation will be honored.
 ```julia
-@with_kw immutable MyS{R}
+@with_kw struct MyS{R}
     a::R = 5
     b = 4
-    MyS(a,b) = (@assert a>b; new(a,b)) #
-    MyS(a) = MyS{R}(a, a-1) # For this provide your own outer constructor:
+    MyS{R}(a,b) where {R} = (@assert a>b; new(a,b)) #
+    MyS{R}(a) where {R} = MyS{R}(a, a-1) # For this provide your own outer constructor:
 end
-MyS{R}(a::R) = MyS{R}(a)
+MyS(a::R) where {R} = MyS{R}(a)
 
 MyS{Int}() # MyS(5,4)
 ms = MyS(3) # MyS(3,2)
