@@ -73,7 +73,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#Parameters.reconstruct",
+    "location": "api.html#Parameters.reconstruct-Union{Tuple{T,Any}, Tuple{T}} where T",
     "page": "API",
     "title": "Parameters.reconstruct",
     "category": "Method",
@@ -86,6 +86,14 @@ var documenterSearchIndex = {"docs": [
     "title": "Parameters.type2dict",
     "category": "Method",
     "text": "Transforms a type-instance into a dictionary.\n\njulia> type T\n           a\n           b\n       end\n\njulia> type2dict(T(4,5))\nDict{Symbol,Any} with 2 entries:\n  :a => 4\n  :b => 5\n\n\n\n"
+},
+
+{
+    "location": "api.html#Parameters.with_kw",
+    "page": "API",
+    "title": "Parameters.with_kw",
+    "category": "Function",
+    "text": "This function is called by the @with_kw macro and does the syntax transformation from:\n\n@with_kw immutable MM{R}\n    r::R = 1000.\n    a::R\nend\n\ninto\n\nimmutable MM{R}\n    r::R\n    a::R\n    MM(r,a) = new(r,a)\n    MM(;r=1000., a=error(\"no default for a\")) = MM{R}(r,a) # inner kw, type-paras are required when calling\nend\nMM{R}(r::R,a::R) = MM{R}(r,a) # default outer positional constructor\nMM(;r=1000,a=error(\"no default for a\")) =  MM(r,a) # outer kw, so no type-paras are needed when calling\nMM(m::MM; kws...) = reconstruct(mm,kws)\nMM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)\nmacro unpack_MM(varname)\n    esc(quote\n    r = varname.r\n    a = varname.a\n    end)\nend\nmacro pack_MM(varname)\n    esc(quote\n    varname = Parameters.reconstruct(varname,r=r,a=a)\n    end)\nend\n\n\n\n"
 },
 
 {
@@ -134,14 +142,6 @@ var documenterSearchIndex = {"docs": [
     "title": "Parameters.unpack",
     "category": "Function",
     "text": "This function is invoked to unpack one field/entry of some DataType dt and has signature:\n\nunpack(dt::Any, ::Val{field}) -> value of field\n\nThe field is the symbol of the assigned variable.\n\nThree definitions are included in the package to unpack a composite type or a dictionary with Symbol or string keys:\n\n@inline unpack{f}(x, ::Val{f}) = getfield(x, f)\n@inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]\n@inline unpack{S<:AbstractString,k}(x::Associative{S}, ::Val{k}) = x[string(k)]\n\nMore methods can be added to allow for specialized unpacking of other datatypes.\n\nSee also pack!.\n\n\n\n"
-},
-
-{
-    "location": "api.html#Parameters.with_kw",
-    "page": "API",
-    "title": "Parameters.with_kw",
-    "category": "Method",
-    "text": "This function is called by the @with_kw macro and does the syntax transformation from:\n\n@with_kw immutable MM{R}\n    r::R = 1000.\n    a::R\nend\n\ninto\n\nimmutable MM{R}\n    r::R\n    a::R\n    MM(r,a) = new(r,a)\n    MM(;r=1000., a=error(\"no default for a\")) = MM{R}(r,a) # inner kw, type-paras are required when calling\nend\nMM{R}(r::R,a::R) = MM{R}(r,a) # default outer positional constructor\nMM(;r=1000,a=error(\"no default for a\")) =  MM(r,a) # outer kw, so no type-paras are needed when calling\nMM(m::MM; kws...) = reconstruct(mm,kws)\nMM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)\nmacro unpack_MM(varname)\n    esc(quote\n    r = varname.r\n    a = varname.a\n    end)\nend\nmacro pack_MM(varname)\n    esc(quote\n    varname = Parameters.reconstruct(varname,r=r,a=a)\n    end)\nend\n\n\n\n"
 },
 
 {
