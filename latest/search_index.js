@@ -13,7 +13,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Parameters.jl",
     "title": "Parameters.jl",
     "category": "section",
-    "text": "This is a package I use to handle numerical-model parameters, thus the name.  However, it should be useful otherwise too.  It has two main features:keyword type constructors with default values, and\nunpacking and packing of composite types and dicts.The keyword-constructor and default-values functionality will probably make it into Julia (# 10146, #533 and #6122) although probably not with all the features present in this package.  I suspect that this package should stay usable & useful even after this change lands in Julia.  Note that keyword functions are currently slow in Julia, so these constructors should not be used in hot inner loops. However, the normal positional constructor is also provided and could be used in performance critical code.NEWS.md keeps tabs on updates."
+    "text": "Breaking news: Julia 0.5 support dropped.This is a package I use to handle numerical-model parameters, thus the name.  However, it should be useful otherwise too.  It has two main features:keyword type constructors with default values, and\nunpacking and packing of composite types and dicts.The keyword-constructor and default-values functionality will probably make it into Julia (# 10146, #533 and #6122) although probably not with all the features present in this package.  I suspect that this package should stay usable & useful even after this change lands in Julia.  Note that keyword functions are currently slow in Julia, so these constructors should not be used in hot inner loops. However, the normal positional constructor is also provided and could be used in performance critical code.NEWS.md keeps tabs on updates."
 },
 
 {
@@ -37,7 +37,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Parameters manual",
     "title": "Types with default values & keyword constructors",
     "category": "section",
-    "text": "Create a type which has default values using @with_kw:using Parameters\n\n@with_kw immutable PhysicalPara{R}\n    rw::R = 1000.\n    ri::R = 900.\n    L::R = 3.34e5\n    g::R = 9.81\n    cw::R = 4220.\n    day::R = 24*3600.\nendNow the type can be constructed using the default values, or with non-defaults specified with keywords:# Create an instance with the defaults\npp = PhysicalPara()\npp_f32 = PhysicalPara{Float32}() # the type parameter can be chosen explicitly\n# Make one with some non-defaults\npp2 = PhysicalPara(cw=77.0, day= 987.0)\n# Make another one based on the previous one with some modifications\npp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)\n# the normal positional constructor can also be used\n# (and should be used in hot inner loops)\npp4 = PhysicalPara(1,2,3,4,5,6)To enforce constraints on the values, it's possible to use @asserts straight inside the type-def.  (As usual, for mutables these asserts can be violated by updating the fields after type construction.)@with_kw immutable PhysicalPara2{R}\n    rw::R = 1000.; @assert rw>0\n    ri::R = 900.\n    @assert rw>ri # Note that the placement of assertions is not\n                  # relevant. (They are moved to the constructor.\nendParameter interdependence is possible:@with_kw immutable Para{R<:Real}\n    a::R = 5\n    b::R\n    c::R = a+b\nend\npa = Para(b=7)Often the bulk of fields will have the same type.  To help with this, a default type can be set.  Using this feature, the last example (with additional field d) can be written more compactly as:@with_kw immutable Para2{R<:Real} @deftype R\n    a = 5\n    b\n    c = a+b\n    d::Int = 4 # adding a type overrides the @deftype\nend\npa2 = Para2(b=7)\n\n# or more pedestrian\n@with_kw immutable Para3 @deftype Float64\n    a = 5\n    b\n    c = a+b\n    d::Int = 4\nend\npa3 = Para3(b=7)Custom inner constructors can be defined as long as:one defining all positional arguments is given\nno zero-positional arguments constructor is defined (as that would clash with the keyword constructor)\nno @asserts (as in above example) are used within the type body.The keyword constructor goes through the inner positional constructor, thus invariants or any other calculation will be honored.@with_kw immutable MyS{R}\n    a::R = 5\n    b = 4\n    MyS(a,b) = (@assert a>b; new(a,b)) #\n    MyS(a) = MyS{R}(a, a-1) # For this provide your own outer constructor:\nend\nMyS{R}(a::R) = MyS{R}(a)\n\nMyS{Int}() # MyS(5,4)\nms = MyS(3) # MyS(3,2)\nMyS(ms, b=-1) # MyS(3,-1)\ntry\n    MyS(ms, b=6) # this will fail the assertion\nendNote that two of the main reasons to have an inner constructor, assertions and simple calculations, are more easily achieved with @asserts and parameter interdependence.The macro @with_kw defines a show-method which is, hopefully, more informative than the standard one.  For example the printing of the first example is:julia> PhysicalPara()\nPhysicalPara{Float64}\n  rw: Float64 1000.0\n  ri: Float64 900.0\n  L: Float64 334000.0\n  g: Float64 9.81\n  cw: Float64 4220.0\n  day: Float64 86400.0If this show method definition is not desired, for instance because of method re-definition warnings, then use @with_kw_noshow."
+    "text": "Create a type which has default values using @with_kw:using Parameters\n\n@with_kw struct PhysicalPara{R}\n    rw::R = 1000.\n    ri::R = 900.\n    L::R = 3.34e5\n    g::R = 9.81\n    cw::R = 4220.\n    day::R = 24*3600.\nendNow the type can be constructed using the default values, or with non-defaults specified with keywords:# Create an instance with the defaults\npp = PhysicalPara()\npp_f32 = PhysicalPara{Float32}() # the type parameter can be chosen explicitly\n# Make one with some non-defaults\npp2 = PhysicalPara(cw=77.0, day= 987.0)\n# Make another one based on the previous one with some modifications\npp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)\n# the normal positional constructor can also be used\n# (and should be used in hot inner loops)\npp4 = PhysicalPara(1,2,3,4,5,6)To enforce constraints on the values, it's possible to use @asserts straight inside the type-def.  (As usual, for mutables these asserts can be violated by updating the fields after type construction.)@with_kw struct PhysicalPara2{R}\n    rw::R = 1000.; @assert rw>0\n    ri::R = 900.\n    @assert rw>ri # Note that the placement of assertions is not\n                  # relevant. (They are moved to the constructor.\nendParameter interdependence is possible:@with_kw struct Para{R<:Real}\n    a::R = 5\n    b::R\n    c::R = a+b\nend\npa = Para(b=7)Often the bulk of fields will have the same type.  To help with this, a default type can be set.  Using this feature, the last example (with additional field d) can be written more compactly as:@with_kw struct Para2{R<:Real} @deftype R\n    a = 5\n    b\n    c = a+b\n    d::Int = 4 # adding a type overrides the @deftype\nend\npa2 = Para2(b=7)\n\n# or more pedestrian\n@with_kw struct Para3 @deftype Float64\n    a = 5\n    b\n    c = a+b\n    d::Int = 4\nend\npa3 = Para3(b=7)Custom inner constructors can be defined as long as:one defining all positional arguments is given\nno zero-positional arguments constructor is defined (as that would clash with the keyword constructor)\nno @asserts (as in above example) are used within the type body.The keyword constructor goes through the inner positional constructor, thus invariants or any other calculation will be honored.@with_kw struct MyS{R}\n    a::R = 5\n    b = 4\n    MyS{R}(a,b) where {R} = (@assert a>b; new(a,b)) #\n    MyS{R}(a) where {R} = MyS{R}(a, a-1) # For this provide your own outer constructor:\nend\nMyS(a::R) where {R} = MyS{R}(a)\n\nMyS{Int}() # MyS(5,4)\nms = MyS(3) # MyS(3,2)\nMyS(ms, b=-1) # MyS(3,-1)\ntry\n    MyS(ms, b=6) # this will fail the assertion\nendNote that two of the main reasons to have an inner constructor, assertions and simple calculations, are more easily achieved with @asserts and parameter interdependence.The macro @with_kw defines a show-method which is, hopefully, more informative than the standard one.  For example the printing of the first example is:julia> PhysicalPara()\nPhysicalPara{Float64}\n  rw: Float64 1000.0\n  ri: Float64 900.0\n  L: Float64 334000.0\n  g: Float64 9.81\n  cw: Float64 4220.0\n  day: Float64 86400.0If this show method definition is not desired, for instance because of method re-definition warnings, then use @with_kw_noshow."
 },
 
 {
@@ -77,7 +77,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "Parameters.reconstruct",
     "category": "Method",
-    "text": "Make a new instance of a type with the same values as the input type except for the fields given in the associative second argument or as keywords.\n\ntype A; a; b end\na = A(3,4)\nb = reconstruct(a, [(:b, 99)]) # ==A(3,99)\n\n\n\n"
+    "text": "Make a new instance of a type with the same values as the input type except for the fields given in the associative second argument or as keywords.\n\nstruct A; a; b end\na = A(3,4)\nb = reconstruct(a, [(:b, 99)]) # ==A(3,99)\n\n\n\n"
 },
 
 {
@@ -93,7 +93,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "Parameters.with_kw",
     "category": "Function",
-    "text": "This function is called by the @with_kw macro and does the syntax transformation from:\n\n@with_kw immutable MM{R}\n    r::R = 1000.\n    a::R\nend\n\ninto\n\nimmutable MM{R}\n    r::R\n    a::R\n    MM(r,a) = new(r,a)\n    MM(;r=1000., a=error(\"no default for a\")) = MM{R}(r,a) # inner kw, type-paras are required when calling\nend\nMM{R}(r::R,a::R) = MM{R}(r,a) # default outer positional constructor\nMM(;r=1000,a=error(\"no default for a\")) =  MM(r,a) # outer kw, so no type-paras are needed when calling\nMM(m::MM; kws...) = reconstruct(mm,kws)\nMM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)\nmacro unpack_MM(varname)\n    esc(quote\n    r = varname.r\n    a = varname.a\n    end)\nend\nmacro pack_MM(varname)\n    esc(quote\n    varname = Parameters.reconstruct(varname,r=r,a=a)\n    end)\nend\n\n\n\n"
+    "text": "This function is called by the @with_kw macro and does the syntax transformation from:\n\n@with_kw struct MM{R}\n    r::R = 1000.\n    a::R\nend\n\ninto\n\nstruct MM{R}\n    r::R\n    a::R\n    MM{R}(r,a) where {R} = new(r,a)\n    MM{R}(;r=1000., a=error(\"no default for a\")) where {R} = MM{R}(r,a) # inner kw, type-paras are required when calling\nend\nMM(r::R,a::R) where {R} = MM{R}(r,a) # default outer positional constructor\nMM(;r=1000,a=error(\"no default for a\")) =  MM(r,a) # outer kw, so no type-paras are needed when calling\nMM(m::MM; kws...) = reconstruct(mm,kws)\nMM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)\nmacro unpack_MM(varname)\n    esc(quote\n    r = varname.r\n    a = varname.a\n    end)\nend\nmacro pack_MM(varname)\n    esc(quote\n    varname = Parameters.reconstruct(varname,r=r,a=a)\n    end)\nend\n\n\n\n"
 },
 
 {
@@ -101,7 +101,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "Parameters.@pack",
     "category": "Macro",
-    "text": "Packs variables into a composite type or a Dict{Symbol}\n\n@pack dict_or_typeinstance = a, b, c\n\nExample with dict:\n\na = 5.0\nc = \"Hi!\"\nd = Dict{Symbol,Any}()\n@pack d = a, c\nd # Dict{Symbol,Any}(:a=>5.0,:c=>\"Hi!\")\n\nExample with type:\n\na = 99\nc = \"HaHa\"\ntype A; a; b; c; end\nd = A(4,7.0,\"Hi\")\n@pack d = a, c\nd.a == 99 #true\nd.c == \"HaHa\" #true\n\n\n\n"
+    "text": "Packs variables into a composite type or a Dict{Symbol}\n\n@pack dict_or_typeinstance = a, b, c\n\nExample with dict:\n\na = 5.0\nc = \"Hi!\"\nd = Dict{Symbol,Any}()\n@pack d = a, c\nd # Dict{Symbol,Any}(:a=>5.0,:c=>\"Hi!\")\n\nExample with type:\n\na = 99\nc = \"HaHa\"\nmutable struct A; a; b; c; end\nd = A(4,7.0,\"Hi\")\n@pack d = a, c\nd.a == 99 #true\nd.c == \"HaHa\" #true\n\n\n\n"
 },
 
 {
@@ -109,7 +109,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "Parameters.@unpack",
     "category": "Macro",
-    "text": "Unpacks fields/keys from a composite type or a Dict{Symbol} into variables\n\n@unpack a, b, c = dict_or_typeinstance\n\nExample with dict:\n\nd = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>\"Hi!\")\n@unpack a, c = d\na == 5.0 #true\nc == \"Hi!\" #true\n\nExample with type:\n\ntype A; a; b; c; end\nd = A(4,7.0,\"Hi\")\n@unpack a, c = d\na == 4 #true\nc == \"Hi!\" #true\n\n\n\n"
+    "text": "Unpacks fields/keys from a composite type or a Dict{Symbol} into variables\n\n@unpack a, b, c = dict_or_typeinstance\n\nExample with dict:\n\nd = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>\"Hi!\")\n@unpack a, c = d\na == 5.0 #true\nc == \"Hi!\" #true\n\nExample with type:\n\nstruct A; a; b; c; end\nd = A(4,7.0,\"Hi\")\n@unpack a, c = d\na == 4 #true\nc == \"Hi\" #true\n\n\n\n"
 },
 
 {
@@ -117,7 +117,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "Parameters.@with_kw",
     "category": "Macro",
-    "text": "Macro which allows default values for field types and a few other features.\n\nBasic usage:\n\n@with_kw immutable MM{R}\n    r::R = 1000.\n    a::Int = 4\nend\n\nFor more details see manual.\n\n\n\n"
+    "text": "Macro which allows default values for field types and a few other features.\n\nBasic usage:\n\n@with_kw struct MM{R}\n    r::R = 1000.\n    a::Int = 4\nend\n\nFor more details see manual.\n\n\n\n"
 },
 
 {
@@ -125,7 +125,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "Parameters.@with_kw_noshow",
     "category": "Macro",
-    "text": "As @with_kw but does not define a show method to avoid annoying redefinition warnings.\n\n@with_kw_noshow immutable MM{R}\n    r::R = 1000.\n    a::Int = 4\nend\n\nFor more details see manual.\n\n\n\n"
+    "text": "As @with_kw but does not define a show method to avoid annoying redefinition warnings.\n\n@with_kw_noshow struct MM{R}\n    r::R = 1000.\n    a::Int = 4\nend\n\nFor more details see manual.\n\n\n\n"
 },
 
 {

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Parameters manual · Parameters.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Parameters.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" action="search.html"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="index.html">Parameters.jl</a></li><li class="current"><a class="toctext" href="manual.html">Parameters manual</a><ul class="internal"><li class="toplevel"><a class="toctext" href="#Types-with-default-values-and-keyword-constructors-1">Types with default values &amp; keyword constructors</a></li><li class="toplevel"><a class="toctext" href="#(Un)pack-macros-1">(Un)pack macros</a></li><li><a class="toctext" href="#Customization-of-@unpack-and-@pack-1">Customization of <code>@unpack</code> and <code>@pack</code></a></li><li><a class="toctext" href="#The-type-specific-(un)pack-macros-(somewhat-dangerous)-1">The type-specific (un)pack macros (somewhat dangerous)</a></li></ul></li><li><a class="toctext" href="api.html">API</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href="manual.html">Parameters manual</a></li></ul><a class="edit-page" href="https://github.com/mauro3/Parameters.jl/tree/d6e4e0091013eb64fb61a9e41e8555b5b87f8ddf/docs/src/manual.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Parameters manual</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Parameters-manual-1" href="#Parameters-manual-1">Parameters manual</a></h1><p>This is a manual by example (<a href="https://github.com/mauro3/Parameters.jl/blob/master/examples/ex1.jl">examples/ex1.jl</a>).</p><h1><a class="nav-anchor" id="Types-with-default-values-and-keyword-constructors-1" href="#Types-with-default-values-and-keyword-constructors-1">Types with default values &amp; keyword constructors</a></h1><p>Create a type which has default values using <a href="api.html#Parameters.@with_kw-Tuple{Any}"><code>@with_kw</code></a>:</p><pre><code class="language-julia">using Parameters
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Parameters manual · Parameters.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Parameters.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" action="search.html"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="index.html">Parameters.jl</a></li><li class="current"><a class="toctext" href="manual.html">Parameters manual</a><ul class="internal"><li class="toplevel"><a class="toctext" href="#Types-with-default-values-and-keyword-constructors-1">Types with default values &amp; keyword constructors</a></li><li class="toplevel"><a class="toctext" href="#(Un)pack-macros-1">(Un)pack macros</a></li><li><a class="toctext" href="#Customization-of-@unpack-and-@pack-1">Customization of <code>@unpack</code> and <code>@pack</code></a></li><li><a class="toctext" href="#The-type-specific-(un)pack-macros-(somewhat-dangerous)-1">The type-specific (un)pack macros (somewhat dangerous)</a></li></ul></li><li><a class="toctext" href="api.html">API</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href="manual.html">Parameters manual</a></li></ul><a class="edit-page" href="https://github.com/mauro3/Parameters.jl/tree/f0d0614cbaea3fd272f4d8ee2110f5742c1b7293/docs/src/manual.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Parameters manual</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Parameters-manual-1" href="#Parameters-manual-1">Parameters manual</a></h1><p>This is a manual by example (<a href="https://github.com/mauro3/Parameters.jl/blob/master/examples/ex1.jl">examples/ex1.jl</a>).</p><h1><a class="nav-anchor" id="Types-with-default-values-and-keyword-constructors-1" href="#Types-with-default-values-and-keyword-constructors-1">Types with default values &amp; keyword constructors</a></h1><p>Create a type which has default values using <a href="api.html#Parameters.@with_kw-Tuple{Any}"><code>@with_kw</code></a>:</p><pre><code class="language-julia">using Parameters
 
-@with_kw immutable PhysicalPara{R}
+@with_kw struct PhysicalPara{R}
     rw::R = 1000.
     ri::R = 900.
     L::R = 3.34e5
@@ -17,17 +17,17 @@ pp2 = PhysicalPara(cw=77.0, day= 987.0)
 pp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)
 # the normal positional constructor can also be used
 # (and should be used in hot inner loops)
-pp4 = PhysicalPara(1,2,3,4,5,6)</code></pre><p>To enforce constraints on the values, it&#39;s possible to use <code>@assert</code>s straight inside the type-def.  (As usual, for mutables these asserts can be violated by updating the fields after type construction.)</p><pre><code class="language-julia">@with_kw immutable PhysicalPara2{R}
+pp4 = PhysicalPara(1,2,3,4,5,6)</code></pre><p>To enforce constraints on the values, it&#39;s possible to use <code>@assert</code>s straight inside the type-def.  (As usual, for mutables these asserts can be violated by updating the fields after type construction.)</p><pre><code class="language-julia">@with_kw struct PhysicalPara2{R}
     rw::R = 1000.; @assert rw&gt;0
     ri::R = 900.
     @assert rw&gt;ri # Note that the placement of assertions is not
                   # relevant. (They are moved to the constructor.
-end</code></pre><p>Parameter interdependence is possible:</p><pre><code class="language-julia">@with_kw immutable Para{R&lt;:Real}
+end</code></pre><p>Parameter interdependence is possible:</p><pre><code class="language-julia">@with_kw struct Para{R&lt;:Real}
     a::R = 5
     b::R
     c::R = a+b
 end
-pa = Para(b=7)</code></pre><p>Often the bulk of fields will have the same type.  To help with this, a default type can be set.  Using this feature, the last example (with additional field <code>d</code>) can be written more compactly as:</p><pre><code class="language-julia">@with_kw immutable Para2{R&lt;:Real} @deftype R
+pa = Para(b=7)</code></pre><p>Often the bulk of fields will have the same type.  To help with this, a default type can be set.  Using this feature, the last example (with additional field <code>d</code>) can be written more compactly as:</p><pre><code class="language-julia">@with_kw struct Para2{R&lt;:Real} @deftype R
     a = 5
     b
     c = a+b
@@ -36,19 +36,19 @@ end
 pa2 = Para2(b=7)
 
 # or more pedestrian
-@with_kw immutable Para3 @deftype Float64
+@with_kw struct Para3 @deftype Float64
     a = 5
     b
     c = a+b
     d::Int = 4
 end
-pa3 = Para3(b=7)</code></pre><p>Custom inner constructors can be defined as long as:</p><ul><li><p>one defining all positional arguments is given</p></li><li><p>no zero-positional arguments constructor is defined (as that would clash with the keyword constructor)</p></li><li><p>no <code>@assert</code>s (as in above example) are used within the type body.</p></li></ul><p>The keyword constructor goes through the inner positional constructor, thus invariants or any other calculation will be honored.</p><pre><code class="language-julia">@with_kw immutable MyS{R}
+pa3 = Para3(b=7)</code></pre><p>Custom inner constructors can be defined as long as:</p><ul><li><p>one defining all positional arguments is given</p></li><li><p>no zero-positional arguments constructor is defined (as that would clash with the keyword constructor)</p></li><li><p>no <code>@assert</code>s (as in above example) are used within the type body.</p></li></ul><p>The keyword constructor goes through the inner positional constructor, thus invariants or any other calculation will be honored.</p><pre><code class="language-julia">@with_kw struct MyS{R}
     a::R = 5
     b = 4
-    MyS(a,b) = (@assert a&gt;b; new(a,b)) #
-    MyS(a) = MyS{R}(a, a-1) # For this provide your own outer constructor:
+    MyS{R}(a,b) where {R} = (@assert a&gt;b; new(a,b)) #
+    MyS{R}(a) where {R} = MyS{R}(a, a-1) # For this provide your own outer constructor:
 end
-MyS{R}(a::R) = MyS{R}(a)
+MyS(a::R) where {R} = MyS{R}(a)
 
 MyS{Int}() # MyS(5,4)
 ms = MyS(3) # MyS(3,2)
