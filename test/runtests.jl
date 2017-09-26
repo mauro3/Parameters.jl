@@ -127,8 +127,8 @@ MT4_2{Float64}(4,5)
 @with_kw struct MT6{R,I<:Integer} <: AMT{R}
     r::R=5
     a::I
-    (::Type{MT6{R,I}})(r) where {R,I} = new{R,I}(r,r)
-    (::Type{MT6{R,I}})(r,a) where {R,I} = (@assert a>r; new{R,I}(r,a))
+    MT6{R,I}(r) where {R,I} = new{R,I}(r,r)
+    MT6{R,I}(r,a) where {R,I} = (@assert a>r; new{R,I}(r,a))
 end
 @test_throws MethodError MT6(r=4, a=5.) # need to specify type parameters
 MT6{Float32, Int}(r=4, a=5.)
@@ -149,7 +149,7 @@ mt6=MT6(5.4, 6) # outer positional
 @with_kw mutable struct MT7{R,I<:Integer} <: AMT{R}
     r::R=5
     a::I
-    (::Type{MT7{R,R}})(r::R) where {R} = new{R,R}(r,r+8)
+    MT7{R,R}(r::R) where {R} = new{R,R}(r,r+8)
     # no MT7(r,a)
 end
 @test_throws MethodError MT7{Float32, Int}(r=4, a=5.)
@@ -158,14 +158,14 @@ end
 tmp = :(struct MT8{R,I<:Integer} <: AMT{R}
         r::R=5
         a::I
-        (::Type{MT8})() = new{Int,Int}(5,6) # this would shadow the keyword constructor!
+        MT8() = new{Int,Int}(5,6) # this would shadow the keyword constructor!
         MT8{R,I}(r,a) where {R,I} = new{R,I}(r,a)
         end)
 @test_throws ErrorException Parameters.with_kw(tmp, @__MODULE__)
 tmp = :(mutable struct MT8{R,I<:Integer} <: AMT{R}
         r::R=5
         a::I
-        (::Type{MT8})(;a=7) = new{Int,Int}(5,a) # this would shadow the keyword constructor!
+        MT8(;a=7) = new{Int,Int}(5,a) # this would shadow the keyword constructor!
         MT8{R,I}(r,a) where {R,I} = new{R,I}(r,a)
         end)
 @test_throws ErrorException Parameters.with_kw(tmp, @__MODULE__)
@@ -174,8 +174,8 @@ tmp = :(mutable struct MT8{R,I<:Integer} <: AMT{R}
 @with_kw struct MT8{R,I<:Integer} <: AMT{R} @deftype R
     r=5
     a::I
-    (::Type{MT8{R,R}})(r::R) where {R} = new{R,R}(r,r)
-    (::Type{MT8{R,I}})(r,a) where {R,I} = (@assert a>r; new{R,I}(r,a))
+    MT8{R,R}(r::R) where {R} = new{R,R}(r,r)
+    MT8{R,I}(r,a) where {R,I} = (@assert a>r; new{R,I}(r,a))
 end
 @test_throws MethodError MT8(r=4, a=5.) # need to specify type parameters
 MT8{Float32, Int}(r=4, a=5.)

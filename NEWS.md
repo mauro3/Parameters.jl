@@ -1,3 +1,7 @@
+# 2017-09-26
+
+Dropped Julia 0.5 support.
+
 # 2017-08-23
 
 Docs now use Documenter.jl
@@ -46,7 +50,7 @@ Allowing documenting types created with `@with_kw`
 Added `@pack` and `@unpack` macros:
 
 ```julia
-mutable struct A
+type A
     a
     b
 end

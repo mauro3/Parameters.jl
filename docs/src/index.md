@@ -1,5 +1,7 @@
 # [Parameters.jl](https://github.com/mauro3/Parameters.jl)
 
+**Breaking news: Julia 0.5 support dropped.**
+
 This is a package I use to handle numerical-model parameters, thus the
 name.  However, it should be useful otherwise too.  It has two main
 features:

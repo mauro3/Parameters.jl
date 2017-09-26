@@ -21,7 +21,7 @@ allow default values and a keyword constructor:
 ```julia
 julia> using Parameters
 
-julia> @with_kw mutable struct A
+julia> @with_kw struct A
            a::Int = 6
            b::Float64 = -1.1
            c::UInt8
@@ -45,16 +45,16 @@ A
 
 Unpacking is done with `@unpack` (`@pack` is similar):
 ```julia
-mutable struct A
+struct B
     a
     b
     c
 end
-@unpack a, c = A(4,5,6)
+@unpack a, c = B(4,5,6)
 # is equivalent to
-AA = A(4,5,6)
-a = AA.a
-c = AA.c
+BB = B(4,5,6)
+a = BB.a
+c = BB.c
 ```
 
 The features are:

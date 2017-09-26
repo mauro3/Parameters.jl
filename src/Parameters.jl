@@ -155,7 +155,7 @@ the input type except for the fields given in the associative
 second argument or as keywords.
 
 ```julia
-mutable struct A; a; b end
+struct A; a; b end
 a = A(3,4)
 b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 ```
@@ -169,7 +169,7 @@ function reconstruct(pp::T, di) where T
     end
     T(args...)
 end
-reconstruct(pp::T; kws...) where {T} = reconstruct(pp, kws)
+reconstruct(pp; kws...) = reconstruct(pp, kws)
 
 
 ###########################
@@ -554,7 +554,7 @@ See also `pack!`.
 function unpack end
 @inline unpack(x, ::Val{f}) where {f} = getfield(x, f)
 @inline unpack(x::Associative{Symbol}, ::Val{k}) where {k} = x[k]
-@inline unpack(x::Associative{S}, ::Val{k}) where {S<:AbstractString,k} = x[string(k)]
+@inline unpack(x::Associative{<:AbstractString}, ::Val{k}) where {k} = x[string(k)]
 
 """
 This function is invoked to pack one entity into some DataType and has
@@ -582,7 +582,7 @@ See also `unpack`.
 function pack! end
 @inline pack!(x, ::Val{f}, val) where {f} = setfield!(x, f, val)
 @inline pack!(x::Associative{Symbol}, ::Val{k}, val) where {k} = x[k]=val
-@inline pack!(x::Associative{S}, ::Val{k}, val) where {S<:AbstractString,k} = x[string(k)]=val
+@inline pack!(x::Associative{<:AbstractString}, ::Val{k}, val) where {k} = x[string(k)]=val
 
 """
 Unpacks fields/keys from a composite type or a `Dict{Symbol}` into variables
@@ -600,11 +600,11 @@ c == "Hi!" #true
 
 Example with type:
 ```julia
-mutable struct A; a; b; c; end
+struct A; a; b; c; end
 d = A(4,7.0,"Hi")
 @unpack a, c = d
 a == 4 #true
-c == "Hi!" #true
+c == "Hi" #true
 ```
 """
 macro unpack(args)
