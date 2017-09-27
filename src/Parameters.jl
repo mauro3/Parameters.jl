@@ -189,7 +189,7 @@ function _pack(binding, fields)
 end
 
 const typedef_head = VERSION >= v"0.7.0-DEV.1263" ? :struct : :type
-const macro_hidden_nargs = length(:(@m).args) - 1
+const macro_hidden_nargs = length(:(@m).args) - 1 # ==1 on Julia 0.6, ==2 on Julia 0.7
 
 """
 This function is called by the `@with_kw` macro and does the syntax
