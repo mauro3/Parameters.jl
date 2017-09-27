@@ -483,7 +483,7 @@ end), @__MODULE__)
 
 ### New 0.6 type system
 eval(parse("""
-    @with_kw immutable V06{T} @deftype Array{I,1} where I<:Integer
+    @with_kw struct V06{T} @deftype Array{I,1} where I<:Integer
         a::T
         b = [10]
         c::Vector{S} where S<:AbstractString=["aaa"]
