@@ -612,7 +612,7 @@ macro unpack(args)
     items, suitecase = args.args
     items = isa(items, Symbol) ? [items] : items.args
     suitecase_instance = gensym()
-    kd = [:( $key = Parameters.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()) ) for key in items]
+    kd = [:( $key = $Parameters.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()) ) for key in items]
     kdblock = Expr(:block, kd...)
     expr = quote
         $suitecase_instance = $suitecase # handles if suitecase is not a variable but an expression
@@ -654,7 +654,7 @@ macro pack(args)
     suitecase, items = args.args
     items = isa(items, Symbol) ? [items] : items.args
     suitecase_instance = gensym()
-    kd = [:( Parameters.pack!($suitecase_instance, Val{$(Expr(:quote, key))}(), $key) ) for key in items]
+    kd = [:( $Parameters.pack!($suitecase_instance, Val{$(Expr(:quote, key))}(), $key) ) for key in items]
     kdblock = Expr(:block, kd...)
     expr = quote
         $suitecase_instance = $suitecase # handles if suitecase is not a variable but an expression
