@@ -492,3 +492,25 @@ eval(parse("""
 V06(a=88)
 V06(a=88, b=[1], c=["a"])
 V06(88, [1], ["a"])
+
+### test escaping
+module TestModule
+
+using Parameters: @unpack, @pack, @with_kw
+
+@with_kw mutable struct TestStruct
+    x::Int = 1
+    y::Float64 = 42.0
+end
+
+function test_function(z::TestStruct)
+    @unpack x, y = z
+    y += x
+    @pack z = y
+    z
+end
+
+end
+
+z2 = TestModule.test_function(TestModule.TestStruct(; y = 9.0))
+@test z2.x == 1 && z2.y == 10.0
