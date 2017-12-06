@@ -5,8 +5,6 @@
 
 [![Build Status](https://travis-ci.org/mauro3/Parameters.jl.svg?branch=master)](https://travis-ci.org/mauro3/Parameters.jl)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/mauro3/Parameters.jl?branch=master&svg=true)](https://ci.appveyor.com/project/mauro3/parameters-jl/branch/master)
-
-[![Parameters](http://pkg.julialang.org/badges/Parameters_0.5.svg)](http://pkg.julialang.org/?pkg=Parameters&ver=0.5)
 [![Parameters](http://pkg.julialang.org/badges/Parameters_0.6.svg)](http://pkg.julialang.org/?pkg=Parameters)
 
 This is a package I use to handle numerical-model parameters, thus the
