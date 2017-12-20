@@ -183,9 +183,13 @@ reconstruct(pp; kws...) = reconstruct(pp, kws)
 # end
 _unpack(binding, fields) = Expr(:block, [:($f = $binding.$f) for f in fields]...)
 # Pack fields back into binding using reconstruct:
-function _pack(binding, fields)
-    kws = [Expr(:kw, f, f) for f in fields]
-    :($binding = $Parameters.reconstruct($binding, $(kws...)) )
+function _pack_mutable(binding, fields)
+    e = Expr(:block, [:($binding.$f = $f) for f in fields]...)
+    push!(e.args, binding)
+    e
+end
+function _pack_immutable(binding, fields)
+    error("Cannot pack an immutable.  Consider using `reconstruct` (or file a feature request).")
 end
 
 const typedef_head = VERSION >= v"0.7.0-DEV.1263" ? :struct : :type
@@ -239,6 +243,7 @@ function with_kw(typedef, mod::Module, withshow=true)
 
     # parse a few things
     tn = typename(typedef) # the name of the type
+    ismutable = typedef.args[1]
     # Returns M{...} (removes any supertypes)
     if isa(typedef.args[2], Symbol)
         typparas = Any[]
@@ -449,7 +454,8 @@ function with_kw(typedef, mod::Module, withshow=true)
 
     # (un)pack macro from https://groups.google.com/d/msg/julia-users/IQS2mT1ITwU/hDtlV7K1elsJ
     unpack_name = Symbol("unpack_"*string(tn))
-    pack_name = Symbol("pack_"*string(tn))
+    pack_name = Symbol("pack!_"*string(tn))
+    pack_name_depr = Symbol("pack_"*string(tn))
     showfn = if withshow
         :(function Base.show(io::IO, p::$tn)
                 # just dumping seems to give ok output, in particular for big data-sets:
@@ -458,6 +464,7 @@ function with_kw(typedef, mod::Module, withshow=true)
     else
         :nothing
     end
+    _pack = ismutable ? :_pack_mutable : :_pack_immutable
 
     # Finish up
     quote
@@ -470,7 +477,11 @@ function with_kw(typedef, mod::Module, withshow=true)
             esc($Parameters._unpack(ex, $unpack_vars))
         end
         macro $pack_name(ex)
-            esc($Parameters._pack(ex, $unpack_vars))
+            esc($Parameters.$(_pack)(ex, $unpack_vars))
+        end
+        macro $pack_name_depr(ex)
+            Base.depwarn("The macro `@pack_A` is deprecated, use `@pack!_A`", $(QuoteNode(pack_name_depr)) )
+            esc($Parameters.$(_pack)(ex, $unpack_vars))
         end
         $tn
     end

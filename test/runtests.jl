@@ -252,14 +252,33 @@ let
     r = 1
     a = 2
     c = 3
-    @pack_P1 mt
-    @test mt===P1(r=1, a=2, c=3)
+    @test_throws ErrorException eval(:(@pack!_P1 mt))
+end
+
+@with_kw mutable struct P1m
+    r::Int
+    c
+    a::Float64
+end
+
+let
+    mt = P1m(r=4, a=5, c=6)
+    @unpack_P1 mt
+    @test r===4
+    @test c===6
+    @test a===5.
+    r = 1
+    a = 2
+    c = 3
+    @pack!_P1m mt
     if Int==Int64
-        @test string(mt) == "P1\n  r: Int64 1\n  c: Int64 3\n  a: Float64 2.0\n"
+        @test string(mt) == "P1m\n  r: Int64 1\n  c: Int64 3\n  a: Float64 2.0\n"
     else
-        @test string(mt) == "P1\n  r: Int32 1\n  c: Int32 3\n  a: Float64 2.0\n"
+        @test string(mt) == "P1m\n  r: Int32 1\n  c: Int32 3\n  a: Float64 2.0\n"
     end
 end
+
+
 
 ### Assertions
 @with_kw struct MT12
@@ -274,9 +293,11 @@ end
 
 # only asserts allowed if no inner constructors
 @test_throws ErrorException Parameters.with_kw(:(struct MT13
-                                                 a=5; @assert a>=5
-                                                 MT13(a) = new(8)
-                                                 end), @__MODULE__)
+                                                   a=5;
+                                                   @assert a>=5
+                                                   MT13(a) = new(8)
+                                                 end),
+                                               @__MODULE__)
 
 # issue #29: assertions with parameterized types
 @with_kw struct MT12a{R}
