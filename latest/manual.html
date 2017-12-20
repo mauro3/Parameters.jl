@@ -81,12 +81,12 @@ d # Dict{Symbol,Any}(:a=&gt;5.0,:c=&gt;&quot;Hi!&quot;)</code></pre><h2><a class
 @inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
 @inline unpack{S&lt;:AbstractString,k}(x::Associative{S}, ::Val{k}) = x[string(k)]</code></pre><p>The <code>Parameters.pack!</code> function is invoked to pack one entity into some <code>DataType</code> and has signature:</p><p><code>pack!(dt::Any, ::Val{field}, value) -&gt; value</code></p><p>Two definitions are included in the package to pack into a composite type or into a dictionary with Symbol or string keys:</p><pre><code class="language-none">@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
 @inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
-@inline pack!{S&lt;:AbstractString,k}(x::Associative{S}, ::Val{k}, val) = x[string(k)]=val</code></pre><p>More methods can be added to <code>unpack</code> and <code>pack!</code> to allow for specialized packing of datatypes.</p><h2><a class="nav-anchor" id="The-type-specific-(un)pack-macros-(somewhat-dangerous)-1" href="#The-type-specific-(un)pack-macros-(somewhat-dangerous)-1">The type-specific (un)pack macros (somewhat dangerous)</a></h2><p>The <code>@with_kw</code> macro automatically produces type-specific (un-)pack macros of form <code>@unpack_TypeName</code> which unpack all fields:</p><pre><code class="language-julia">function fn(var, pa::Para)
+@inline pack!{S&lt;:AbstractString,k}(x::Associative{S}, ::Val{k}, val) = x[string(k)]=val</code></pre><p>More methods can be added to <code>unpack</code> and <code>pack!</code> to allow for specialized packing of datatypes.</p><h2><a class="nav-anchor" id="The-type-specific-(un)pack-macros-(somewhat-dangerous)-1" href="#The-type-specific-(un)pack-macros-(somewhat-dangerous)-1">The type-specific (un)pack macros (somewhat dangerous)</a></h2><p>The <code>@with_kw</code> macro automatically produces type-specific (un-)pack macros of form <code>@unpack_TypeName</code> and <code>@pack!_TypeName</code> which unpack/pack all fields:</p><pre><code class="language-julia">function fn(var, pa::Para)
     @unpack_Para pa # the macro is constructed during the @with_kw
                     # and called @unpack_*
     out = var + a + b
     b = 77
-    @pack_Para pa
+    @pack!_Para pa # only works with mutables
     return out, pa
 end
 
