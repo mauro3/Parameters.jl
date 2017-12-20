@@ -206,14 +206,14 @@ specialized packing of datatypes.
 ## The type-specific (un)pack macros (somewhat dangerous)
 
 The `@with_kw` macro automatically produces type-specific (un-)pack
-macros of form `@unpack_TypeName` which unpack all fields:
+macros of form `@unpack_TypeName` and `@pack!_TypeName` which unpack/pack all fields:
 ```julia
 function fn(var, pa::Para)
     @unpack_Para pa # the macro is constructed during the @with_kw
                     # and called @unpack_*
     out = var + a + b
     b = 77
-    @pack_Para pa
+    @pack!_Para pa # only works with mutables
     return out, pa
 end
 
