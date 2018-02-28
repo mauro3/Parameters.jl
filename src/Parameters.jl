@@ -10,6 +10,7 @@ __precompile__()
 module Parameters
 import Base: @__doc__
 import DataStructures: OrderedDict
+using Compat
 
 export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack
 
@@ -151,7 +152,7 @@ end
 
 """
 Make a new instance of a type with the same values as
-the input type except for the fields given in the associative
+the input type except for the fields given in the AbstractDict
 second argument or as keywords.
 
 ```julia
@@ -161,11 +162,11 @@ b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 ```
 """
 function reconstruct(pp::T, di) where T
-    di = !isa(di, Associative) ? Dict(di) : di
+    di = !isa(di, AbstractDict) ? Dict(di) : di
     ns = fieldnames(T)
-    args = Vector{Any}(length(ns))
+    args = []
     for (i,n) in enumerate(ns)
-        args[i] = get(di, n, getfield(pp, n))
+        push!(args, get(di, n, getfield(pp, n)))
     end
     T(args...)
 end
@@ -218,7 +219,7 @@ end
 MM(r::R,a::R) where {R} = MM{R}(r,a) # default outer positional constructor
 MM(;r=1000,a=error("no default for a")) =  MM(r,a) # outer kw, so no type-paras are needed when calling
 MM(m::MM; kws...) = reconstruct(mm,kws)
-MM(m::MM, di::Union{Associative, Tuple{Symbol,Any}}) = reconstruct(mm, di)
+MM(m::MM, di::Union{AbstractDict, Tuple{Symbol,Any}}) = reconstruct(mm, di)
 macro unpack_MM(varname)
     esc(quote
     r = varname.r
@@ -446,9 +447,9 @@ function with_kw(typedef, mod::Module, withshow=true)
     ###
     outer_copy = quote
         $tn(pp::$tn; kws... ) = reconstruct(pp, kws)
-        # $tn(pp::$tn, di::Union(Associative,Vararg{Tuple{Symbol,Any}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
-        # $tn(pp::$tn, di::Union(Associative, Tuple{Vararg{Tuple{Symbol, Any}}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
-        $tn(pp::$tn, di::Associative ) = reconstruct(pp, di)
+        # $tn(pp::$tn, di::Union(AbstractDict,Vararg{Tuple{Symbol,Any}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
+        # $tn(pp::$tn, di::Union(AbstractDict, Tuple{Vararg{Tuple{Symbol, Any}}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
+        $tn(pp::$tn, di::$Parameters.AbstractDict) = reconstruct(pp, di)
         $tn(pp::$tn, di::Vararg{Tuple{Symbol,Any}} ) = reconstruct(pp, di)
     end
 
@@ -554,8 +555,8 @@ Three definitions are included in the package to unpack a composite type
 or a dictionary with Symbol or string keys:
 ```
 @inline unpack{f}(x, ::Val{f}) = getfield(x, f)
-@inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
-@inline unpack{S<:AbstractString,k}(x::Associative{S}, ::Val{k}) = x[string(k)]
+@inline unpack{k}(x::AbstractDict{Symbol}, ::Val{k}) = x[k]
+@inline unpack{S<:AbstractString,k}(x::AbstractDict{S}, ::Val{k}) = x[string(k)]
 ```
 
 More methods can be added to allow for specialized unpacking of other datatypes.
@@ -564,8 +565,8 @@ See also `pack!`.
 """
 function unpack end
 @inline unpack(x, ::Val{f}) where {f} = getfield(x, f)
-@inline unpack(x::Associative{Symbol}, ::Val{k}) where {k} = x[k]
-@inline unpack(x::Associative{<:AbstractString}, ::Val{k}) where {k} = x[string(k)]
+@inline unpack(x::AbstractDict{Symbol}, ::Val{k}) where {k} = x[k]
+@inline unpack(x::AbstractDict{<:AbstractString}, ::Val{k}) where {k} = x[string(k)]
 
 """
 This function is invoked to pack one entity into some DataType and has
@@ -581,8 +582,8 @@ type or into a dictionary with Symbol or string keys:
 
 ```
 @inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
-@inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
-@inline pack!{S<:AbstractString,k}(x::Associative{S}, ::Val{k}, val) = x[string(k)]=val
+@inline pack!{k}(x::AbstractDict{Symbol}, ::Val{k}, val) = x[k]=val
+@inline pack!{S<:AbstractString,k}(x::AbstractDict{S}, ::Val{k}, val) = x[string(k)]=val
 ```
 
 More methods can be added to allow for specialized packing of other
@@ -592,8 +593,8 @@ See also `unpack`.
 """
 function pack! end
 @inline pack!(x, ::Val{f}, val) where {f} = setfield!(x, f, val)
-@inline pack!(x::Associative{Symbol}, ::Val{k}, val) where {k} = x[k]=val
-@inline pack!(x::Associative{<:AbstractString}, ::Val{k}, val) where {k} = x[string(k)]=val
+@inline pack!(x::AbstractDict{Symbol}, ::Val{k}, val) where {k} = x[k]=val
+@inline pack!(x::AbstractDict{<:AbstractString}, ::Val{k}, val) where {k} = x[string(k)]=val
 
 """
 Unpacks fields/keys from a composite type or a `Dict{Symbol}` into variables

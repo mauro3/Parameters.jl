@@ -1,6 +1,7 @@
 using Parameters
-using Base.Test
 using Compat
+using Compat.Test
+using Compat.Markdown
 
 # parameters.jl
 ###############
@@ -222,19 +223,19 @@ end
 @test MT10{Float64}(b=1, c=1).c==1
 
 # binding outside variables
-a = 7
-b = [1,2]
+a_ = 7
+b_ = [1,2]
 @with_kw struct MT11
-    aa::Int=a  # a::Int=a is not possible as the outside a gets shadowed
-    bb::Vector{Int}=b
+    a::Int=a_  # a::Int=a is not possible as the outside a gets shadowed
+    b::Vector{Int}=b_
 end
 m = MT11()
-@test m.aa===a
-@test m.bb===b
-a = 5
-b[1] = 2
-@test m.aa===7
-@test m.bb[1]==2
+@test m.a===a_
+@test m.b===b_
+a_ = 5
+b_[1] = 2
+@test m.a===7
+@test m.b[1]==2
 
 ## (Un)pack
 @with_kw struct P1
@@ -252,7 +253,11 @@ let
     r = 1
     a = 2
     c = 3
-    @test_throws ErrorException eval(:(@pack!_P1 mt))
+    if VERSION >= v"0.7.0-DEV"
+        @test_throws LoadError eval(:(@pack!_P1 mt))
+    else
+        @test_throws ErrorException eval(:(@pack!_P1 mt))
+    end
 end
 
 @with_kw mutable struct P1m
@@ -277,8 +282,6 @@ let
         @test string(mt) == "P1m\n  r: Int32 1\n  c: Int32 3\n  a: Float64 2.0\n"
     end
 end
-
-
 
 ### Assertions
 @with_kw struct MT12
@@ -317,11 +320,11 @@ end
 @test_throws ErrorException I10()
 @test I10(1,2,3)==I10{Int}(1,2,3)
 @test_throws MethodError I10(a=10) # typeof(a)!=typeof(c)
-a =  I10(a="asd")
-b = I10{String}("asd",10,"aaa")
-for fn in fieldnames(typeof(a))
+a_ = I10(a="asd")
+b_ = I10{String}("asd",10,"aaa")
+for fn in fieldnames(typeof(a_))
     # complicated testing because of mutable T
-    @test getfield(a, fn)==getfield(b, fn)
+    @test getfield(a_, fn)==getfield(b_, fn)
 end
 
 @with_kw struct I10a{T}
@@ -367,7 +370,6 @@ d = A(4,7.0,"Hi!")
 @unpack a, c = d
 @test a == 4 #true
 @test c == "Hi!" #true
-
 
 ## Packing
 
@@ -503,13 +505,11 @@ end
 end), @__MODULE__)
 
 ### New 0.6 type system
-eval(parse("""
-    @with_kw struct V06{T} @deftype Array{I,1} where I<:Integer
-        a::T
-        b = [10]
-        c::Vector{S} where S<:AbstractString=["aaa"]
-    end
-    """))
+@with_kw struct V06{T} @deftype Array{I,1} where I<:Integer
+    a::T
+    b = [10]
+    c::Vector{S} where S<:AbstractString=["aaa"]
+end
 V06(a=88)
 V06(a=88, b=[1], c=["a"])
 V06(88, [1], ["a"])
