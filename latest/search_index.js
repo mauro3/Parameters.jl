@@ -45,7 +45,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Parameters manual",
     "title": "(Un)pack macros",
     "category": "section",
-    "text": "When working with parameters, or otherwise, it is often convenient to unpack (and pack) some or all of the fields of a type.  This is often the case when passed into a function.The preferred to do this is using the @unpack and @pack macros which are generic and also work with non-@with_kw types and dictionaries (and can be customized for other types too).  Continuing with the Para type defined above:function fn2(var, pa::Para)\n    @unpack a, b = pa # equivalent to: a,b = pa.a,pa.b\n    out = var + a + b\n    b = 77\n    @pack pa = b # equivalent to: pa.b = b\n    return out, pa\nend\n\nout, pa = fn1(7, pa)Example with a dictionary:d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>\"Hi!\")\n@unpack a, c = d\na == 5.0 #true\nc == \"Hi!\" #true\n\nd = Dict{Symbol,Any}()\n@pack d = a, c\nd # Dict{Symbol,Any}(:a=>5.0,:c=>\"Hi!\")"
+    "text": "When working with parameters, or otherwise, it is often convenient to unpack (and pack) some or all of the fields of a type.  This is often the case when passed into a function.The preferred to do this is using the @unpack and @pack macros which are generic and also work with non-@with_kw types, modules, and dictionaries (and can be customized for other types too, see next section).  Continuing with the Para type defined above:function fn2(var, pa::Para)\n    @unpack a, b = pa # equivalent to: a,b = pa.a,pa.b\n    out = var + a + b\n    b = 77\n    @pack pa = b # equivalent to: pa.b = b\n    return out, pa\nend\n\nout, pa = fn1(7, pa)Example with a dictionary:d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>\"Hi!\")\n@unpack a, c = d\na == 5.0 #true\nc == \"Hi!\" #true\n\nd = Dict{Symbol,Any}()\n@pack d = a, c\nd # Dict{Symbol,Any}(:a=>5.0,:c=>\"Hi!\")"
 },
 
 {
@@ -76,7 +76,7 @@ var documenterSearchIndex = {"docs": [
     "location": "api.html#Parameters.reconstruct-Union{Tuple{T,Any}, Tuple{T}} where T",
     "page": "API",
     "title": "Parameters.reconstruct",
-    "category": "Method",
+    "category": "method",
     "text": "Make a new instance of a type with the same values as the input type except for the fields given in the AbstractDict second argument or as keywords.\n\nstruct A; a; b end\na = A(3,4)\nb = reconstruct(a, [(:b, 99)]) # ==A(3,99)\n\n\n\n"
 },
 
@@ -84,7 +84,7 @@ var documenterSearchIndex = {"docs": [
     "location": "api.html#Parameters.type2dict-Tuple{Any}",
     "page": "API",
     "title": "Parameters.type2dict",
-    "category": "Method",
+    "category": "method",
     "text": "Transforms a type-instance into a dictionary.\n\njulia> type T\n           a\n           b\n       end\n\njulia> type2dict(T(4,5))\nDict{Symbol,Any} with 2 entries:\n  :a => 4\n  :b => 5\n\n\n\n"
 },
 
@@ -92,7 +92,7 @@ var documenterSearchIndex = {"docs": [
     "location": "api.html#Parameters.with_kw",
     "page": "API",
     "title": "Parameters.with_kw",
-    "category": "Function",
+    "category": "function",
     "text": "This function is called by the @with_kw macro and does the syntax transformation from:\n\n@with_kw struct MM{R}\n    r::R = 1000.\n    a::R\nend\n\ninto\n\nstruct MM{R}\n    r::R\n    a::R\n    MM{R}(r,a) where {R} = new(r,a)\n    MM{R}(;r=1000., a=error(\"no default for a\")) where {R} = MM{R}(r,a) # inner kw, type-paras are required when calling\nend\nMM(r::R,a::R) where {R} = MM{R}(r,a) # default outer positional constructor\nMM(;r=1000,a=error(\"no default for a\")) =  MM(r,a) # outer kw, so no type-paras are needed when calling\nMM(m::MM; kws...) = reconstruct(mm,kws)\nMM(m::MM, di::Union{AbstractDict, Tuple{Symbol,Any}}) = reconstruct(mm, di)\nmacro unpack_MM(varname)\n    esc(quote\n    r = varname.r\n    a = varname.a\n    end)\nend\nmacro pack_MM(varname)\n    esc(quote\n    varname = Parameters.reconstruct(varname,r=r,a=a)\n    end)\nend\n\n\n\n"
 },
 
@@ -100,7 +100,7 @@ var documenterSearchIndex = {"docs": [
     "location": "api.html#Parameters.@pack-Tuple{Any}",
     "page": "API",
     "title": "Parameters.@pack",
-    "category": "Macro",
+    "category": "macro",
     "text": "Packs variables into a composite type or a Dict{Symbol}\n\n@pack dict_or_typeinstance = a, b, c\n\nExample with dict:\n\na = 5.0\nc = \"Hi!\"\nd = Dict{Symbol,Any}()\n@pack d = a, c\nd # Dict{Symbol,Any}(:a=>5.0,:c=>\"Hi!\")\n\nExample with type:\n\na = 99\nc = \"HaHa\"\nmutable struct A; a; b; c; end\nd = A(4,7.0,\"Hi\")\n@pack d = a, c\nd.a == 99 #true\nd.c == \"HaHa\" #true\n\n\n\n"
 },
 
@@ -108,7 +108,7 @@ var documenterSearchIndex = {"docs": [
     "location": "api.html#Parameters.@unpack-Tuple{Any}",
     "page": "API",
     "title": "Parameters.@unpack",
-    "category": "Macro",
+    "category": "macro",
     "text": "Unpacks fields/keys from a composite type or a Dict{Symbol} into variables\n\n@unpack a, b, c = dict_or_typeinstance\n\nExample with dict:\n\nd = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>\"Hi!\")\n@unpack a, c = d\na == 5.0 #true\nc == \"Hi!\" #true\n\nExample with type:\n\nstruct A; a; b; c; end\nd = A(4,7.0,\"Hi\")\n@unpack a, c = d\na == 4 #true\nc == \"Hi\" #true\n\n\n\n"
 },
 
@@ -116,7 +116,7 @@ var documenterSearchIndex = {"docs": [
     "location": "api.html#Parameters.@with_kw-Tuple{Any}",
     "page": "API",
     "title": "Parameters.@with_kw",
-    "category": "Macro",
+    "category": "macro",
     "text": "Macro which allows default values for field types and a few other features.\n\nBasic usage:\n\n@with_kw struct MM{R}\n    r::R = 1000.\n    a::Int = 4\nend\n\nFor more details see manual.\n\n\n\n"
 },
 
@@ -124,7 +124,7 @@ var documenterSearchIndex = {"docs": [
     "location": "api.html#Parameters.@with_kw_noshow-Tuple{Any}",
     "page": "API",
     "title": "Parameters.@with_kw_noshow",
-    "category": "Macro",
+    "category": "macro",
     "text": "As @with_kw but does not define a show method to avoid annoying redefinition warnings.\n\n@with_kw_noshow struct MM{R}\n    r::R = 1000.\n    a::Int = 4\nend\n\nFor more details see manual.\n\n\n\n"
 },
 
@@ -132,7 +132,7 @@ var documenterSearchIndex = {"docs": [
     "location": "api.html#Parameters.pack!",
     "page": "API",
     "title": "Parameters.pack!",
-    "category": "Function",
+    "category": "function",
     "text": "This function is invoked to pack one entity into some DataType and has signature:\n\npack!(dt::Any, ::Val{field}, value) -> value\n\nNote that this means the only symbols or immutable field-descriptors are allowed, as they are used as type parameter in Val.\n\nTwo definitions are included in the package to pack into a composite type or into a dictionary with Symbol or string keys:\n\n@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)\n@inline pack!{k}(x::AbstractDict{Symbol}, ::Val{k}, val) = x[k]=val\n@inline pack!{S<:AbstractString,k}(x::AbstractDict{S}, ::Val{k}, val) = x[string(k)]=val\n\nMore methods can be added to allow for specialized packing of other datatypes.\n\nSee also unpack.\n\n\n\n"
 },
 
@@ -140,7 +140,7 @@ var documenterSearchIndex = {"docs": [
     "location": "api.html#Parameters.unpack",
     "page": "API",
     "title": "Parameters.unpack",
-    "category": "Function",
+    "category": "function",
     "text": "This function is invoked to unpack one field/entry of some DataType dt and has signature:\n\nunpack(dt::Any, ::Val{field}) -> value of field\n\nThe field is the symbol of the assigned variable.\n\nThree definitions are included in the package to unpack a composite type or a dictionary with Symbol or string keys:\n\n@inline unpack{f}(x, ::Val{f}) = getfield(x, f)\n@inline unpack{k}(x::AbstractDict{Symbol}, ::Val{k}) = x[k]\n@inline unpack{S<:AbstractString,k}(x::AbstractDict{S}, ::Val{k}) = x[string(k)]\n\nMore methods can be added to allow for specialized unpacking of other datatypes.\n\nSee also pack!.\n\n\n\n"
 },
 
