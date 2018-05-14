@@ -135,8 +135,8 @@ unpack (and pack) some or all of the fields of a type.  This is often
 the case when passed into a function.
 
 The preferred to do this is using the [`@unpack`](@ref) and [`@pack`](@ref) macros
-which are generic and also work with non-`@with_kw` types and
-dictionaries (and can be customized for other types too).  Continuing
+which are generic and also work with non-`@with_kw` types, modules, and
+dictionaries (and can be customized for other types too, see next section).  Continuing
 with the `Para` type defined above:
 
 ```julia
@@ -164,8 +164,6 @@ d = Dict{Symbol,Any}()
 @pack d = a, c
 d # Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
 ```
-
-
 
 ## Customization of `@unpack` and `@pack`
 

@@ -24,10 +24,12 @@ end
 Base.start(lns::Lines) = 1
 function Base.next(lns::Lines, nr)
     for i=nr:length(lns.block.args)
-        if isa(lns.block.args[i], LineNumberNode)
+        if lns.block.args[i] isa LineNumberNode
             continue
         end
-        if isa(lns.block.args[i], Symbol) || !(lns.block.args[i].head==:line)
+        if ( lns.block.args[i] isa Symbol
+             || lns.block.args[i] isa String # doc-string
+             || !(lns.block.args[i].head==:line))
             return lns.block.args[i], i+1
         end
     end
@@ -44,10 +46,10 @@ end
 function Base.setindex!(lns::Lines, val, ind)
     ii = 1
     for i=1:length(lns.block.args)
-        if isa(lns.block.args[i], LineNumberNode)
+        if lns.block.args[i] isa LineNumberNode
             continue
         end
-        if isa(lns.block.args[i], Symbol) || !(lns.block.args[i].head==:line)
+        if lns.block.args[i] isa Symbol || !(lns.block.args[i].head==:line)
             if ind==ii
                 lns.block.args[i] = val
                 return nothing
@@ -67,7 +69,7 @@ function keep_only_typparas(args, typparas)
     args = deepcopy(args)
     typparas_ = map(stripsubtypes, typparas)
     for i=1:length(args)
-        isa(args[i],Symbol) && continue
+        isa(args[i], Symbol) && continue
         @assert args[i].head==:(::)
         T = args[i].args[2]
         if !(symbol_in(typparas_, T))
@@ -91,11 +93,11 @@ symbol_in(s::Vector, ex) = any(map(ss->symbol_in(ss, ex), s))
 
 # Returns the name of the type as Symbol
 function typename(typedef::Expr)
-    if isa(typedef.args[2], Symbol)
+    if typedef.args[2] isa Symbol
         return typedef.args[2]
-    elseif isa(typedef.args[2].args[1], Symbol)
+    elseif typedef.args[2].args[1] isa Symbol
         return typedef.args[2].args[1]
-    elseif isa(typedef.args[2].args[1].args[1], Symbol)
+    elseif typedef.args[2].args[1].args[1] isa Symbol
         return typedef.args[2].args[1].args[1]
     else
         error("Could not parse type-head from: $typedef")
@@ -118,7 +120,7 @@ function check_inner_constructor(l)
     if length(fnhead.args)==1
         error("No inner constructors with zero positional arguments allowed!")
     elseif (length(fnhead.args)==2 #1<length(fnhead.args)<=3
-            && isa(fnhead.args[2], Expr)
+            && fnhead.args[2] isa Expr
             && fnhead.args[2].head==:parameters)
         error("No inner constructors with zero positional arguments plus keyword arguments allowed!")
     end
@@ -246,10 +248,10 @@ function with_kw(typedef, mod::Module, withshow=true)
     tn = typename(typedef) # the name of the type
     ismutable = typedef.args[1]
     # Returns M{...} (removes any supertypes)
-    if isa(typedef.args[2], Symbol)
+    if typedef.args[2] isa Symbol
         typparas = Any[]
     elseif typedef.args[2].head==:<:
-        if isa(typedef.args[2].args[1],Symbol)
+        if typedef.args[2].args[1] isa Symbol
             typparas = Any[]
         else
             typparas = typedef.args[2].args[1].args[2:end]
@@ -265,7 +267,7 @@ function with_kw(typedef, mod::Module, withshow=true)
     end
     # default type @deftype
     l, i = next(lns, start(lns))
-    if isa(l, Expr) && l.head == :macrocall && l.args[1] == Symbol("@deftype")
+    if l isa Expr && l.head == :macrocall && l.args[1] == Symbol("@deftype")
         has_deftyp = true
         if length(l.args) != (2 + macro_hidden_nargs)
             error("Malformed `@deftype` line $l")
@@ -287,7 +289,7 @@ function with_kw(typedef, mod::Module, withshow=true)
             push!(lns2, l)
             continue
         end
-        if isa(l, Symbol)
+        if l isa Symbol || l isa String
             push!(lns2, l)
             continue
         end
@@ -320,7 +322,7 @@ function with_kw(typedef, mod::Module, withshow=true)
             # ignore @deftype line
             continue
         end
-        if isa(l, Symbol)  # no default value and no type annotation
+        if l isa Symbol  # no default value and no type annotation
             if has_deftyp
                 push!(fielddefs.args, :($l::$deftyp))
             else
@@ -331,14 +333,16 @@ function with_kw(typedef, mod::Module, withshow=true)
             kws[sym] = :(error($err1str * $syms * $err2str))
             # unwrap-macro
             push!(unpack_vars, sym)
+        elseif l isa String # doc-string
+            push!(fielddefs.args, l)
         elseif l.head==:(=)  # default value and with or without type annotation
-            if isa(l.args[1], Expr) && (l.args[1].head==:call || # inner constructor
+            if l.args[1] isa Expr && (l.args[1].head==:call || # inner constructor
                                         l.args[1].head==:where && l.args[1].args[1].head==:call) # inner constructor with `where`
                 check_inner_constructor(l)
                 push!(inner_constructors, l)
             else
                 fld = l.args[1]
-                if isa(fld, Symbol) && has_deftyp # no type annotation
+                if fld isa Symbol && has_deftyp # no type annotation
                     fld = :($fld::$deftyp)
                 end
                 push!(fielddefs.args, fld)

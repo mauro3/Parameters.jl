@@ -9,10 +9,18 @@ using Compat.Markdown
 "Test documentation"
 @with_kw struct MT1
     r::Int = 4
+    "A field"
     c = "sdaf"
 end
-MT1()
 @test "Test documentation\n" == Markdown.plain(@doc MT1)
+# https://github.com/JuliaLang/julia/issues/27092 means this does not work:
+# @test "A field\n" == Markdown.plain(@doc MT1.c)
+if VERSION<v"0.7-"
+    @test "A field\n" == Markdown.plain(Base.Docs.fielddoc(MT1, :c))
+else
+    @eval using REPL
+    @test "A field\n" == Markdown.plain(REPL.fielddoc(MT1, :c))
+end
 
 # parameter-less
 @with_kw_noshow mutable struct MT2
