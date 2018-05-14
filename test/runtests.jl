@@ -3,8 +3,18 @@ using Compat
 using Compat.Test
 using Compat.Markdown
 
-# parameters.jl
-###############
+# misc
+if VERSION>=v"0.7-"
+    a8679 = @eval (a=1, b=2)
+    ra8679 = @eval (a=1, b=44)
+    @test ra8679 == reconstruct(a8679, b=44)
+end
+
+a8679 = Dict(:a=>1, :b=>2)
+@test Dict(:a=>1, :b=>44) == reconstruct(a8679, b=44)
+
+# @with_kw
+##########
 
 "Test documentation"
 @with_kw struct MT1
@@ -369,6 +379,14 @@ d = Dict("a"=>5.0,"b"=>2,"c"=>"Hi!")
 @unpack a, c = d
 @test a == 5.0 #true
 @test c == "Hi!" #true
+
+# Example with named tuple
+if VERSION>=v"0.7-"
+    @eval d = (a=5.0, b=2, c="Hi!")
+    @unpack a, c = d
+    @test a == 5.0 #true
+    @test c == "Hi!" #true
+end
 
 # TODO add test with non String string
 

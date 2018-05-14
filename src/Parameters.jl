@@ -155,7 +155,7 @@ end
 """
 Make a new instance of a type with the same values as
 the input type except for the fields given in the AbstractDict
-second argument or as keywords.
+second argument or as keywords.  Necessitates that the type has a key-word constructor; but also works for Dicts and
 
 ```julia
 struct A; a; b end
@@ -165,12 +165,23 @@ b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
 """
 function reconstruct(pp::T, di) where T
     di = !isa(di, AbstractDict) ? Dict(di) : di
-    ns = fieldnames(T)
-    args = []
-    for (i,n) in enumerate(ns)
-        push!(args, get(di, n, getfield(pp, n)))
+    if pp isa AbstractDict
+        for (k,v) in di
+            pp[k] = v
+        end
+        return pp
+    else
+        ns = fieldnames(T)
+        args = []
+        for (i,n) in enumerate(ns)
+            push!(args, get(di, n, getfield(pp, n)))
+        end
+        if VERSION >= v"0.7.0-"
+            return pp isa NamedTuple ? T(Tuple(args)) : T(args...)
+        else
+            return T(args...)
+        end
     end
-    T(args...)
 end
 reconstruct(pp; kws...) = reconstruct(pp, kws)
 
