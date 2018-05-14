@@ -77,7 +77,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "Parameters.reconstruct",
     "category": "method",
-    "text": "Make a new instance of a type with the same values as the input type except for the fields given in the AbstractDict second argument or as keywords.\n\nstruct A; a; b end\na = A(3,4)\nb = reconstruct(a, [(:b, 99)]) # ==A(3,99)\n\n\n\n"
+    "text": "Make a new instance of a type with the same values as the input type except for the fields given in the AbstractDict second argument or as keywords.  Necessitates that the type has a key-word constructor; but also works for Dicts and\n\nstruct A; a; b end\na = A(3,4)\nb = reconstruct(a, [(:b, 99)]) # ==A(3,99)\n\n\n\n"
 },
 
 {
