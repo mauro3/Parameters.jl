@@ -8,10 +8,20 @@ if VERSION>=v"0.7-"
     a8679 = @eval (a=1, b=2)
     ra8679 = @eval (a=1, b=44)
     @test ra8679 == reconstruct(a8679, b=44)
+    @test_throws ErrorException reconstruct(a8679, c=44)
 end
 
 a8679 = Dict(:a=>1, :b=>2)
 @test Dict(:a=>1, :b=>44) == reconstruct(a8679, b=44)
+@test_throws ErrorException reconstruct(a8679, c=44)
+
+struct A8679
+    a
+    b
+end
+a8679 = A8679(1, 2)
+@test A8679(1, 44) == reconstruct(a8679, b=44)
+@test_throws ErrorException reconstruct(a8679, c=44)
 
 # @with_kw
 ##########

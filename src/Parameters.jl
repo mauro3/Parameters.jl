@@ -153,20 +153,31 @@ function type2dict(dt)
 end
 
 """
-Make a new instance of a type with the same values as
-the input type except for the fields given in the AbstractDict
-second argument or as keywords.  Necessitates that the type has a key-word constructor; but also works for Dicts and
+Make a new instance of a type with the same values as the input type
+except for the fields given in the AbstractDict second argument or as
+keywords.  Works for types, Dicts, and NamedTuples.
 
-```julia
-struct A; a; b end
-a = A(3,4)
-b = reconstruct(a, [(:b, 99)]) # ==A(3,99)
+Note: this is not very performant.  Check Setfield.jl for a faster &
+nicer implementation.
+
+```jldoctest
+julia> struct A
+           a
+           b
+       end
+
+julia> a = A(3,4)
+A(3, 4)
+
+julia> b = reconstruct(a, b=99)
+A(3, 99)
 ```
 """
 function reconstruct(pp::T, di) where T
-    di = !isa(di, AbstractDict) ? Dict(di) : di
+    di = !isa(di, AbstractDict) ? Dict(di) : copy(di)
     if pp isa AbstractDict
         for (k,v) in di
+            !haskey(pp, k) && error("Field $k not in type $T")
             pp[k] = v
         end
         return pp
@@ -174,8 +185,9 @@ function reconstruct(pp::T, di) where T
         ns = fieldnames(T)
         args = []
         for (i,n) in enumerate(ns)
-            push!(args, get(di, n, getfield(pp, n)))
+            push!(args, pop!(di, n, getfield(pp, n)))
         end
+        length(di)!=0 && error("Fields $(keys(di)) not in type $T")
         if VERSION >= v"0.7.0-"
             return pp isa NamedTuple ? T(Tuple(args)) : T(args...)
         else
