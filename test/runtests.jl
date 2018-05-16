@@ -431,48 +431,39 @@ d = A(4,7.0,"Hi")
 
 # older tests ported
 mutable struct UP1
-    a
-    b
+    aUP1
+    bUP1
 end
 uu = UP1(1,2)
-@test_throws ErrorException @unpack c = uu
-@test_throws ErrorException @unpack a, c = uu
+@test_throws ErrorException @unpack cUP1 = uu
+@test_throws ErrorException @unpack aUP1, cUP1 = uu
 
-a, b = 0, 0
-@unpack a = uu
-@test a==1
-@test b==0
-a, b = 0, 0
-@unpack a, b = uu
-@test a==1
-@test b==2
+aUP1, bUP1 = 0, 0
+@unpack aUP1 = uu
+@test aUP1==1
+@test bUP1==0
+aUP1, bUP1 = 0, 0
+@unpack aUP1, bUP1 = uu
+@test aUP1==1
+@test bUP1==2
 
 
 vv = uu
-a = 99
-@pack uu = a
+aUP1 = 99
+@pack uu = aUP1
 @test uu==vv
-@test uu.a==99
+@test uu.aUP1==99
 
 struct UP2
-    a
-    b
+    aUP2
+    bUP2
 end
 uu = UP2(1,2)
-@test_throws ErrorException @unpack c = uu
-@test_throws ErrorException @unpack a, c = uu
+@test_throws ErrorException @unpack cUP2 = uu
+@test_throws ErrorException @unpack aUP2, cUP2 = uu
 
-a, b = 0, 0
-@unpack a = uu
-@test a==1
-@test b==0
-a, b = 0, 0
-@unpack a,b = uu
-@test a==1
-@test b==2
-
-a = 99
-@test_throws ErrorException @pack uu = a
+aUP1 = 99
+@test_throws ErrorException @pack uu = aUP1
 
 # check that inference works
 struct UP3
