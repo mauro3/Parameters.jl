@@ -73,6 +73,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#Parameters",
+    "page": "API",
+    "title": "Parameters",
+    "category": "module",
+    "text": "This is a package I use to handle numerical-model parameters, thus the name. However, it should be useful otherwise too. It has two main features:\n\nkeyword type constructors with default values, and\nunpacking and packing of composite types and dicts.\n\nThe macro @with_kw which decorates a type definition to allow default values and a keyword constructor:\n\njulia> using Parameters\n\njulia> @with_kw struct A\n           a::Int = 6\n           b::Float64 = -1.1\n           c::UInt8\n       end\n\njulia> A(c=4)\nA\n  a: 6\n  b: -1.1\n  c: 4\n\nUnpacking is done with @unpack (@pack is similar):\n\nstruct B\n    a\n    b\n    c\nend\n@unpack a, c = B(4,5,6)\n# is equivalent to\nBB = B(4,5,6)\na = BB.a\nc = BB.c\n\n\n\n"
+},
+
+{
     "location": "api.html#Parameters.reconstruct-Union{Tuple{T,Any}, Tuple{T}} where T",
     "page": "API",
     "title": "Parameters.reconstruct",
