@@ -506,11 +506,11 @@ function with_kw(typedef, mod::Module, withshow=true)
     ## outer copy constructor
     ###
     outer_copy = quote
-        $tn(pp::$tn; kws... ) = reconstruct(pp, kws)
+        $tn(pp::$tn; kws... ) = $Parameters.reconstruct(pp, kws)
         # $tn(pp::$tn, di::Union(AbstractDict,Vararg{Tuple{Symbol,Any}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
         # $tn(pp::$tn, di::Union(AbstractDict, Tuple{Vararg{Tuple{Symbol, Any}}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
-        $tn(pp::$tn, di::$Parameters.AbstractDict) = reconstruct(pp, di)
-        $tn(pp::$tn, di::Vararg{Tuple{Symbol,Any}} ) = reconstruct(pp, di)
+        $tn(pp::$tn, di::$Parameters.AbstractDict) = $Parameters.reconstruct(pp, di)
+        $tn(pp::$tn, di::Vararg{Tuple{Symbol,Any}} ) = $Parameters.reconstruct(pp, di)
     end
 
     # (un)pack macro from https://groups.google.com/d/msg/julia-users/IQS2mT1ITwU/hDtlV7K1elsJ
