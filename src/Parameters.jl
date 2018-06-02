@@ -226,11 +226,7 @@ function reconstruct(pp::T, di) where T
             push!(args, pop!(di, n, getfield(pp, n)))
         end
         length(di)!=0 && error("Fields $(keys(di)) not in type $T")
-        if VERSION >= v"0.7.0-"
-            return pp isa NamedTuple ? T(Tuple(args)) : T(args...)
-        else
-            return T(args...)
-        end
+        return pp isa NamedTuple ? T(Tuple(args)) : T(args...)
     end
 end
 reconstruct(pp; kws...) = reconstruct(pp, kws)
@@ -256,7 +252,6 @@ function _pack_immutable(binding, fields)
     error("Cannot pack an immutable.  Consider using `reconstruct` (or file a feature request).")
 end
 
-const typedef_head = VERSION >= v"0.7.0-DEV.1263" ? :struct : :type
 const macro_hidden_nargs = length(:(@m).args) - 1 # ==1 on Julia 0.6, ==2 on Julia 0.7
 
 """
@@ -297,8 +292,11 @@ end
 ```
 """
 function with_kw(typedef, mod::Module, withshow=true)
-    if typedef.head != typedef_head
-        error("only works on type-defs")
+    if typedef.head==:tuple # named-tuple
+        withshow==false && error("`@with_kw_noshow` not supported for named tuples")
+        return with_kw_nt(typedef, mod)
+    elseif typedef.head != :struct
+        error("only works on type-defs or named tuples.  (Make sure to have a space after @with_kw`.)")
     end
     err1str = "Field \'"
     err2str = "\' has no default, supply it with keyword."
@@ -438,7 +436,7 @@ function with_kw(typedef, mod::Module, withshow=true)
         end
     end
     # The type definition without inner constructors:
-    typ = Expr(typedef_head, deepcopy(typedef.args[1:2])..., deepcopy(fielddefs))
+    typ = Expr(:struct, deepcopy(typedef.args[1:2])..., deepcopy(fielddefs))
 
     # Inner keyword constructor.  Note that this calls the positional
     # constructor under the hood and not `new`.  That way a user can
@@ -561,6 +559,39 @@ end
     @deprecate with_kw(typedef, withshow=true) with_kw(typedef, @__MODULE__, withshow=true)
 else
     @deprecate with_kw(typedef, withshow=true) with_kw(typedef, current_module(), withshow=true)
+end
+
+"""
+Do the with-kw stuff for named tuples.
+"""
+function with_kw_nt(typedef, mod)
+    kwargs = []
+    args = []
+    nt = []
+    for a in typedef.args
+        if a isa Expr
+            a.head != :(=) && error("NameTuple fields need to be of form: `k=val`")
+            sy = a.args[1]
+            va = a.args[2]
+            push!(kwargs, Expr(:kw, sy, va))
+            push!(args, sy)
+            push!(nt, :($sy=$sy))
+        elseif a isa Symbol  # no default value given
+            sy = a
+            push!(args, sy)
+            push!(nt, :($sy=$sy))
+            push!(kwargs, Expr(:kw, sy, :(error("Supply default value for $($(string(sy)))"))))
+        else
+            error("Cannot parse $(string(a))")
+        end
+    end
+    nt = Expr(:tuple, nt...)
+    f = gensym(:NT_kwconstructor)
+    quote
+        $f = (; $(kwargs...)) -> $nt
+        (::typeof($f))($(args...)) = $nt
+        $f
+    end
 end
 
 """
