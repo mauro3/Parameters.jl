@@ -61,9 +61,11 @@ end
 decolon2(a::Expr) = (@assert a.head==:(::);  a.args[1])
 decolon2(a::Symbol) = a
 
+strip_strings(args) = Any[arg for arg in args if !isa(arg, String)]
+
 # Keeps the ::T of the args if T ∈ typparas
 function keep_only_typparas(args, typparas)
-    args = deepcopy(args)
+    args = strip_strings(deepcopy(args))
     typparas_ = map(stripsubtypes, typparas)
     for i=1:length(args)
         isa(args[i],Symbol) && continue
