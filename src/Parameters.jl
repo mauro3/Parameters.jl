@@ -335,6 +335,10 @@ function with_kw(typedef, mod::Module, withshow=true)
                 if isa(fld, Symbol) && has_deftyp # no type annotation
                     fld = :($fld::$deftyp)
                 end
+                # add field-doc strings
+                docstring = string("Default: ", l.args[2])
+                push!(fielddefs.args, docstring)
+
                 push!(fielddefs.args, fld)
                 kws[decolon2(fld)] = l.args[2]
                 # unwrap-macro
