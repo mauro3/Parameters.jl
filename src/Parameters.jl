@@ -97,9 +97,12 @@ end
 decolon2(a::Expr) = (@assert a.head==:(::);  a.args[1])
 decolon2(a::Symbol) = a
 
+# Remove field doc strings
+strip_strings(args) = Any[arg for arg in args if !isa(arg, String)]
+
 # Keeps the ::T of the args if T ∈ typparas
 function keep_only_typparas(args, typparas)
-    args = deepcopy(args)
+    args = strip_strings(deepcopy(args))
     typparas_ = map(stripsubtypes, typparas)
     for i=1:length(args)
         isa(args[i], Symbol) && continue
@@ -401,6 +404,10 @@ function with_kw(typedef, mod::Module, withshow=true)
                 if fld isa Symbol && has_deftyp # no type annotation
                     fld = :($fld::$deftyp)
                 end
+                # add field-doc strings
+                docstring = string("Default: ", l.args[2])
+                push!(fielddefs.args, docstring)
+
                 push!(fielddefs.args, fld)
                 kws[decolon2(fld)] = l.args[2]
                 # unwrap-macro
