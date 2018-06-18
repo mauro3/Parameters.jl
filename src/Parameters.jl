@@ -61,6 +61,7 @@ end
 decolon2(a::Expr) = (@assert a.head==:(::);  a.args[1])
 decolon2(a::Symbol) = a
 
+# Remove field doc strings
 strip_strings(args) = Any[arg for arg in args if !isa(arg, String)]
 
 # Keeps the ::T of the args if T ∈ typparas
