@@ -32,6 +32,8 @@ a8679 = A8679(1, 2)
     "A field"
     c = "sdaf"
 end
+@test MT1().r==4
+@test MT1().c=="sdaf"
 @test "Test documentation\n" == Markdown.plain(@doc MT1)
 # https://github.com/JuliaLang/julia/issues/27092 means this does not work:
 # @test "A field\n" == Markdown.plain(@doc MT1.c)
@@ -40,6 +42,27 @@ if VERSION<v"0.7-"
 else
     @eval using REPL
     @test "A field\n" == Markdown.plain(REPL.fielddoc(MT1, :c))
+end
+
+abstract type AMT1_2 end
+"Test documentation with type-parameter"
+@with_kw struct MT1_2{T} <: AMT1_2
+    "Field r"
+    r::Int = 4
+    "A field"
+    c = "sdaf"
+end
+@test MT1_2{Int}().r==4
+@test MT1_2{Int}().c=="sdaf"
+@test "Test documentation with type-parameter\n" == Markdown.plain(@doc MT1_2)
+const TMT1_2 = MT1_2{Int} # another Julia bug
+if VERSION<v"0.7-"
+    @test "Field r\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :r))
+    @test "A field\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :c))
+else
+    @eval using REPL
+    @test "Field r\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :r))
+    @test "A field\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :c))
 end
 
 # parameter-less

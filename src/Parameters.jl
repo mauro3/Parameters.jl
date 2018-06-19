@@ -103,6 +103,7 @@ function keep_only_typparas(args, typparas)
     typparas_ = map(stripsubtypes, typparas)
     for i=1:length(args)
         isa(args[i], Symbol) && continue
+        isa(args[i], String) && continue # field doc-string
         @assert args[i].head==:(::)
         T = args[i].args[2]
         if !(symbol_in(typparas_, T))
@@ -439,8 +440,6 @@ function with_kw(typedef, mod::Module, withshow=true)
     if length(typparas)>0
         tps = stripsubtypes(typparas)
         innerc = :( $tn{$(tps...)}($kwargs) where {$(tps...)} = $tn{$(tps...)}($(args...)))
-        # 0.6 only:
-        # innerc = :($tn{$(tps...)}($kwargs) where {$(tps...)} = $tn{$(tps...)}($(args...)))
     else
         innerc = :($tn($kwargs) = $tn($(args...)) )
     end
@@ -453,8 +452,6 @@ function with_kw(typedef, mod::Module, withshow=true)
         if length(typparas)>0
             tps = stripsubtypes(typparas)
             innerc2 = :( $tn{$(tps...)}($(args...)) where {$(tps...)} = new{$(tps...)}($(args...)) )
-            # 0.6 only:
-            # innerc2 = :($tn{$(tps...)}($(args...)) where {$(tps...)} = new($(args...)))
         else
             innerc2 = :($tn($(args...)) = new($(args...)))
         end
