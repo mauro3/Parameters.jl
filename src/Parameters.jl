@@ -97,20 +97,24 @@ end
 decolon2(a::Expr) = (@assert a.head==:(::);  a.args[1])
 decolon2(a::Symbol) = a
 
-# Keeps the ::T of the args if T ∈ typparas
+# Keep the ::T of the args if T ∈ typparas,
+# leave symbols as is, drop field-doc-strings.
 function keep_only_typparas(args, typparas)
     args = deepcopy(args)
+    tokeep = Int[]
     typparas_ = map(stripsubtypes, typparas)
     for i=1:length(args)
+        isa(args[i], String) && continue # do not keep field doc-strings
+        push!(tokeep, i)
         isa(args[i], Symbol) && continue
-        isa(args[i], String) && continue # field doc-string
+        # keep the typepara if ∈ typparas
         @assert args[i].head==:(::)
         T = args[i].args[2]
         if !(symbol_in(typparas_, T))
             args[i] = decolon2(args[i])
         end
     end
-    args
+    args[tokeep]
 end
 
 # check whether a symbol is contained in an expression

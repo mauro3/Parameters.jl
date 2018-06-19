@@ -55,7 +55,7 @@ end
 @test MT1_2{Int}().r==4
 @test MT1_2{Int}().c=="sdaf"
 @test "Test documentation with type-parameter\n" == Markdown.plain(@doc MT1_2)
-const TMT1_2 = MT1_2{Int} # another Julia bug
+const TMT1_2 = MT1_2{Int} # Julia bug https://github.com/JuliaLang/julia/issues/27656
 if VERSION<v"0.7-"
     @test "Field r\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :r))
     @test "A field\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :c))
@@ -64,6 +64,27 @@ else
     @test "Field r\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :r))
     @test "A field\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :c))
 end
+
+"Test documentation with bound type-parameter"
+@with_kw struct MT1_3{T} <: AMT1_2
+    "Field r"
+    r::Int = 4
+    "A field"
+    c::T = "sdaf"
+end
+@test MT1_3().r==4
+@test MT1_3().c=="sdaf"
+@test "Test documentation with bound type-parameter\n" == Markdown.plain(@doc MT1_3)
+const TMT1_3 = MT1_3{Int} # Julia bug https://github.com/JuliaLang/julia/issues/27656
+if VERSION<v"0.7-"
+    @test "Field r\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_3, :r))
+    @test "A field\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_3, :c))
+else
+    @eval using REPL
+    @test "Field r\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :r))
+    @test "A field\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :c))
+end
+
 
 # parameter-less
 @with_kw_noshow mutable struct MT2
