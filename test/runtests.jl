@@ -28,6 +28,7 @@ a8679 = A8679(1, 2)
 
 "Test documentation"
 @with_kw struct MT1
+    "Field r"
     r::Int = 4
     "A field"
     c = "sdaf"
