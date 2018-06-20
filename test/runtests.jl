@@ -36,12 +36,12 @@ end
 @test MT1().c=="sdaf"
 @test "Test documentation\n" == Markdown.plain(@doc MT1)
 # https://github.com/JuliaLang/julia/issues/27092 means this does not work:
-# @test "A field\n" == Markdown.plain(@doc MT1.c)
+# @test "A field Default: sdaf\n" == Markdown.plain(@doc MT1.c)
 if VERSION<v"0.7-"
-    @test "A field\n" == Markdown.plain(Base.Docs.fielddoc(MT1, :c))
+    @test "A field Default: sdaf\n" == Markdown.plain(Base.Docs.fielddoc(MT1, :c))
 else
     @eval using REPL
-    @test "A field\n" == Markdown.plain(REPL.fielddoc(MT1, :c))
+    @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(MT1, :c))
 end
 
 abstract type AMT1_2 end
@@ -57,12 +57,12 @@ end
 @test "Test documentation with type-parameter\n" == Markdown.plain(@doc MT1_2)
 const TMT1_2 = MT1_2{Int} # Julia bug https://github.com/JuliaLang/julia/issues/27656
 if VERSION<v"0.7-"
-    @test "Field r\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :r))
-    @test "A field\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :c))
+    @test "Field r Default: 4\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :r))
+    @test "A field Default: sdaf\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :c))
 else
     @eval using REPL
-    @test "Field r\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :r))
-    @test "A field\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :c))
+    @test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :r))
+    @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :c))
 end
 
 "Test documentation with bound type-parameter"
@@ -77,12 +77,12 @@ end
 @test "Test documentation with bound type-parameter\n" == Markdown.plain(@doc MT1_3)
 const TMT1_3 = MT1_3{Int} # Julia bug https://github.com/JuliaLang/julia/issues/27656
 if VERSION<v"0.7-"
-    @test "Field r\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_3, :r))
-    @test "A field\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_3, :c))
+    @test "Field r Default: 4\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_3, :r))
+    @test "A field Default: sdaf\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_3, :c))
 else
     @eval using REPL
-    @test "Field r\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :r))
-    @test "A field\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :c))
+    @test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :r))
+    @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :c))
 end
 
 
