@@ -38,9 +38,11 @@ end
 # https://github.com/JuliaLang/julia/issues/27092 means this does not work:
 # @test "A field Default: sdaf\n" == Markdown.plain(@doc MT1.c)
 if VERSION<v"0.7-"
+    @test "Field r Default: 4\n" == Markdown.plain(Base.Docs.fielddoc(MT1, :r))
     @test "A field Default: sdaf\n" == Markdown.plain(Base.Docs.fielddoc(MT1, :c))
 else
     @eval using REPL
+    @test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(MT1, :r))
     @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(MT1, :c))
 end
 
