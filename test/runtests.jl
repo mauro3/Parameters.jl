@@ -1,4 +1,5 @@
 using Parameters
+include("../src/kw_params.jl")
 using Compat
 using Compat.Test
 using Compat.Markdown
@@ -615,3 +616,34 @@ end
 
 z2 = TestModule.test_function(TestModule.TestStruct(; y = 9.0))
 @test z2.x == 1 && z2.y == 10.0
+
+paramfactory = @kw_params(x = 1, y = 2)
+@test typeof(paramfactory) <: Function
+@test paramfactory().x == 1
+@test paramfactory().y == 2
+@test_throws ErrorException paramfactory().z
+@test_throws MethodError paramfactory(z = 2)
+γ(z) = 2*z
+@test @kw_params(γ = γ)().γ(2) == 4
+@test @kw_params(γ = γ, x = γ)().γ(2) == 4
+@test_throws ErrorException eval(:(@kw_params (1, 2))) # Test spacing error. 
+@test_throws UndefVarError eval(:(@kw_params(x = 1 + 2 + y))) # Test evaluability check. 
+@test_throws ErrorException eval(:(@kw_params(x = 1, x = 2, y = 2))) # Test check against duplicate values. 
+@test paramfactory() === paramfactory() # Test that these are actually lazy/interned.
+object = paramfactory()
+@test_throws ErrorException object.x = 2 # Test immutability. 
+x = 100; # Test invunerability to macroenvironment. 
+@test object.x == 1
+object = @kw_params(x = 1, y = x)()
+@test object.x == 1 && object.y == 100
+x = [1, 2, 3]
+object = @kw_params(x = x)()
+@test object.x == [1, 2, 3]
+x = [4, 5, 6]
+@test object.x == [1, 2, 3]
+weirdstring = "\()esc(;"
+@test @kw_params(x = "\()esc(;")().x == "\()esc(;"
+@test @kw_params(x = (2 > 1))().x == true # Compound evaluation check
+foo(x) = 3*x
+@test @kw_params(x = x -> foo(x))().x(4) == 12 # Anonymous functions/value clash check
+@test @kw_params(x = :(:x))().x == :x # Name clash and symbols
