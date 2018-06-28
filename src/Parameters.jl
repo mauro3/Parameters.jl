@@ -44,7 +44,7 @@ module Parameters
 import Base: @__doc__
 import DataStructures: OrderedDict
 using Compat
-
+include("kw_params.jl")
 export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack
 
 ## Parser helpers
@@ -740,4 +740,5 @@ end
 # TODO: maybe add @pack_new for packing into a new instance.  Could be
 # used with immutables also.
 
+#### Named Tuple constructor
 end # module
