@@ -410,6 +410,12 @@ MyNT = @with_kw (a=1, b="test", w=:uu)
 MyNT2 = @with_kw (a=1, b="test", w)
 @test_throws ErrorException MyNT2() # no default for w
 
+MyNT3 = @with_kw (a=1, b=a)
+@test MyNT3()==(a=1, b=1)
+@test MyNT3(a=2)==(a=2, b=2)
+@test MyNT3(b=2)==(a=1, b=2)
+
+
 ###########################
 # Packing and unpacking @unpack, @pack
 ##########################

@@ -296,7 +296,10 @@ function with_kw(typedef, mod::Module, withshow=true)
         withshow==false && error("`@with_kw_noshow` not supported for named tuples")
         return with_kw_nt(typedef, mod)
     elseif typedef.head != :struct
-        error("only works on type-defs or named tuples.  (Make sure to have a space after @with_kw`.)")
+        error("""Only works on type-defs or named tuples.
+              Make sure to have a space after `@with_kw`, e.g. `@with_kw (a=1,)
+              Also, make sure to use a trailing comma for single-field NamedTuples.
+              """)
     end
     err1str = "Field \'"
     err2str = "\' has no default, supply it with keyword."
@@ -408,7 +411,7 @@ function with_kw(typedef, mod::Module, withshow=true)
                 docstring = string("Default: ", l.args[2])
                 if i > 1 && lns[i-1] isa String
                     # if the last line was a docstring, append the default
-                    fielddefs.args[end] *= " " * docstring 
+                    fielddefs.args[end] *= " " * docstring
                 else
                     # otherwise add a new line
                     push!(fielddefs.args, docstring)
@@ -586,11 +589,11 @@ function with_kw_nt(typedef, mod)
         end
     end
     nt = Expr(:tuple, nt...)
-    f = gensym(:NT_kwconstructor)
+    NT = gensym(:NamedTuple_kw)
     quote
-        $f = (; $(kwargs...)) -> $nt
-        (::typeof($f))($(args...)) = $nt
-        $f
+        $NT = (; $(kwargs...)) -> $nt
+        (::typeof($NT))($(args...)) = $nt
+        $NT
     end
 end
 
@@ -614,6 +617,13 @@ macro with_kw(typedef)
     else
         return esc(with_kw(typedef, current_module(), true))
     end
+end
+
+macro with_kw(args...)
+    error("""Only works on type-defs or named tuples.
+          Did you try to construct a NamedTuple but omitted the space between the macro and the NamedTuple?
+          Do `@with_kw (a=1, b=2)` and not `@with_kw(a=1, b=2)`.
+          """)
 end
 
 """
