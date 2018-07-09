@@ -81,6 +81,7 @@ ms = MyS(3) # MyS(3,2)
 MyS(ms, b=-1) # MyS(3,-1)
 try
     MyS(ms, b=6) # this will fail the assertion
+catch
 end
 
 
