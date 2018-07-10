@@ -153,6 +153,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#Parameters.with_kw_nt-Tuple{Any,Any}",
+    "page": "API",
+    "title": "Parameters.with_kw_nt",
+    "category": "method",
+    "text": "Do the with-kw stuff for named tuples.\n\n\n\n"
+},
+
+{
     "location": "api.html#API-1",
     "page": "API",
     "title": "API",
