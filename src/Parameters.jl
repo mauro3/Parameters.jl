@@ -226,7 +226,11 @@ function reconstruct(pp::T, di) where T
             push!(args, pop!(di, n, getfield(pp, n)))
         end
         length(di)!=0 && error("Fields $(keys(di)) not in type $T")
-        return pp isa NamedTuple ? T(Tuple(args)) : T(args...)
+        if VERSION >= v"0.7.0-"
+            return pp isa NamedTuple ? T(Tuple(args)) : T(args...)
+        else
+            return T(args...)
+        end
     end
 end
 reconstruct(pp; kws...) = reconstruct(pp, kws)
@@ -252,6 +256,7 @@ function _pack_immutable(binding, fields)
     error("Cannot pack an immutable.  Consider using `reconstruct` (or file a feature request).")
 end
 
+const typedef_head = VERSION >= v"0.7.0-DEV.1263" ? :struct : :type
 const macro_hidden_nargs = length(:(@m).args) - 1 # ==1 on Julia 0.6, ==2 on Julia 0.7
 
 """
@@ -295,7 +300,7 @@ function with_kw(typedef, mod::Module, withshow=true)
     if typedef.head==:tuple # named-tuple
         withshow==false && error("`@with_kw_noshow` not supported for named tuples")
         return with_kw_nt(typedef, mod)
-    elseif typedef.head != :struct
+    elseif typedef.head != typedef_head
         error("""Only works on type-defs or named tuples.
               Make sure to have a space after `@with_kw`, e.g. `@with_kw (a=1,)
               Also, make sure to use a trailing comma for single-field NamedTuples.
@@ -439,7 +444,7 @@ function with_kw(typedef, mod::Module, withshow=true)
         end
     end
     # The type definition without inner constructors:
-    typ = Expr(:struct, deepcopy(typedef.args[1:2])..., deepcopy(fielddefs))
+    typ = Expr(typedef_head, deepcopy(typedef.args[1:2])..., deepcopy(fielddefs))
 
     # Inner keyword constructor.  Note that this calls the positional
     # constructor under the hood and not `new`.  That way a user can
@@ -574,7 +579,7 @@ function with_kw_nt(typedef, mod)
     for a in typedef.args
         if a isa Expr
             a.head != :(=) && error("NameTuple fields need to be of form: `k=val`")
-            sy = a.args[1]
+            sy = a.args[1]::Symbol
             va = a.args[2]
             push!(kwargs, Expr(:kw, sy, va))
             push!(args, sy)
@@ -588,12 +593,20 @@ function with_kw_nt(typedef, mod)
             error("Cannot parse $(string(a))")
         end
     end
-    nt = Expr(:tuple, nt...)
     NT = gensym(:NamedTuple_kw)
-    quote
-        $NT = (; $(kwargs...)) -> $nt
-        (::typeof($NT))($(args...)) = $nt
-        $NT
+    if VERSION >= v"0.7.0-"
+        nt = Expr(:tuple, nt...)
+        quote
+            $NT = (; $(kwargs...)) -> $nt
+            (::typeof($NT))($(args...)) = $nt
+            $NT
+        end
+    else
+        quote
+            $NT = (; $(kwargs...)) -> NamedTuples.@NT($(nt...))
+            (::typeof($NT))($(args...)) = NamedTuples.@NT($(nt...))
+            $NT
+        end
     end
 end
 
