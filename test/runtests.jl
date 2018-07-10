@@ -509,7 +509,7 @@ else
         immutabilityTest = @with_kw (f = x,)
         obj = immutabilityTest()
         x = [4, 5, 6]
-        @test obj.f == [4, 5, 6] # Test MUTABILITY per the rules of v0.7
+        @test obj.f == [1, 2, 3] # Test immutability per the rules of v0.7
         undefTest = @with_kw (x = ζ + 2,)
         @test_throws UndefVarError undefTest() # Check use of undefined variables. 
 
