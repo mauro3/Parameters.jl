@@ -55,6 +55,7 @@ ms = MyS(3) # MyS(3,2)
 MyS(ms, b=-1) # MyS(3,-1)
 try
     MyS(ms, b=6) # this will fail the assertion
+catch
 end</code></pre><p>Note that two of the main reasons to have an inner constructor, assertions and simple calculations, are more easily achieved with <code>@assert</code>s and parameter interdependence.</p><p>The macro <code>@with_kw</code> defines a show-method which is, hopefully, more informative than the standard one.  For example the printing of the first example is:</p><pre><code class="language-julia">julia&gt; PhysicalPara()
 PhysicalPara{Float64}
   rw: Float64 1000.0
