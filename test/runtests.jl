@@ -500,7 +500,7 @@ else
         scopingTest = @with_kw (f = f,)
         @test_broken scopingTest().f(2) == 8 # Something wrong with doing this directly. 
         x = [1, 2, 3]
-        scopingTest = @with_kw (x = x)
+        scopingTest = @with_kw (x = x,)
         @test scopingTest().x == [1, 2, 3]
         @test_throws ErrorException eval(:(@with_kw (a = 1, a = 2,))) # Duplicate values handling 
         obj = MyNT()
