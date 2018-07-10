@@ -447,8 +447,8 @@ if VERSION<v"0.7-"
         @test MyNT3(b=2)==@NT(a=1, b=2)
 
         @test_throws ErrorException MyNT().z # Undefined field access
-        f(x) = x -> x^3
-        scopingTest = @with_kw (f = f,)
+        q = x -> x^3
+        scopingTest = @with_kw (q = q)
         @test_broken scopingTest() # Scoping failure.
         @test_throws ErrorException eval(:(@with_kw (a = 1, a = 2,))) # Duplicate values handling 
         obj = MyNT()
@@ -496,9 +496,9 @@ else
         @test MyNT3(b=2)==(a=1, b=2)
 
         @test_throws ErrorException MyNT().z # Undefined field access
-        f(x) = x -> x^3
-        scopingTest = @with_kw (f = f,)
-        @test_broken scopingTest().f(2) == 8 # Something wrong with doing this directly. 
+        q = x -> x^3
+        scopingTest = @with_kw (q = q,)
+        @test scopingTest().q(2) == 8 # Something wrong with doing this directly. 
         x = [1, 2, 3]
         scopingTest = @with_kw (x = x,)
         @test scopingTest().x == [1, 2, 3]
