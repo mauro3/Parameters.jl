@@ -23,6 +23,7 @@ a8679 = A8679(1, 2)
 @test A8679(1, 44) == reconstruct(a8679, b=44)
 @test_throws ErrorException reconstruct(a8679, c=44)
 
+##########
 # @with_kw
 ##########
 
@@ -63,7 +64,6 @@ if VERSION<v"0.7-"
     @test "Field r Default: 4\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :r))
     @test "A field Default: sdaf\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :c))
 else
-    @eval using REPL
     @test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :r))
     @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :c))
 end
@@ -423,6 +423,49 @@ end
 @test_throws ErrorException T9867()
 @test T9867(r=2).r == 2
 
+
+# NamedTuples
+###
+if VERSION<v"0.7-"
+    @eval using NamedTuples # needs separate eval
+    @eval begin
+        using NamedTuples
+        MyNT = @with_kw (a=1, b="test", w=:uu)
+        @test MyNT()==@NT(a=1, b="test", w=:uu)
+        @test MyNT(b=1)==@NT(a=1, b=1, w=:uu)
+        @test MyNT(1,2,"a")==@NT(a=1, b=2, w="a")
+        @test_throws MethodError MyNT(c=1)
+        @test_throws TypeError @eval @with_kw (a::Int=1,) # no type annotations allowed
+        @test_throws ErrorException @eval @with_kw(a=1,) # no space
+
+        MyNT2 = @with_kw (a=1, b="test", w)
+        @test_throws ErrorException MyNT2() # no default for w
+
+        MyNT3 = @with_kw (a=1, b=a)
+        @test MyNT3()==@NT(a=1, b=1)
+        @test MyNT3(a=2)==@NT(a=2, b=2)
+        @test MyNT3(b=2)==@NT(a=1, b=2)
+    end
+else
+    @eval begin
+        MyNT = @with_kw (a=1, b="test", w=:uu)
+        @test MyNT()==(a=1, b="test", w=:uu)
+        @test MyNT(b=1)==(a=1, b=1, w=:uu)
+        @test MyNT(1,2,"a")==(a=1, b=2, w="a")
+        @test_throws MethodError MyNT(c=1)
+        @test_throws LoadError @eval @with_kw (a::Int=1,) # no type annotations allowed
+        @test_throws LoadError @eval @with_kw(a=1,) # no space
+
+        MyNT2 = @with_kw (a=1, b="test", w)
+        @test_throws ErrorException MyNT2() # no default for w
+
+        MyNT3 = @with_kw (a=1, b=a)
+        @test MyNT3()==(a=1, b=1)
+        @test MyNT3(a=2)==(a=2, b=2)
+        @test MyNT3(b=2)==(a=1, b=2)
+    end
+end
+
 ###########################
 # Packing and unpacking @unpack, @pack
 ##########################
@@ -478,48 +521,39 @@ d = A(4,7.0,"Hi")
 
 # older tests ported
 mutable struct UP1
-    a
-    b
+    aUP1
+    bUP1
 end
 uu = UP1(1,2)
-@test_throws ErrorException @unpack c = uu
-@test_throws ErrorException @unpack a, c = uu
+@test_throws ErrorException @unpack cUP1 = uu
+@test_throws ErrorException @unpack aUP1, cUP1 = uu
 
-a, b = 0, 0
-@unpack a = uu
-@test a==1
-@test b==0
-a, b = 0, 0
-@unpack a, b = uu
-@test a==1
-@test b==2
+aUP1, bUP1 = 0, 0
+@unpack aUP1 = uu
+@test aUP1==1
+@test bUP1==0
+aUP1, bUP1 = 0, 0
+@unpack aUP1, bUP1 = uu
+@test aUP1==1
+@test bUP1==2
 
 
 vv = uu
-a = 99
-@pack uu = a
+aUP1 = 99
+@pack uu = aUP1
 @test uu==vv
-@test uu.a==99
+@test uu.aUP1==99
 
 struct UP2
-    a
-    b
+    aUP2
+    bUP2
 end
 uu = UP2(1,2)
-@test_throws ErrorException @unpack c = uu
-@test_throws ErrorException @unpack a, c = uu
+@test_throws ErrorException @unpack cUP2 = uu
+@test_throws ErrorException @unpack aUP2, cUP2 = uu
 
-a, b = 0, 0
-@unpack a = uu
-@test a==1
-@test b==0
-a, b = 0, 0
-@unpack a,b = uu
-@test a==1
-@test b==2
-
-a = 99
-@test_throws ErrorException @pack uu = a
+aUP1 = 99
+@test_throws ErrorException @pack uu = aUP1
 
 # check that inference works
 struct UP3

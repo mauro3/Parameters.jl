@@ -297,8 +297,14 @@ end
 ```
 """
 function with_kw(typedef, mod::Module, withshow=true)
-    if typedef.head != typedef_head
-        error("only works on type-defs")
+    if typedef.head==:tuple # named-tuple
+        withshow==false && error("`@with_kw_noshow` not supported for named tuples")
+        return with_kw_nt(typedef, mod)
+    elseif typedef.head != typedef_head
+        error("""Only works on type-defs or named tuples.
+              Make sure to have a space after `@with_kw`, e.g. `@with_kw (a=1,)
+              Also, make sure to use a trailing comma for single-field NamedTuples.
+              """)
     end
     err1str = "Field \'"
     err2str = "\' has no default, supply it with keyword."
@@ -410,7 +416,7 @@ function with_kw(typedef, mod::Module, withshow=true)
                 docstring = string("Default: ", l.args[2])
                 if i > 1 && lns[i-1] isa String
                     # if the last line was a docstring, append the default
-                    fielddefs.args[end] *= " " * docstring 
+                    fielddefs.args[end] *= " " * docstring
                 else
                     # otherwise add a new line
                     push!(fielddefs.args, docstring)
@@ -564,6 +570,47 @@ else
 end
 
 """
+Do the with-kw stuff for named tuples.
+"""
+function with_kw_nt(typedef, mod)
+    kwargs = []
+    args = []
+    nt = []
+    for a in typedef.args
+        if a isa Expr
+            a.head != :(=) && error("NameTuple fields need to be of form: `k=val`")
+            sy = a.args[1]::Symbol
+            va = a.args[2]
+            push!(kwargs, Expr(:kw, sy, va))
+            push!(args, sy)
+            push!(nt, :($sy=$sy))
+        elseif a isa Symbol  # no default value given
+            sy = a
+            push!(args, sy)
+            push!(nt, :($sy=$sy))
+            push!(kwargs, Expr(:kw, sy, :(error("Supply default value for $($(string(sy)))"))))
+        else
+            error("Cannot parse $(string(a))")
+        end
+    end
+    NT = gensym(:NamedTuple_kw)
+    if VERSION >= v"0.7.0-"
+        nt = Expr(:tuple, nt...)
+        quote
+            $NT = (; $(kwargs...)) -> $nt
+            (::typeof($NT))($(args...)) = $nt
+            $NT
+        end
+    else
+        quote
+            $NT = (; $(kwargs...)) -> NamedTuples.@NT($(nt...))
+            (::typeof($NT))($(args...)) = NamedTuples.@NT($(nt...))
+            $NT
+        end
+    end
+end
+
+"""
 Macro which allows default values for field types and a few other features.
 
 Basic usage:
@@ -583,6 +630,13 @@ macro with_kw(typedef)
     else
         return esc(with_kw(typedef, current_module(), true))
     end
+end
+
+macro with_kw(args...)
+    error("""Only works on type-defs or named tuples.
+          Did you try to construct a NamedTuple but omitted the space between the macro and the NamedTuple?
+          Do `@with_kw (a=1, b=2)` and not `@with_kw(a=1, b=2)`.
+          """)
 end
 
 """
