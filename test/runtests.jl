@@ -448,7 +448,7 @@ if VERSION<v"0.7-"
 
         @test_throws ErrorException MyNT().z # Undefined field access
         q = x -> x^3
-        scopingTest = @with_kw (q = q)
+        scopingTest = @with_kw (q = q,)
         @test_broken scopingTest() # Scoping failure.
         @test_throws ErrorException eval(:(@with_kw (a = 1, a = 2,))) # Duplicate values handling 
         obj = MyNT()
