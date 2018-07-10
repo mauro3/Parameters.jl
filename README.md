@@ -69,7 +69,7 @@ These named tuples can be unpacked exactly like other decorated `struct`s (see b
 > NOTE: The main caveat is not to reuse a symbol across different assignments; i.e. `MyNT = @with_kw (x = y, c = x)` will yield 
 `MyNT() = (x = foo, c = foo)`, where `foo` is the initial value of `y`. In v0.6, assignments of the kind `f = f` are not supported. 
 
-In v0.6, `NamedTuples.jl` is a prerequisite for named tuple support. In v0.7, they are included in base Julia. 
+In v0.6, `NamedTuples.jl` is a prerequisite for named tuple support, and needs to be loaded via `import` or `using`. In v0.7, they are included in base Julia. 
 
 Unpacking is done with `@unpack` (`@pack` is similar):
 ```julia
