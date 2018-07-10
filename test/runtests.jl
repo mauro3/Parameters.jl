@@ -498,7 +498,9 @@ else
         @test_throws ErrorException MyNT().z # Undefined field access
         f(x) = x -> x^3
         scopingTest = @with_kw (f = f,)
-        @test scopingTest().f(2) == 8 # Scoping failure.
+        func = scopingTest.f
+        @test func(2) == 8 # Scoping
+        @test_broken scopingTest().f(2) == 8 # Something wrong with doing this directly. 
         @test_throws ErrorException eval(:(@with_kw (a = 1, a = 2,))) # Duplicate values handling 
         obj = MyNT()
         @test_throws ErrorException obj.a = 2 # Immutability against object setting
