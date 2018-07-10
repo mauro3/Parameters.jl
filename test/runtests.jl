@@ -434,7 +434,7 @@ if VERSION<v"0.7-"
         @test MyNT()==@NT(a=1, b="test", w=:uu)
         @test MyNT(b=1)==@NT(a=1, b=1, w=:uu)
         @test MyNT(1,2,"a")==@NT(a=1, b=2, w="a")
-        @test_throws MethodError MyNT(c=1)
+        @test_throws MethodError MyNT(c=1) # Undefined field setting. 
         @test_throws TypeError @eval @with_kw (a::Int=1,) # no type annotations allowed
         @test_throws ErrorException @eval @with_kw(a=1,) # no space
 
@@ -445,6 +445,37 @@ if VERSION<v"0.7-"
         @test MyNT3()==@NT(a=1, b=1)
         @test MyNT3(a=2)==@NT(a=2, b=2)
         @test MyNT3(b=2)==@NT(a=1, b=2)
+
+        @test_throws ErrorException MyNT().z # Undefined field access
+        f(x) = x -> x^3
+        scopingTest = @with_kw (f = f,)
+        @test_broken scopingTest() # Scoping failure.
+        @test_throws ErrorException eval(:(@with_kw (a = 1, a = 2,))) # Duplicate values handling 
+        obj = MyNT()
+        @test_throws ErrorException obj.a = 2 # Immutability 
+        x = [1, 2, 3]
+        immutabilityTest = @with_kw (f = x,)
+        obj = immutabilityTest()
+        x = [4, 5, 6]
+        @test obj.f == [1, 2, 3] # Test immutability per the rules of v0.6
+        undefTest = @with_kw (x = ζ + 2,)
+        @test_throws UndefVarError undefTest() # Check use of undefined variables. 
+        
+        # Exotic input test 
+        naughtyInputs = ["!@#\$%^&*()`~", :"()esc(;", :x, :(eval(:x)), true, esc(true), "-9223372036854775808/-1", :(0/0), "-9223372036854775808/-1", "0xabad1dea", :(@test)]
+        for input in naughtyInputs
+            naughtyTest = @with_kw (x = input, y = 2)
+            @test naughtyTest().x == input
+        end
+
+        # Other behavior checks 
+        compoundTest = @with_kw (x = (2 > 1), y = 2)
+        @test compoundTest().x == true # Compound evaluation check
+        foo(x) = 3*x
+        anonymousTest = @with_kw (x = x -> foo(x), y = 2)
+        @test anonymousTest().x(4) == 12 # Anonymous functions/value clash check
+        symbolTest = @with_kw (x = :x, y = 2)
+        @test symbolTest().x == :x
     end
 else
     @eval begin
@@ -463,6 +494,37 @@ else
         @test MyNT3()==(a=1, b=1)
         @test MyNT3(a=2)==(a=2, b=2)
         @test MyNT3(b=2)==(a=1, b=2)
+
+        @test_throws ErrorException MyNT().z # Undefined field access
+        f(x) = x -> x^3
+        scopingTest = @with_kw (f = f,)
+        @test scopingTest().f(2) == 8 # Scoping failure.
+        @test_throws ErrorException eval(:(@with_kw (a = 1, a = 2,))) # Duplicate values handling 
+        obj = MyNT()
+        @test_throws ErrorException obj.a = 2 # Immutability against object setting
+        x = [1, 2, 3]
+        immutabilityTest = @with_kw (f = x,)
+        obj = immutabilityTest()
+        x = [4, 5, 6]
+        @test obj.f == [4, 5, 6] # Test MUTABILITY per the rules of v0.7
+        undefTest = @with_kw (x = ζ + 2,)
+        @test_throws UndefVarError undefTest() # Check use of undefined variables. 
+
+         # Exotic input test 
+         naughtyInputs = ["!@#\$%^&*()`~", :"()esc(;", :x, :(eval(:x)), true, esc(true), "-9223372036854775808/-1", :(0/0), "-9223372036854775808/-1", "0xabad1dea", :(@test)]
+        for input in naughtyInputs
+            naughtyTest = @with_kw (x = input, y = 2)
+            @test naughtyTest().x == input
+        end
+ 
+         # Other behavior checks 
+         compoundTest = @with_kw (x = (2 > 1), y = 2)
+         @test compoundTest().x == true # Compound evaluation check
+         foo(x) = 3*x
+         anonymousTest = @with_kw (x = x -> foo(x), y = 2)
+         @test anonymousTest().x(4) == 12 # Anonymous functions/value clash check
+         symbolTest = @with_kw (x = :x, y = 2)
+         @test symbolTest().x == :x
     end
 end
 
