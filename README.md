@@ -64,7 +64,7 @@ julia> MyNT(z = x -> x^3)
 (x = 1, y = "foo", z = #8)
 ```
 
-These named tuples can be unpacked exactly like other decorated `struct`s (see below). 
+These named tuples can be unpacked using `@unpack` (see below). 
 
 > NOTE: The main caveat is not to reuse a symbol across different assignments; i.e. `MyNT = @with_kw (x = y, c = x)` will yield 
 `MyNT() = (x = foo, c = foo)`, where `foo` is the initial value of `y`. In v0.6, assignments of the kind `f = f` are not supported. 
