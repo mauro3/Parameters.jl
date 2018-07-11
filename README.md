@@ -10,11 +10,10 @@
 [![Parameters](http://pkg.julialang.org/badges/Parameters_0.7.svg)](http://pkg.julialang.org/detail/Parameters)
 
 This is a package I use to handle numerical-model parameters, thus the
-name.  However, it should be useful otherwise too.  It has three main
+name.  However, it should be useful otherwise too.  It has two main
 features:
 
-- keyword type constructors with default values,
-- named tuple constructors with default values, and 
+- keyword type constructors with default values for `struct`s and `NamedTuples`,
 - unpacking and packing of composite types and dicts.
 
 The macro `@with_kw` which decorates a type definition to
@@ -52,24 +51,12 @@ julia> MyNT = @with_kw (x = 1, y = "foo", z = :(bar))
 
 julia> MyNT()
 (x = 1, y = "foo", z = :bar)
-```
 
-These constructors can be used as bona fide constructors; e.g. 
-
-```julia
 julia> MyNT(x = 2)
 (x = 2, y = "foo", z = :bar)
-
-julia> MyNT(z = x -> x^3)
-(x = 1, y = "foo", z = #8)
 ```
 
-These named tuples can be unpacked using `@unpack` (see below). 
-
-> NOTE: The main caveat is not to reuse a symbol across different assignments; i.e. `MyNT = @with_kw (x = y, c = x)` will yield 
-`MyNT() = (x = foo, c = foo)`, where `foo` is the initial value of `y`. In v0.6, assignments of the kind `f = f` are not supported. 
-
-In v0.6, `NamedTuples.jl` is a prerequisite for named tuple support, and needs to be loaded via `import` or `using`. In v0.7, they are included in base Julia. 
+> v0.6 users: since `NamedTuples` are not supported in base Julia v0.6, you must import the `NamedTuples.jl` package. Be aware of [this issue](https://github.com/JuliaLang/julia/issues/17240) with keyword arguments in v0.6. 
 
 Unpacking is done with `@unpack` (`@pack` is similar):
 ```julia

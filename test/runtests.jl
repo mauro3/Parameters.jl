@@ -448,18 +448,14 @@ if VERSION<v"0.7-"
 
         @test_throws ErrorException MyNT().z # Undefined field access
         q = x -> x^3
-        scopingTest = @with_kw (q = q,)
-        @test_broken scopingTest() # Scoping failure.
-        @test_throws ErrorException eval(:(@with_kw (a = 1, a = 2,))) # Duplicate values handling 
-        obj = MyNT()
-        @test_throws ErrorException obj.a = 2 # Immutability 
+        scopingTest = @with_kw (q = q,) # See https://github.com/JuliaLang/julia/issues/17240
+        @test_throws UndefVarError scopingTest()
         x = [1, 2, 3]
         immutabilityTest = @with_kw (f = x,)
         obj = immutabilityTest()
         x = [4, 5, 6]
-        @test obj.f == [1, 2, 3] # Test immutability per the rules of v0.6
-        undefTest = @with_kw (x = ζ + 2,)
-        @test_throws UndefVarError undefTest() # Check use of undefined variables. 
+        @test obj.f == [1, 2, 3] # Test immutability for old object 
+        @test immutabilityTest().f == [4, 5, 6] # Test rebinding for new object 
         
         # Exotic input test 
         naughtyInputs = ["!@#\$%^&*()`~", :"()esc(;", :x, :(eval(:x)), true, esc(true), "-9223372036854775808/-1", :(0/0), "-9223372036854775808/-1", "0xabad1dea", :(@test)]
@@ -498,20 +494,18 @@ else
         @test_throws ErrorException MyNT().z # Undefined field access
         q = x -> x^3
         scopingTest = @with_kw (q = q,)
-        @test scopingTest().q(2) == 8 # Something wrong with doing this directly. 
+        @test scopingTest().q(2) == 8 
         x = [1, 2, 3]
         scopingTest = @with_kw (x = x,)
         @test scopingTest().x == [1, 2, 3]
-        @test_throws ErrorException eval(:(@with_kw (a = 1, a = 2,))) # Duplicate values handling 
         obj = MyNT()
         @test_throws ErrorException obj.a = 2 # Immutability against object setting
         x = [1, 2, 3]
         immutabilityTest = @with_kw (f = x,)
         obj = immutabilityTest()
         x = [4, 5, 6]
-        @test obj.f == [1, 2, 3] # Test immutability per the rules of v0.7
-        undefTest = @with_kw (x = ζ + 2,)
-        @test_throws UndefVarError undefTest() # Check use of undefined variables. 
+        @test obj.f == [1, 2, 3] # Test immutability 
+        @test immutabilityTest().f == [4, 5, 6] # Test rebinding for new object 
 
          # Exotic input test 
          naughtyInputs = ["!@#\$%^&*()`~", :"()esc(;", :x, :(eval(:x)), true, esc(true), "-9223372036854775808/-1", :(0/0), "-9223372036854775808/-1", "0xabad1dea", :(@test)]
