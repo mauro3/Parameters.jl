@@ -498,8 +498,6 @@ else
         x = [1, 2, 3]
         scopingTest = @with_kw (x = x,)
         @test scopingTest().x == [1, 2, 3]
-        obj = MyNT()
-        @test_throws ErrorException obj.a = 2 # Immutability against object setting
         x = [1, 2, 3]
         immutabilityTest = @with_kw (f = x,)
         obj = immutabilityTest()
