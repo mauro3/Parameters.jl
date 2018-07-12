@@ -1,3 +1,7 @@
+# 2018-07-10
+
+Added named tuple support. 
+
 # 2017-09-26
 
 Dropped Julia 0.5 support.

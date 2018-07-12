@@ -434,7 +434,7 @@ if VERSION<v"0.7-"
         @test MyNT()==@NT(a=1, b="test", w=:uu)
         @test MyNT(b=1)==@NT(a=1, b=1, w=:uu)
         @test MyNT(1,2,"a")==@NT(a=1, b=2, w="a")
-        @test_throws MethodError MyNT(c=1)
+        @test_throws MethodError MyNT(c=1) # Undefined field setting. 
         @test_throws TypeError @eval @with_kw (a::Int=1,) # no type annotations allowed
         @test_throws ErrorException @eval @with_kw(a=1,) # no space
 
@@ -445,6 +445,33 @@ if VERSION<v"0.7-"
         @test MyNT3()==@NT(a=1, b=1)
         @test MyNT3(a=2)==@NT(a=2, b=2)
         @test MyNT3(b=2)==@NT(a=1, b=2)
+
+        @test_throws ErrorException MyNT().z # Undefined field access
+        q = x -> x^3
+        scopingTest = @with_kw (q = q,) # See https://github.com/JuliaLang/julia/issues/17240
+        @test_throws UndefVarError scopingTest()
+        x = [1, 2, 3]
+        immutabilityTest = @with_kw (f = x,)
+        obj = immutabilityTest()
+        x = [4, 5, 6]
+        @test obj.f == [1, 2, 3] # Test immutability for old object 
+        @test immutabilityTest().f == [4, 5, 6] # Test rebinding for new object 
+        
+        # Exotic input test 
+        naughtyInputs = ["!@#\$%^&*()`~", :"()esc(;", :x, :(eval(:x)), true, esc(true), "-9223372036854775808/-1", :(0/0), "-9223372036854775808/-1", "0xabad1dea", :(@test)]
+        for input in naughtyInputs
+            naughtyTest = @with_kw (x = input, y = 2)
+            @test naughtyTest().x == input
+        end
+
+        # Other behavior checks 
+        compoundTest = @with_kw (x = (2 > 1), y = 2)
+        @test compoundTest().x == true # Compound evaluation check
+        foo(x) = 3*x
+        anonymousTest = @with_kw (x = x -> foo(x), y = 2)
+        @test anonymousTest().x(4) == 12 # Anonymous functions/value clash check
+        symbolTest = @with_kw (x = :x, y = 2)
+        @test symbolTest().x == :x
     end
 else
     @eval begin
@@ -463,6 +490,36 @@ else
         @test MyNT3()==(a=1, b=1)
         @test MyNT3(a=2)==(a=2, b=2)
         @test MyNT3(b=2)==(a=1, b=2)
+
+        @test_throws ErrorException MyNT().z # Undefined field access
+        q = x -> x^3
+        scopingTest = @with_kw (q = q,)
+        @test scopingTest().q(2) == 8 
+        x = [1, 2, 3]
+        scopingTest = @with_kw (x = x,)
+        @test scopingTest().x == [1, 2, 3]
+        x = [1, 2, 3]
+        immutabilityTest = @with_kw (f = x,)
+        obj = immutabilityTest()
+        x = [4, 5, 6]
+        @test obj.f == [1, 2, 3] # Test immutability 
+        @test immutabilityTest().f == [4, 5, 6] # Test rebinding for new object 
+
+         # Exotic input test 
+         naughtyInputs = ["!@#\$%^&*()`~", :"()esc(;", :x, :(eval(:x)), true, esc(true), "-9223372036854775808/-1", :(0/0), "-9223372036854775808/-1", "0xabad1dea", :(@test)]
+        for input in naughtyInputs
+            naughtyTest = @with_kw (x = input, y = 2)
+            @test naughtyTest().x == input
+        end
+ 
+         # Other behavior checks 
+         compoundTest = @with_kw (x = (2 > 1), y = 2)
+         @test compoundTest().x == true # Compound evaluation check
+         foo(x) = 3*x
+         anonymousTest = @with_kw (x = x -> foo(x), y = 2)
+         @test anonymousTest().x(4) == 12 # Anonymous functions/value clash check
+         symbolTest = @with_kw (x = :x, y = 2)
+         @test symbolTest().x == :x
     end
 end
 

@@ -13,7 +13,7 @@ This is a package I use to handle numerical-model parameters, thus the
 name.  However, it should be useful otherwise too.  It has two main
 features:
 
-- keyword type constructors with default values, and
+- keyword type constructors with default values for `struct`s and `NamedTuples`,
 - unpacking and packing of composite types and dicts.
 
 The macro `@with_kw` which decorates a type definition to
@@ -42,6 +42,21 @@ A
   b: -1.1
   c: 4
 ```
+
+The macro also supports constructors for named tuples with default values; e.g.
+
+```julia
+julia> MyNT = @with_kw (x = 1, y = "foo", z = :(bar))
+(::#5) (generic function with 2 methods)
+
+julia> MyNT()
+(x = 1, y = "foo", z = :bar)
+
+julia> MyNT(x = 2)
+(x = 2, y = "foo", z = :bar)
+```
+
+> v0.6 users: since `NamedTuples` are not supported in base Julia v0.6, you must import the `NamedTuples.jl` package. Be aware of [this issue](https://github.com/JuliaLang/julia/issues/17240) with keyword arguments in v0.6. 
 
 Unpacking is done with `@unpack` (`@pack` is similar):
 ```julia
