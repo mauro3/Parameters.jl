@@ -41,6 +41,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "manual.html#Named-Tuple-Support-1",
+    "page": "Parameters manual",
+    "title": "Named Tuple Support",
+    "category": "section",
+    "text": "As mentioned in the README, the @with_kw macro can be used to decorate a named tuple and produce a named tuple constructor with those defaults. Users of Julia v0.6 should be aware of this caveat that prohibits assignments like @with_kw (f = f, x = x). This is a consequence of different scoping rules for keyword arguments in v0.6 and v0.7. Users of v0.6 will also need to explicitly import NamedTuples.jl, since this functionality is not present in that version of base Julia. These named tuples can be defined as such: MyNT = @with_kw (f = x -> x^3, y = 3, z = \"foo\")And the constructors can be used as follows:julia> MyNT(f = x -> x^2, z = :foo)\n(f = #12, y = 3, z = :foo)The constructor is not type-locked:julia> MyNT(f = \"x -> x^3\")\n(f = \"x -> x^3\", y = 3, z = \"foo\")And these named tuples can unpacked in the usual way (see below).julia> @unpack f, y, z = MyNT()\n(f = #7, y = 3, z = \"foo\")\n\njulia> f\n(::#7) (generic function with 1 method)\n\njulia> y\n3\n\njulia> z\n\"foo\"Since the macro operates on a single tuple expression (as opposed to a tuple of assignment expressions),writing @with_kw(x = 1, y = :foo) will return an error suggesting you write @with_kw (x = 1, y = :foo)."
+},
+
+{
     "location": "manual.html#(Un)pack-macros-1",
     "page": "Parameters manual",
     "title": "(Un)pack macros",
