@@ -16,6 +16,8 @@ features:
 - keyword type constructors with default values for `struct`s and `NamedTuples`,
 - unpacking and packing of composite types and dicts.
 
+Checkout my ten minute JuliaCon 2018 [talk](https://youtu.be/JFrzrTYFYbU?t=1m).
+
 The macro `@with_kw` which decorates a type definition to
 allow default values and a keyword constructor:
 ```julia
@@ -56,7 +58,7 @@ julia> MyNT(x = 2)
 (x = 2, y = "foo", z = :bar)
 ```
 
-> v0.6 users: since `NamedTuples` are not supported in base Julia v0.6, you must import the `NamedTuples.jl` package. Be aware of [this issue](https://github.com/JuliaLang/julia/issues/17240) with keyword arguments in v0.6. 
+> v0.6 users: since `NamedTuples` are not supported in base Julia v0.6, you must import the `NamedTuples.jl` package. Be aware of [this issue](https://github.com/JuliaLang/julia/issues/17240) with keyword arguments in v0.6.
 
 Unpacking is done with `@unpack` (`@pack` is similar):
 ```julia
