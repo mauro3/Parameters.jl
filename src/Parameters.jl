@@ -54,8 +54,8 @@ export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack
 struct Lines
     block::Expr
 end
-Base.start(lns::Lines) = 1
-function Base.next(lns::Lines, nr)
+start(lns::Lines) = 1
+function next(lns::Lines, nr)
     for i=nr:length(lns.block.args)
         if lns.block.args[i] isa LineNumberNode
             continue
@@ -68,11 +68,21 @@ function Base.next(lns::Lines, nr)
     end
     return -1
 end
-function Base.done(lns::Lines, nr)
+function done(lns::Lines, nr)
     if next(lns::Lines, nr)==-1
         true
     else
         false
+    end
+end
+if VERSION < v"0.7.0-DEV"
+    Base.start(lns::Lines) = start(lns)
+    Base.next(lns::Lines, nr) = next(lns, nr)
+    Base.done(lns::Lines, nr) = done(lns, nr)
+else
+    function Base.iterate(lns::Lines, nr=start(lns))
+        nr = next(lns, nr)
+        return nr == -1 ? nothing : nr
     end
 end
 # This is not O(1) but hey...
