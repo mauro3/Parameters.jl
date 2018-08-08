@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Parameters manual · Parameters.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Parameters.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="search.html"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="index.html">Parameters.jl</a></li><li class="current"><a class="toctext" href="manual.html">Parameters manual</a><ul class="internal"><li class="toplevel"><a class="toctext" href="#Types-with-default-values-and-keyword-constructors-1">Types with default values &amp; keyword constructors</a></li><li><a class="toctext" href="#Named-Tuple-Support-1">Named Tuple Support</a></li><li class="toplevel"><a class="toctext" href="#(Un)pack-macros-1">(Un)pack macros</a></li><li><a class="toctext" href="#Customization-of-@unpack-and-@pack-1">Customization of <code>@unpack</code> and <code>@pack</code></a></li><li><a class="toctext" href="#The-type-specific-(un)pack-macros-(somewhat-dangerous)-1">The type-specific (un)pack macros (somewhat dangerous)</a></li></ul></li><li><a class="toctext" href="api.html">API</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href="manual.html">Parameters manual</a></li></ul><a class="edit-page" href="https://github.com/mauro3/Parameters.jl/blob/master/docs/src/manual.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Parameters manual</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Parameters-manual-1" href="#Parameters-manual-1">Parameters manual</a></h1><p>This is a manual by example (<a href="https://github.com/mauro3/Parameters.jl/blob/master/examples/ex1.jl">examples/ex1.jl</a>).</p><h1><a class="nav-anchor" id="Types-with-default-values-and-keyword-constructors-1" href="#Types-with-default-values-and-keyword-constructors-1">Types with default values &amp; keyword constructors</a></h1><p>Create a type which has default values using <a href="api.html#Parameters.@with_kw-Tuple{Any}"><code>@with_kw</code></a>:</p><pre><code class="language-julia">using Parameters
+
+@with_kw struct PhysicalPara{R}
+    rw::R = 1000.
+    ri::R = 900.
+    L::R = 3.34e5
+    g::R = 9.81
+    cw::R = 4220.
+    day::R = 24*3600.
+end</code></pre><p>Now the type can be constructed using the default values, or with non-defaults specified with keywords:</p><pre><code class="language-julia"># Create an instance with the defaults
+pp = PhysicalPara()
+pp_f32 = PhysicalPara{Float32}() # the type parameter can be chosen explicitly
+# Make one with some non-defaults
+pp2 = PhysicalPara(cw=77.0, day= 987.0)
+# Make another one based on the previous one with some modifications
+pp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)
+# the normal positional constructor can also be used
+# (and should be used in hot inner loops)
+pp4 = PhysicalPara(1,2,3,4,5,6)</code></pre><p>To enforce constraints on the values, it&#39;s possible to use <code>@assert</code>s straight inside the type-def.  (As usual, for mutables these asserts can be violated by updating the fields after type construction.)</p><pre><code class="language-julia">@with_kw struct PhysicalPara2{R}
+    rw::R = 1000.; @assert rw&gt;0
+    ri::R = 900.
+    @assert rw&gt;ri # Note that the placement of assertions is not
+                  # relevant. (They are moved to the constructor.
+end</code></pre><p>Parameter interdependence is possible:</p><pre><code class="language-julia">@with_kw struct Para{R&lt;:Real}
+    a::R = 5
+    b::R
+    c::R = a+b
+end
+pa = Para(b=7)</code></pre><p>Often the bulk of fields will have the same type.  To help with this, a default type can be set.  Using this feature, the last example (with additional field <code>d</code>) can be written more compactly as:</p><pre><code class="language-julia">@with_kw struct Para2{R&lt;:Real} @deftype R
+    a = 5
+    b
+    c = a+b
+    d::Int = 4 # adding a type overrides the @deftype
+end
+pa2 = Para2(b=7)
+
+# or more pedestrian
+@with_kw struct Para3 @deftype Float64
+    a = 5
+    b
+    c = a+b
+    d::Int = 4
+end
+pa3 = Para3(b=7)</code></pre><p>Custom inner constructors can be defined as long as:</p><ul><li><p>one defining all positional arguments is given</p></li><li><p>no zero-positional arguments constructor is defined (as that would clash with the keyword constructor)</p></li><li><p>no <code>@assert</code>s (as in above example) are used within the type body.</p></li></ul><p>The keyword constructor goes through the inner positional constructor, thus invariants or any other calculation will be honored.</p><pre><code class="language-julia">@with_kw struct MyS{R}
+    a::R = 5
+    b = 4
+    MyS{R}(a,b) where {R} = (@assert a&gt;b; new(a,b)) #
+    MyS{R}(a) where {R} = MyS{R}(a, a-1) # For this provide your own outer constructor:
+end
+MyS(a::R) where {R} = MyS{R}(a)
+
+MyS{Int}() # MyS(5,4)
+ms = MyS(3) # MyS(3,2)
+MyS(ms, b=-1) # MyS(3,-1)
+try
+    MyS(ms, b=6) # this will fail the assertion
+catch
+end</code></pre><p>Note that two of the main reasons to have an inner constructor, assertions and simple calculations, are more easily achieved with <code>@assert</code>s and parameter interdependence.</p><p>The macro <code>@with_kw</code> defines a show-method which is, hopefully, more informative than the standard one.  For example the printing of the first example is:</p><pre><code class="language-julia">julia&gt; PhysicalPara()
+PhysicalPara{Float64}
+  rw: Float64 1000.0
+  ri: Float64 900.0
+  L: Float64 334000.0
+  g: Float64 9.81
+  cw: Float64 4220.0
+  day: Float64 86400.0</code></pre><p>If this <code>show</code> method definition is not desired, for instance because of method re-definition warnings, then use <a href="api.html#Parameters.@with_kw_noshow-Tuple{Any}"><code>@with_kw_noshow</code></a>.</p><h2><a class="nav-anchor" id="Named-Tuple-Support-1" href="#Named-Tuple-Support-1">Named Tuple Support</a></h2><p>As mentioned in the README, the <code>@with_kw</code> macro can be used to decorate a named tuple and produce a named tuple constructor with those defaults. </p><blockquote><p>Users of Julia v0.6 should be aware of this <a href="https://github.com/JuliaLang/julia/issues/17240">caveat</a> that prohibits assignments like <code>@with_kw (f = f, x = x)</code>. This is a consequence of different scoping rules for keyword arguments in <a href="https://docs.julialang.org/en/stable/manual/functions/#Evaluation-Scope-of-Default-Values-1">v0.6</a> and <a href="https://docs.julialang.org/en/latest/manual/functions/#Evaluation-Scope-of-Default-Values-1">v0.7</a>. </p></blockquote><blockquote><p>Users of v0.6 will also need to explicitly import <code>NamedTuples.jl</code>, since this functionality is not present in that version of base Julia. </p></blockquote><p>These named tuples can be defined as such: </p><pre><code class="language-julia">MyNT = @with_kw (f = x -&gt; x^3, y = 3, z = &quot;foo&quot;)</code></pre><p>And the constructors can be used as follows:</p><pre><code class="language-julia">julia&gt; MyNT(f = x -&gt; x^2, z = :foo)
+(f = #12, y = 3, z = :foo)</code></pre><p>The constructor is not type-locked:</p><pre><code class="language-julia">julia&gt; MyNT(f = &quot;x -&gt; x^3&quot;)
+(f = &quot;x -&gt; x^3&quot;, y = 3, z = &quot;foo&quot;)</code></pre><p>And these named tuples can unpacked in the usual way (see below).</p><pre><code class="language-julia">julia&gt; @unpack f, y, z = MyNT()
+(f = #7, y = 3, z = &quot;foo&quot;)
+
+julia&gt; f
+(::#7) (generic function with 1 method)
+
+julia&gt; y
+3
+
+julia&gt; z
+&quot;foo&quot;</code></pre><p>Since the macro operates on a single tuple expression (as opposed to a tuple of assignment expressions),writing <code>@with_kw(x = 1, y = :foo)</code> will return an error suggesting you write <code>@with_kw (x = 1, y = :foo)</code>.</p><h1><a class="nav-anchor" id="(Un)pack-macros-1" href="#(Un)pack-macros-1">(Un)pack macros</a></h1><p>When working with parameters, or otherwise, it is often convenient to unpack (and pack) some or all of the fields of a type.  This is often the case when passed into a function.</p><p>The preferred to do this is using the <a href="api.html#Parameters.@unpack-Tuple{Any}"><code>@unpack</code></a> and <a href="api.html#Parameters.@pack-Tuple{Any}"><code>@pack</code></a> macros which are generic and also work with non-<code>@with_kw</code> types, modules, and dictionaries (and can be customized for other types too, see next section).  Continuing with the <code>Para</code> type defined above:</p><pre><code class="language-julia">function fn2(var, pa::Para)
+    @unpack a, b = pa # equivalent to: a,b = pa.a,pa.b
+    out = var + a + b
+    b = 77
+    @pack pa = b # equivalent to: pa.b = b
+    return out, pa
+end
+
+out, pa = fn1(7, pa)</code></pre><p>Example with a dictionary:</p><pre><code class="language-julia">d = Dict{Symbol,Any}(:a=&gt;5.0,:b=&gt;2,:c=&gt;&quot;Hi!&quot;)
+@unpack a, c = d
+a == 5.0 #true
+c == &quot;Hi!&quot; #true
+
+d = Dict{Symbol,Any}()
+@pack d = a, c
+d # Dict{Symbol,Any}(:a=&gt;5.0,:c=&gt;&quot;Hi!&quot;)</code></pre><h2><a class="nav-anchor" id="Customization-of-@unpack-and-@pack-1" href="#Customization-of-@unpack-and-@pack-1">Customization of <code>@unpack</code> and <code>@pack</code></a></h2><p>What happens during the (un-)packing of a particular datatype is determined by the functions <a href="api.html#Parameters.unpack"><code>Parameters.unpack</code></a> and <a href="api.html#Parameters.pack!"><code>Parameters.pack!</code></a>.</p><p>The <code>Parameters.unpack</code> function is invoked to unpack one entity of some <code>DataType</code> and has signature:</p><p><code>unpack(dt::Any, ::Val{field}) -&gt; value of field</code></p><p>Two definitions are included in the package to unpack a composite type or a dictionary with Symbol or string keys:</p><pre><code class="language-none">@inline unpack{f}(x, ::Val{f}) = getfield(x, f)
+@inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
+@inline unpack{S&lt;:AbstractString,k}(x::Associative{S}, ::Val{k}) = x[string(k)]</code></pre><p>The <code>Parameters.pack!</code> function is invoked to pack one entity into some <code>DataType</code> and has signature:</p><p><code>pack!(dt::Any, ::Val{field}, value) -&gt; value</code></p><p>Two definitions are included in the package to pack into a composite type or into a dictionary with Symbol or string keys:</p><pre><code class="language-none">@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
+@inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
+@inline pack!{S&lt;:AbstractString,k}(x::Associative{S}, ::Val{k}, val) = x[string(k)]=val</code></pre><p>More methods can be added to <code>unpack</code> and <code>pack!</code> to allow for specialized packing of datatypes.</p><h2><a class="nav-anchor" id="The-type-specific-(un)pack-macros-(somewhat-dangerous)-1" href="#The-type-specific-(un)pack-macros-(somewhat-dangerous)-1">The type-specific (un)pack macros (somewhat dangerous)</a></h2><p>The <code>@with_kw</code> macro automatically produces type-specific (un-)pack macros of form <code>@unpack_TypeName</code> and <code>@pack!_TypeName</code> which unpack/pack all fields:</p><pre><code class="language-julia">function fn(var, pa::Para)
+    @unpack_Para pa # the macro is constructed during the @with_kw
+                    # and called @unpack_*
+    out = var + a + b
+    b = 77
+    @pack!_Para pa # only works with mutables
+    return out, pa
+end
+
+out, pa = fn(7, pa)</code></pre><p>However, note that the (un-)packing macros which unpack all fields have a few pitfalls, as changing the type definition will change what local variables are available in a function using <code>@unpack_*</code>.  Examples:</p><ul><li><p>adding a field <code>pi</code> to a type would hijack <code>Base.pi</code> usage in any function using <code>@unpack_*</code></p></li><li><p>the <code>@unpack_*</code> will shadow an input argument of the function with the same name as a type-fieldname.  This I found very perplexing at times.</p></li></ul><p>Thus, in general, it is probably better to use the <code>@(un)pack</code> macros instead.</p><footer><hr/><a class="previous" href="index.html"><span class="direction">Previous</span><span class="title">Parameters.jl</span></a><a class="next" href="api.html"><span class="direction">Next</span><span class="title">API</span></a></footer></article></body></html>
