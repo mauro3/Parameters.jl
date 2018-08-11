@@ -22,7 +22,7 @@ Dropping Julia 0.4 support
 
 Updated packing and unpacking macro syntax according to PR
 [#13](https://github.com/mauro3/Parameters.jl/pull/13).  Before
-`@pack` was supported for immutable (via invoking `reconstruct`), this
+`@pack!` was supported for immutable (via invoking `reconstruct`), this
 has been dropped.
 
 Also, `@unpack` performance on Julia-0.4 will be sub-par with this
@@ -51,7 +51,7 @@ Allowing documenting types created with `@with_kw`
 
 # 2015-08-17
 
-Added `@pack` and `@unpack` macros:
+Added `@pack!` and `@unpack` macros:
 
 ```julia
 type A

@@ -350,7 +350,7 @@ let
     r = 1
     a = 2
     c = 3
-    @pack!_P1m mt
+    @pack_P1m! mt
     if Int==Int64
         @test string(mt) == "P1m\n  r: Int64 1\n  c: Int64 3\n  a: Float64 2.0\n"
     else
@@ -524,7 +524,7 @@ else
 end
 
 ###########################
-# Packing and unpacking @unpack, @pack
+# Packing and unpacking @unpack, @pack!
 ##########################
 # Example with dict:
 d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
@@ -560,11 +560,11 @@ d = A(4,7.0,"Hi!")
 a = 5.0
 c = "Hi!"
 d = Dict{Symbol,Any}()
-@pack d = a, c
+@pack! d = a, c
 @test d==Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
 
 d = Dict{String,Any}()
-@pack d = a, c
+@pack! d = a, c
 @test d==Dict{String,Any}("a"=>5.0,"c"=>"Hi!")
 
 
@@ -572,7 +572,7 @@ d = Dict{String,Any}()
 a = 99
 c = "HaHa"
 d = A(4,7.0,"Hi")
-@pack d = a, c
+@pack! d = a, c
 @test d.a == 99
 @test d.c == "HaHa"
 
@@ -597,7 +597,7 @@ aUP1, bUP1 = 0, 0
 
 vv = uu
 aUP1 = 99
-@pack uu = aUP1
+@pack! uu = aUP1
 @test uu==vv
 @test uu.aUP1==99
 
@@ -610,7 +610,7 @@ uu = UP2(1,2)
 @test_throws ErrorException @unpack aUP2, cUP2 = uu
 
 aUP1 = 99
-@test_throws ErrorException @pack uu = aUP1
+@test_throws ErrorException @pack! uu = aUP1
 
 # check that inference works
 struct UP3
@@ -691,7 +691,7 @@ V06(88, [1], ["a"])
 ### test escaping
 module TestModule
 
-using Parameters: @unpack, @pack, @with_kw
+using Parameters: @unpack, @pack!, @with_kw
 
 @with_kw mutable struct TestStruct
     x::Int = 1
@@ -701,7 +701,7 @@ end
 function test_function(z::TestStruct)
     @unpack x, y = z
     y += x
-    @pack z = y
+    @pack! z = y
     z
 end
 

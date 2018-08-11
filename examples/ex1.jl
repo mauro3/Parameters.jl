@@ -108,7 +108,7 @@ function fn2(var, pa::Para)
     @unpack a, b = pa
     out = var + a + b
     b = 77
-    #@pack pa = b # doesn't work with immutable type
+    #@pack! pa = b # doesn't work with immutable type
     return out, pa
 end
 
