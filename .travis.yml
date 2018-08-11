@@ -1,10 +1,13 @@
+# Documentation: http://docs.travis-ci.com/user/languages/julia/
+#
+# https://github.com/invenia/Mocking.jl/blob/master/.travis.yml
 language: julia
 os:
   - linux
   - osx
 julia:
-  - 0.6
   - 0.7
+  - 1.0
   - nightly
 matrix:
   allow_failures:
@@ -20,5 +23,5 @@ git:
 #  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("Parameters"); Pkg.test("Parameters"; coverage=true)'
 ## Documeter.jl
 after_success:
-  - julia -e 'Pkg.add("Documenter")'
-  - julia -e 'cd(Pkg.dir("Parameters")); include(joinpath("docs", "make.jl"))'
+  - julia -e 'using Pkg; Pkg.add("Documenter")'
+  - julia -e 'using Pkg; cd(Pkg.dir("Parameters")); include(joinpath("docs", "make.jl"))'
