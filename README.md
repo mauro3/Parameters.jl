@@ -60,7 +60,7 @@ julia> MyNT(x = 2)
 
 > v0.6 users: since `NamedTuples` are not supported in base Julia v0.6, you must import the `NamedTuples.jl` package. Be aware of [this issue](https://github.com/JuliaLang/julia/issues/17240) with keyword arguments in v0.6.
 
-Unpacking is done with `@unpack` (`@pack` is similar):
+Unpacking is done with `@unpack` (`@pack!` is similar):
 ```julia
 struct B
     a
@@ -84,7 +84,7 @@ The features are:
   another type instance
 - packing and unpacking macros for the type: `@unpack_*` where `*` is
   the type name.
-- generic packing and unpacking macros `@pack`, `@unpack` (work with
+- generic packing and unpacking macros `@pack!`, `@unpack` (work with
   any types).
 
 The keyword-constructor and default-values functionality will probably

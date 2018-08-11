@@ -26,7 +26,7 @@ A
   c: 4
 ```
 
-Unpacking is done with `@unpack` (`@pack` is similar):
+Unpacking is done with `@unpack` (`@pack!` is similar):
 ```
 struct B
     a
@@ -45,7 +45,7 @@ import Base: @__doc__
 import DataStructures: OrderedDict
 using Compat
 
-export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack
+export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack!
 
 ## Parser helpers
 #################
@@ -541,7 +541,7 @@ function with_kw(typedef, mod::Module, withshow=true)
 
     # (un)pack macro from https://groups.google.com/d/msg/julia-users/IQS2mT1ITwU/hDtlV7K1elsJ
     unpack_name = Symbol("unpack_"*string(tn))
-    pack_name = Symbol("pack!_"*string(tn))
+    pack_name = Symbol("pack_"*string(tn)*"!")
     pack_name_depr = Symbol("pack_"*string(tn))
     showfn = if withshow
         :(function Base.show(io::IO, p::$tn)
@@ -567,7 +567,7 @@ function with_kw(typedef, mod::Module, withshow=true)
             esc($Parameters.$(_pack)(ex, $unpack_vars))
         end
         macro $pack_name_depr(ex)
-            Base.depwarn("The macro `@pack_A` is deprecated, use `@pack!_A`", $(QuoteNode(pack_name_depr)) )
+            Base.depwarn("The macro `@pack_A` is deprecated, use `@$(string($pack_name))`", $(QuoteNode(pack_name_depr)) )
             esc($Parameters.$(_pack)(ex, $unpack_vars))
         end
         $tn
@@ -672,7 +672,7 @@ end
 
 
 ###########################
-# Packing and unpacking @unpack, @pack
+# Packing and unpacking @unpack, @pack!
 ##########################
 # Below code slightly adapted from Simon Danisch's GLVisualize via PR
 # https://github.com/mauro3/Parameters.jl/pull/13
@@ -772,7 +772,7 @@ end
 """
 Packs variables into a composite type or a `Dict{Symbol}`
 ```julia_skip
-@pack dict_or_typeinstance = a, b, c
+@pack! dict_or_typeinstance = a, b, c
 ```
 
 Example with dict:
@@ -780,7 +780,7 @@ Example with dict:
 a = 5.0
 c = "Hi!"
 d = Dict{Symbol,Any}()
-@pack d = a, c
+@pack! d = a, c
 d # Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
 ```
 
@@ -790,12 +790,12 @@ a = 99
 c = "HaHa"
 mutable struct A; a; b; c; end
 d = A(4,7.0,"Hi")
-@pack d = a, c
+@pack! d = a, c
 d.a == 99 #true
 d.c == "HaHa" #true
 ```
 """
-macro pack(args)
+macro pack!(args)
     args.head!=:(=) && error("Expression needs to be of form `a = b,c`")
     suitecase, items = args.args
     items = isa(items, Symbol) ? [items] : items.args

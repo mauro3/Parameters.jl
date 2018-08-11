@@ -6,6 +6,7 @@ This is a manual by example
 # Types with default values & keyword constructors
 
 Create a type which has default values using [`@with_kw`](@ref):
+
 ```julia
 using Parameters
 
@@ -19,9 +20,9 @@ using Parameters
 end
 ```
 
-
 Now the type can be constructed using the default values, or with
 non-defaults specified with keywords:
+
 ```julia
 # Create an instance with the defaults
 pp = PhysicalPara()
@@ -35,10 +36,10 @@ pp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)
 pp4 = PhysicalPara(1,2,3,4,5,6)
 ```
 
-
 To enforce constraints on the values, it's possible to use `@assert`s
-straight inside the type-def.  (As usual, for mutables these
+straight inside the type-def. (As usual, for mutables these
 asserts can be violated by updating the fields after type construction.)
+
 ```julia
 @with_kw struct PhysicalPara2{R}
     rw::R = 1000.; @assert rw>0
@@ -48,8 +49,8 @@ asserts can be violated by updating the fields after type construction.)
 end
 ```
 
-
 Parameter interdependence is possible:
+
 ```julia
 @with_kw struct Para{R<:Real}
     a::R = 5
@@ -59,10 +60,10 @@ end
 pa = Para(b=7)
 ```
 
-
-Often the bulk of fields will have the same type.  To help with this,
-a default type can be set.  Using this feature, the last example (with
+Often the bulk of fields will have the same type. To help with this,
+a default type can be set. Using this feature, the last example (with
 additional field `d`) can be written more compactly as:
+
 ```julia
 @with_kw struct Para2{R<:Real} @deftype R
     a = 5
@@ -82,7 +83,6 @@ end
 pa3 = Para3(b=7)
 ```
 
-
 Custom inner constructors can be defined as long as:
 
 - one defining all positional arguments is given
@@ -92,6 +92,7 @@ Custom inner constructors can be defined as long as:
 
 The keyword constructor goes through the inner positional constructor,
 thus invariants or any other calculation will be honored.
+
 ```julia
 @with_kw struct MyS{R}
     a::R = 5
@@ -109,12 +110,14 @@ try
 catch
 end
 ```
+
 Note that two of the main reasons to have an inner constructor,
 assertions and simple calculations, are more easily achieved with
 `@assert`s and parameter interdependence.
 
 The macro `@with_kw` defines a show-method which is, hopefully, more informative than the
-standard one.  For example the printing of the first example is:
+standard one. For example the printing of the first example is:
+
 ```julia
 julia> PhysicalPara()
 PhysicalPara{Float64}
@@ -129,15 +132,15 @@ PhysicalPara{Float64}
 If this `show` method definition is not desired, for instance because of method
 re-definition warnings, then use [`@with_kw_noshow`](@ref).
 
-## Named Tuple Support 
+## Named Tuple Support
 
-As mentioned in the README, the `@with_kw` macro can be used to decorate a named tuple and produce a named tuple constructor with those defaults. 
+As mentioned in the README, the `@with_kw` macro can be used to decorate a named tuple and produce a named tuple constructor with those defaults.
 
-> Users of Julia v0.6 should be aware of this [caveat](https://github.com/JuliaLang/julia/issues/17240) that prohibits assignments like `@with_kw (f = f, x = x)`. This is a consequence of different scoping rules for keyword arguments in [v0.6](https://docs.julialang.org/en/stable/manual/functions/#Evaluation-Scope-of-Default-Values-1) and [v0.7](https://docs.julialang.org/en/latest/manual/functions/#Evaluation-Scope-of-Default-Values-1). 
+> Users of Julia v0.6 should be aware of this [caveat](https://github.com/JuliaLang/julia/issues/17240) that prohibits assignments like `@with_kw (f = f, x = x)`. This is a consequence of different scoping rules for keyword arguments in [v0.6](https://docs.julialang.org/en/stable/manual/functions/#Evaluation-Scope-of-Default-Values-1) and [v0.7](https://docs.julialang.org/en/latest/manual/functions/#Evaluation-Scope-of-Default-Values-1).
 
-> Users of v0.6 will also need to explicitly import `NamedTuples.jl`, since this functionality is not present in that version of base Julia. 
+> Users of v0.6 will also need to explicitly import `NamedTuples.jl`, since this functionality is not present in that version of base Julia.
 
-These named tuples can be defined as such: 
+These named tuples can be defined as such:
 
 ```julia
 MyNT = @with_kw (f = x -> x^3, y = 3, z = "foo")
@@ -178,12 +181,12 @@ Since the macro operates on a single tuple expression (as opposed to a tuple of 
 # (Un)pack macros
 
 When working with parameters, or otherwise, it is often convenient to
-unpack (and pack) some or all of the fields of a type.  This is often
+unpack (and pack) some or all of the fields of a type. This is often
 the case when passed into a function.
 
-The preferred to do this is using the [`@unpack`](@ref) and [`@pack`](@ref) macros
+The preferred to do this is using the [`@unpack`](@ref) and [`@pack!`](@ref) macros
 which are generic and also work with non-`@with_kw` types, modules, and
-dictionaries (and can be customized for other types too, see next section).  Continuing
+dictionaries (and can be customized for other types too, see next section). Continuing
 with the `Para` type defined above:
 
 ```julia
@@ -191,16 +194,15 @@ function fn2(var, pa::Para)
     @unpack a, b = pa # equivalent to: a,b = pa.a,pa.b
     out = var + a + b
     b = 77
-    @pack pa = b # equivalent to: pa.b = b
+    @pack! pa = b # equivalent to: pa.b = b
     return out, pa
 end
 
 out, pa = fn1(7, pa)
 ```
 
-
-
 Example with a dictionary:
+
 ```julia
 d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
 @unpack a, c = d
@@ -208,11 +210,11 @@ a == 5.0 #true
 c == "Hi!" #true
 
 d = Dict{Symbol,Any}()
-@pack d = a, c
+@pack! d = a, c
 d # Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
 ```
 
-## Customization of `@unpack` and `@pack`
+## Customization of `@unpack` and `@pack!`
 
 What happens during the (un-)packing of a particular datatype is
 determined by the functions [`Parameters.unpack`](@ref) and
@@ -225,6 +227,7 @@ The `Parameters.unpack` function is invoked to unpack one entity of some
 
 Two definitions are included in the package to unpack a composite type
 or a dictionary with Symbol or string keys:
+
 ```
 @inline unpack{f}(x, ::Val{f}) = getfield(x, f)
 @inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
@@ -251,7 +254,8 @@ specialized packing of datatypes.
 ## The type-specific (un)pack macros (somewhat dangerous)
 
 The `@with_kw` macro automatically produces type-specific (un-)pack
-macros of form `@unpack_TypeName` and `@pack!_TypeName` which unpack/pack all fields:
+macros of form `@unpack_TypeName` and `@pack_TypeName!` which unpack/pack all fields:
+
 ```julia
 function fn(var, pa::Para)
     @unpack_Para pa # the macro is constructed during the @with_kw
@@ -267,12 +271,12 @@ out, pa = fn(7, pa)
 
 However, note that the (un-)packing macros which unpack all fields
 have a few pitfalls, as changing the type definition will change what
-local variables are available in a function using `@unpack_*`.  Examples:
+local variables are available in a function using `@unpack_*`. Examples:
 
 - adding a field `pi` to a type would hijack `Base.pi` usage in any
   function using `@unpack_*`
 - the `@unpack_*` will shadow an input argument of the function with
-  the same name as a type-fieldname.  This I found very perplexing at
+  the same name as a type-fieldname. This I found very perplexing at
   times.
 
 Thus, in general, it is probably better to use the `@(un)pack` macros instead.
