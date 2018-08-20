@@ -116,6 +116,8 @@ Documentation is here: [stable](https://mauro3.github.io/Parameters.jl/stable) a
 - [SimpleStructs.jl](https://github.com/pluskid/SimpleStructs.jl) also
   provides key-word constructors, default values and assertions.  But
   the syntax is less nice than Parameters.jl.
+- [ExtractMacro.jl](https://github.com/carlobaldassi/ExtractMacro.jl) also has
+  the `@unpack` functionality.
 
 # TODO
 
