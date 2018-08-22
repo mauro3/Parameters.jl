@@ -181,8 +181,8 @@ Since the macro operates on a single tuple expression (as opposed to a tuple of 
 # (Un)pack macros
 
 When working with parameters, or otherwise, it is often convenient to
-unpack (and pack) some or all of the fields of a type. This is often
-the case when passed into a function.
+unpack (and pack, in the case of mutable datatypes) some or all of the
+fields of a type.  This is often the case when passed into a function.
 
 The preferred to do this is using the [`@unpack`](@ref) and [`@pack!`](@ref) macros
 which are generic and also work with non-`@with_kw` types, modules, and
@@ -198,7 +198,7 @@ function fn2(var, pa::Para)
     return out, pa
 end
 
-out, pa = fn1(7, pa)
+out, pa = fn2(7, pa)
 ```
 
 Example with a dictionary:
