@@ -42,7 +42,7 @@ c = BB.c
 """
 module Parameters
 import Base: @__doc__
-import DataStructures: OrderedDict
+import OrderedCollections: OrderedDict
 
 export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack!
 
