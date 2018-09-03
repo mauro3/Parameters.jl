@@ -43,7 +43,6 @@ c = BB.c
 module Parameters
 import Base: @__doc__
 import DataStructures: OrderedDict
-using Compat
 
 export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack!
 
@@ -75,16 +74,11 @@ function done(lns::Lines, nr)
         false
     end
 end
-if VERSION < v"0.7.0-DEV"
-    Base.start(lns::Lines) = start(lns)
-    Base.next(lns::Lines, nr) = next(lns, nr)
-    Base.done(lns::Lines, nr) = done(lns, nr)
-else
-    function Base.iterate(lns::Lines, nr=start(lns))
-        nr = next(lns, nr)
-        return nr == -1 ? nothing : nr
-    end
+function Base.iterate(lns::Lines, nr=start(lns))
+    nr = next(lns, nr)
+    return nr == -1 ? nothing : nr
 end
+
 # This is not O(1) but hey...
 function Base.setindex!(lns::Lines, val, ind)
     ii = 1
@@ -236,11 +230,7 @@ function reconstruct(pp::T, di) where T
             push!(args, pop!(di, n, getfield(pp, n)))
         end
         length(di)!=0 && error("Fields $(keys(di)) not in type $T")
-        if VERSION >= v"0.7.0-"
-            return pp isa NamedTuple ? T(Tuple(args)) : T(args...)
-        else
-            return T(args...)
-        end
+        return pp isa NamedTuple ? T(Tuple(args)) : T(args...)
     end
 end
 reconstruct(pp; kws...) = reconstruct(pp, kws)
@@ -266,7 +256,6 @@ function _pack_immutable(binding, fields)
     error("Cannot pack an immutable.  Consider using `reconstruct` (or file a feature request).")
 end
 
-const typedef_head = VERSION >= v"0.7.0-DEV.1263" ? :struct : :type
 const macro_hidden_nargs = length(:(@m).args) - 1 # ==1 on Julia 0.6, ==2 on Julia 0.7
 
 """
@@ -310,7 +299,7 @@ function with_kw(typedef, mod::Module, withshow=true)
     if typedef.head==:tuple # named-tuple
         withshow==false && error("`@with_kw_noshow` not supported for named tuples")
         return with_kw_nt(typedef, mod)
-    elseif typedef.head != typedef_head
+    elseif typedef.head != :struct
         error("""Only works on type-defs or named tuples.
               Make sure to have a space after `@with_kw`, e.g. `@with_kw (a=1,)
               Also, make sure to use a trailing comma for single-field NamedTuples.
@@ -454,7 +443,7 @@ function with_kw(typedef, mod::Module, withshow=true)
         end
     end
     # The type definition without inner constructors:
-    typ = Expr(typedef_head, deepcopy(typedef.args[1:2])..., deepcopy(fielddefs))
+    typ = Expr(:struct, deepcopy(typedef.args[1:2])..., deepcopy(fielddefs))
 
     # Inner keyword constructor.  Note that this calls the positional
     # constructor under the hood and not `new`.  That way a user can
@@ -604,19 +593,11 @@ function with_kw_nt(typedef, mod)
         end
     end
     NT = gensym(:NamedTuple_kw)
-    if VERSION >= v"0.7.0-"
-        nt = Expr(:tuple, nt...)
-        quote
-            $NT = (; $(kwargs...)) -> $nt
-            (::typeof($NT))($(args...)) = $nt
-            $NT
-        end
-    else
-        quote
-            $NT = (; $(kwargs...)) -> NamedTuples.@NT($(nt...))
-            (::typeof($NT))($(args...)) = NamedTuples.@NT($(nt...))
-            $NT
-        end
+    nt = Expr(:tuple, nt...)
+    quote
+        $NT = (; $(kwargs...)) -> $nt
+        (::typeof($NT))($(args...)) = $nt
+        $NT
     end
 end
 

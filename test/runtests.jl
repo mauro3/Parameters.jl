@@ -1,15 +1,10 @@
-using Parameters
-using Compat
-using Compat.Test
-using Compat.Markdown
+using Parameters, Test, Markdown
 
 # misc
-if VERSION>=v"0.7-"
-    a8679 = @eval (a=1, b=2)
-    ra8679 = @eval (a=1, b=44)
-    @test ra8679 == reconstruct(a8679, b=44)
-    @test_throws ErrorException reconstruct(a8679, c=44)
-end
+a8679 = @eval (a=1, b=2)
+ra8679 = @eval (a=1, b=44)
+@test ra8679 == reconstruct(a8679, b=44)
+@test_throws ErrorException reconstruct(a8679, c=44)
 
 a8679 = Dict(:a=>1, :b=>2)
 @test Dict(:a=>1, :b=>44) == reconstruct(a8679, b=44)
@@ -39,14 +34,9 @@ end
 @test "Test documentation\n" == Markdown.plain(@doc MT1)
 # https://github.com/JuliaLang/julia/issues/27092 means this does not work:
 # @test "A field Default: sdaf\n" == Markdown.plain(@doc MT1.c)
-if VERSION<v"0.7-"
-    @test "Field r Default: 4\n" == Markdown.plain(Base.Docs.fielddoc(MT1, :r))
-    @test "A field Default: sdaf\n" == Markdown.plain(Base.Docs.fielddoc(MT1, :c))
-else
-    @eval using REPL
-    @test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(MT1, :r))
-    @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(MT1, :c))
-end
+using REPL
+@test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(MT1, :r))
+@test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(MT1, :c))
 
 abstract type AMT1_2 end
 "Test documentation with type-parameter"
@@ -60,13 +50,8 @@ end
 @test MT1_2{Int}().c=="sdaf"
 @test "Test documentation with type-parameter\n" == Markdown.plain(@doc MT1_2)
 const TMT1_2 = MT1_2{Int} # Julia bug https://github.com/JuliaLang/julia/issues/27656
-if VERSION<v"0.7-"
-    @test "Field r Default: 4\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :r))
-    @test "A field Default: sdaf\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_2, :c))
-else
-    @test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :r))
-    @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :c))
-end
+@test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :r))
+@test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(TMT1_2, :c))
 
 "Test documentation with bound type-parameter"
 @with_kw struct MT1_3{T} <: AMT1_2
@@ -79,14 +64,8 @@ end
 @test MT1_3().c=="sdaf"
 @test "Test documentation with bound type-parameter\n" == Markdown.plain(@doc MT1_3)
 const TMT1_3 = MT1_3{Int} # Julia bug https://github.com/JuliaLang/julia/issues/27656
-if VERSION<v"0.7-"
-    @test "Field r Default: 4\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_3, :r))
-    @test "A field Default: sdaf\n" == Markdown.plain(Base.Docs.fielddoc(TMT1_3, :c))
-else
-    @eval using REPL
-    @test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :r))
-    @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :c))
-end
+@test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :r))
+@test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :c))
 
 
 # parameter-less
@@ -289,12 +268,7 @@ end
     a::R = 5
 end
 @test_throws UndefVarError MT10{Float64}() # defaults are evaluated in order
-if VERSION >= v"0.7.0-DEV.1219"
-    @test_throws UndefVarError MT10{Float64}(b=1).c
-else
-    # Ref https://github.com/JuliaLang/julia/issues/9535#issuecomment-73717708
-    @test MT10{Float64}(b=1).c==6
-end
+@test_throws UndefVarError MT10{Float64}(b=1).c
 @test MT10{Float64}(b=1, c=1).c==1
 
 # binding outside variables
@@ -328,11 +302,7 @@ let
     r = 1
     a = 2
     c = 3
-    if VERSION >= v"0.7.0-DEV"
-        @test_throws LoadError eval(:(@pack!_P1 mt))
-    else
-        @test_throws ErrorException eval(:(@pack!_P1 mt))
-    end
+    @test_throws LoadError eval(:(@pack!_P1 mt))
 end
 
 @with_kw mutable struct P1m
@@ -426,102 +396,51 @@ end
 
 # NamedTuples
 ###
-if VERSION<v"0.7-"
-    @eval using NamedTuples # needs separate eval
-    @eval begin
-        using NamedTuples
-        MyNT = @with_kw (a=1, b="test", w=:uu)
-        @test MyNT()==@NT(a=1, b="test", w=:uu)
-        @test MyNT(b=1)==@NT(a=1, b=1, w=:uu)
-        @test MyNT(1,2,"a")==@NT(a=1, b=2, w="a")
-        @test_throws MethodError MyNT(c=1) # Undefined field setting. 
-        @test_throws TypeError @eval @with_kw (a::Int=1,) # no type annotations allowed
-        @test_throws ErrorException @eval @with_kw(a=1,) # no space
+MyNT = @with_kw (a=1, b="test", w=:uu)
+@test MyNT()==(a=1, b="test", w=:uu)
+@test MyNT(b=1)==(a=1, b=1, w=:uu)
+@test MyNT(1,2,"a")==(a=1, b=2, w="a")
+@test_throws MethodError MyNT(c=1)
+@test_throws LoadError @eval @with_kw (a::Int=1,) # no type annotations allowed
+@test_throws LoadError @eval @with_kw(a=1,) # no space
 
-        MyNT2 = @with_kw (a=1, b="test", w)
-        @test_throws ErrorException MyNT2() # no default for w
+MyNT2 = @with_kw (a=1, b="test", w)
+@test_throws ErrorException MyNT2() # no default for w
 
-        MyNT3 = @with_kw (a=1, b=a)
-        @test MyNT3()==@NT(a=1, b=1)
-        @test MyNT3(a=2)==@NT(a=2, b=2)
-        @test MyNT3(b=2)==@NT(a=1, b=2)
+MyNT3 = @with_kw (a=1, b=a)
+@test MyNT3()==(a=1, b=1)
+@test MyNT3(a=2)==(a=2, b=2)
+@test MyNT3(b=2)==(a=1, b=2)
 
-        @test_throws ErrorException MyNT().z # Undefined field access
-        q = x -> x^3
-        scopingTest = @with_kw (q = q,) # See https://github.com/JuliaLang/julia/issues/17240
-        @test_throws UndefVarError scopingTest()
-        x = [1, 2, 3]
-        immutabilityTest = @with_kw (f = x,)
-        obj = immutabilityTest()
-        x = [4, 5, 6]
-        @test obj.f == [1, 2, 3] # Test immutability for old object 
-        @test immutabilityTest().f == [4, 5, 6] # Test rebinding for new object 
-        
-        # Exotic input test 
-        naughtyInputs = ["!@#\$%^&*()`~", :"()esc(;", :x, :(eval(:x)), true, esc(true), "-9223372036854775808/-1", :(0/0), "-9223372036854775808/-1", "0xabad1dea", :(@test)]
-        for input in naughtyInputs
-            naughtyTest = @with_kw (x = input, y = 2)
-            @test naughtyTest().x == input
-        end
+@test_throws ErrorException MyNT().z # Undefined field access
+q = x -> x^3
+scopingTest = @with_kw (q = q,)
+@test scopingTest().q(2) == 8
+x = [1, 2, 3]
+scopingTest = @with_kw (x = x,)
+@test scopingTest().x == [1, 2, 3]
+x = [1, 2, 3]
+immutabilityTest = @with_kw (f = x,)
+obj = immutabilityTest()
+x = [4, 5, 6]
+@test obj.f == [1, 2, 3] # Test immutability
+@test immutabilityTest().f == [4, 5, 6] # Test rebinding for new object
 
-        # Other behavior checks 
-        compoundTest = @with_kw (x = (2 > 1), y = 2)
-        @test compoundTest().x == true # Compound evaluation check
-        foo(x) = 3*x
-        anonymousTest = @with_kw (x = x -> foo(x), y = 2)
-        @test anonymousTest().x(4) == 12 # Anonymous functions/value clash check
-        symbolTest = @with_kw (x = :x, y = 2)
-        @test symbolTest().x == :x
-    end
-else
-    @eval begin
-        MyNT = @with_kw (a=1, b="test", w=:uu)
-        @test MyNT()==(a=1, b="test", w=:uu)
-        @test MyNT(b=1)==(a=1, b=1, w=:uu)
-        @test MyNT(1,2,"a")==(a=1, b=2, w="a")
-        @test_throws MethodError MyNT(c=1)
-        @test_throws LoadError @eval @with_kw (a::Int=1,) # no type annotations allowed
-        @test_throws LoadError @eval @with_kw(a=1,) # no space
-
-        MyNT2 = @with_kw (a=1, b="test", w)
-        @test_throws ErrorException MyNT2() # no default for w
-
-        MyNT3 = @with_kw (a=1, b=a)
-        @test MyNT3()==(a=1, b=1)
-        @test MyNT3(a=2)==(a=2, b=2)
-        @test MyNT3(b=2)==(a=1, b=2)
-
-        @test_throws ErrorException MyNT().z # Undefined field access
-        q = x -> x^3
-        scopingTest = @with_kw (q = q,)
-        @test scopingTest().q(2) == 8 
-        x = [1, 2, 3]
-        scopingTest = @with_kw (x = x,)
-        @test scopingTest().x == [1, 2, 3]
-        x = [1, 2, 3]
-        immutabilityTest = @with_kw (f = x,)
-        obj = immutabilityTest()
-        x = [4, 5, 6]
-        @test obj.f == [1, 2, 3] # Test immutability 
-        @test immutabilityTest().f == [4, 5, 6] # Test rebinding for new object 
-
-         # Exotic input test 
-         naughtyInputs = ["!@#\$%^&*()`~", :"()esc(;", :x, :(eval(:x)), true, esc(true), "-9223372036854775808/-1", :(0/0), "-9223372036854775808/-1", "0xabad1dea", :(@test)]
-        for input in naughtyInputs
-            naughtyTest = @with_kw (x = input, y = 2)
-            @test naughtyTest().x == input
-        end
- 
-         # Other behavior checks 
-         compoundTest = @with_kw (x = (2 > 1), y = 2)
-         @test compoundTest().x == true # Compound evaluation check
-         foo(x) = 3*x
-         anonymousTest = @with_kw (x = x -> foo(x), y = 2)
-         @test anonymousTest().x(4) == 12 # Anonymous functions/value clash check
-         symbolTest = @with_kw (x = :x, y = 2)
-         @test symbolTest().x == :x
-    end
+# Exotic input test
+naughtyInputs = ["!@#\$%^&*()`~", :"()esc(;", :x, :(eval(:x)), true, esc(true), "-9223372036854775808/-1", :(0/0), "-9223372036854775808/-1", "0xabad1dea", :(@test)]
+for input in naughtyInputs
+    naughtyTest = @with_kw (x = input, y = 2)
+    @test naughtyTest().x == input
 end
+
+# Other behavior checks
+compoundTest = @with_kw (x = (2 > 1), y = 2)
+@test compoundTest().x == true # Compound evaluation check
+foo(x) = 3*x
+anonymousTest = @with_kw (x = x -> foo(x), y = 2)
+@test anonymousTest().x(4) == 12 # Anonymous functions/value clash check
+symbolTest = @with_kw (x = :x, y = 2)
+@test symbolTest().x == :x
 
 ###########################
 # Packing and unpacking @unpack, @pack!
@@ -538,12 +457,10 @@ d = Dict("a"=>5.0,"b"=>2,"c"=>"Hi!")
 @test c == "Hi!" #true
 
 # Example with named tuple
-if VERSION>=v"0.7-"
-    @eval d = (a=5.0, b=2, c="Hi!")
-    @unpack a, c = d
-    @test a == 5.0 #true
-    @test c == "Hi!" #true
-end
+@eval d = (a=5.0, b=2, c="Hi!")
+@unpack a, c = d
+@test a == 5.0 #true
+@test c == "Hi!" #true
 
 # TODO add test with non String string
 
