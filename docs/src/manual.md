@@ -262,7 +262,7 @@ function fn(var, pa::Para)
                     # and called @unpack_*
     out = var + a + b
     b = 77
-    @pack!_Para pa # only works with mutables
+    @pack_Para! pa # only works with mutables
     return out, pa
 end
 

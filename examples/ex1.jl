@@ -1,3 +1,5 @@
+# This is the example used in the manual.
+# (Consider using Literate.jl)
 using Parameters
 
 ## Create a type which has default values:
@@ -94,7 +96,7 @@ function fn1(var, pa::Para)
                     # and called @unpack_*
     out = var + a + b
     b = 77
-    @pack_Para pa # now pa.b==77
+    pa = reconstruct(pa, b=b) # now pa.b==77
     return out, pa
 end
 
