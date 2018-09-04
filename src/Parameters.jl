@@ -253,7 +253,7 @@ function _pack_mutable(binding, fields)
     e
 end
 function _pack_immutable(binding, fields)
-    error("Cannot pack an immutable.  Consider using `reconstruct` (or file a feature request).")
+    error("Cannot pack an immutable.  Consider using `reconstruct` (or make a pull request).")
 end
 
 const macro_hidden_nargs = length(:(@m).args) - 1 # ==1 on Julia 0.6, ==2 on Julia 0.7
@@ -556,16 +556,11 @@ function with_kw(typedef, mod::Module, withshow=true)
             esc($Parameters.$(_pack)(ex, $unpack_vars))
         end
         macro $pack_name_depr(ex)
-            Base.depwarn("The macro `@pack_A` is deprecated, use `@$(string($pack_name))`", $(QuoteNode(pack_name_depr)) )
+            Base.depwarn("The macro `@$($(Meta.quot(pack_name)))` is deprecated, use `@$($(Meta.quot(pack_name_depr)))`", $(QuoteNode(pack_name_depr)) )
             esc($Parameters.$(_pack)(ex, $unpack_vars))
         end
         $tn
     end
-end
-@static if isdefined(Base, Symbol("@__MODULE__"))
-    @deprecate with_kw(typedef, withshow=true) with_kw(typedef, @__MODULE__, withshow=true)
-else
-    @deprecate with_kw(typedef, withshow=true) with_kw(typedef, current_module(), withshow=true)
 end
 
 """
@@ -616,11 +611,7 @@ end
 For more details see manual.
 """
 macro with_kw(typedef)
-    @static if isdefined(Base, Symbol("@__MODULE__"))
-        return esc(with_kw(typedef, __module__, true))
-    else
-        return esc(with_kw(typedef, current_module(), true))
-    end
+    return esc(with_kw(typedef, __module__, true))
 end
 
 macro with_kw(args...)
@@ -644,11 +635,7 @@ end
 For more details see manual.
 """
 macro with_kw_noshow(typedef)
-    @static if isdefined(Base, Symbol("@__MODULE__"))
-        return esc(with_kw(typedef, __module__, false))
-    else
-        return esc(with_kw(typedef, current_module(), false))
-    end
+    return esc(with_kw(typedef, __module__, false))
 end
 
 
