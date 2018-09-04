@@ -44,7 +44,7 @@ module Parameters
 import Base: @__doc__
 import OrderedCollections: OrderedDict
 
-export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack!
+export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack!, @pack
 
 ## Parser helpers
 #################
@@ -764,18 +764,25 @@ d.c == "HaHa" #true
 ```
 """
 macro pack!(args)
+    esc(_pack_bang(args))
+end
+
+macro pack(args)
+    Base.depwarn("The macro `@pack` is deprecated, use `@pack!`", Symbol("@pack"))
+    esc(_pack_bang(args))
+end
+function _pack_bang(args)
     args.head!=:(=) && error("Expression needs to be of form `a = b,c`")
     suitecase, items = args.args
     items = isa(items, Symbol) ? [items] : items.args
     suitecase_instance = gensym()
     kd = [:( $Parameters.pack!($suitecase_instance, Val{$(Expr(:quote, key))}(), $key) ) for key in items]
     kdblock = Expr(:block, kd...)
-    expr = quote
+    return quote
         $suitecase_instance = $suitecase # handles if suitecase is not a variable but an expression
         $kdblock
         ($(items...),)
     end
-    esc(expr)
 end
 
 # TODO: maybe add @pack_new for packing into a new instance.  Could be
