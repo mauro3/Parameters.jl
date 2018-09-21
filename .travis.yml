@@ -24,4 +24,4 @@ git:
 ## Documeter.jl
 after_success:
   - julia -e 'using Pkg; Pkg.add("Documenter")'
-  - julia -e 'using Pkg; cd(Pkg.dir("Parameters")); include(joinpath("docs", "make.jl"))'
+  - julia -e 'import Parameters; cd(joinpath(dirname(pathof(Parameters)), "..")); include(joinpath("docs", "make.jl"))'

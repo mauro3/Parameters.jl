@@ -203,6 +203,8 @@ Note: this is not very performant.  Check Setfield.jl for a faster &
 nicer implementation.
 
 ```jldoctest
+julia> using Parameters
+
 julia> struct A
            a
            b
