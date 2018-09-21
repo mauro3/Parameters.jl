@@ -11,7 +11,7 @@ makedocs(
 
 deploydocs(
     repo = "github.com/mauro3/Parameters.jl.git",
-    julia  = "0.6",
+    julia  = "1.0",
     target = "build",
     deps = nothing,
     make = nothing
