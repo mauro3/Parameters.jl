@@ -104,7 +104,7 @@ decolon2(a::Symbol) = a
 # Keep the ::T of the args if T ∈ typparas,
 # leave symbols as is, drop field-doc-strings.
 function keep_only_typparas(args, typparas)
-    args = deepcopy(args)
+    args = copy(args)
     tokeep = Int[]
     typparas_ = map(stripsubtypes, typparas)
     for i=1:length(args)
@@ -445,7 +445,7 @@ function with_kw(typedef, mod::Module, withshow=true)
         end
     end
     # The type definition without inner constructors:
-    typ = Expr(:struct, deepcopy(typedef.args[1:2])..., deepcopy(fielddefs))
+    typ = Expr(:struct, typedef.args[1:2]..., copy(fielddefs))
 
     # Inner keyword constructor.  Note that this calls the positional
     # constructor under the hood and not `new`.  That way a user can

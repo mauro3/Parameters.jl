@@ -393,6 +393,11 @@ end
 @test_throws ErrorException T9867()
 @test T9867(r=2).r == 2
 
+# issue #56: spliced-in modules
+@eval @with_kw struct SplicedModule <: $Base.AbstractVector{Int}
+    x
+end
+@test SplicedModule(12).x == 12
 
 # NamedTuples
 ###
