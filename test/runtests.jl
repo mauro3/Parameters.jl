@@ -1,4 +1,4 @@
-using Parameters, Test, Markdown
+using Parameters, Test, Markdown, REPL
 
 # misc
 a8679 = @eval (a=1, b=2)
@@ -34,7 +34,6 @@ end
 @test "Test documentation\n" == Markdown.plain(@doc MT1)
 # https://github.com/JuliaLang/julia/issues/27092 means this does not work:
 # @test "A field Default: sdaf\n" == Markdown.plain(@doc MT1.c)
-using REPL
 @test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(MT1, :r))
 @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(MT1, :c))
 
@@ -138,8 +137,8 @@ abstract type AMT{R<:Real} end
     r::R=5
     a::I
 end
-@test_throws MethodError MT5(r=4, a=5.) # need to specify type parameters
-MT5{Float32, Int}(r=4, a=5.)
+@test_throws MethodError MT5(r=4, a=5.) # a has wrong type
+MT5{Float32, Int}(r=4, a=5.)  # a gets converted
 MT5{Float32, Int}(a=5.)
 MT5{Float32, Int}(5.4, 4)  # inner positional
 mt5=MT5(5.4, 4) # outer positional
@@ -367,10 +366,7 @@ end
 @test_throws MethodError I10(a=10) # typeof(a)!=typeof(c)
 a_ = I10(a="asd")
 b_ = I10{String}("asd",10,"aaa")
-for fn in fieldnames(typeof(a_))
-    # complicated testing because of mutable T
-    @test getfield(a_, fn)==getfield(b_, fn)
-end
+@test a_==b_
 
 @with_kw struct I10a{T}
     a::T

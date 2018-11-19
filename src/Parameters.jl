@@ -558,7 +558,7 @@ function with_kw(typedef, mod::Module, withshow=true)
             esc($Parameters.$(_pack)(ex, $unpack_vars))
         end
         macro $pack_name_depr(ex)
-            Base.depwarn("The macro `@$($(Meta.quot(pack_name)))` is deprecated, use `@$($(Meta.quot(pack_name_depr)))`", $(QuoteNode(pack_name_depr)) )
+            Base.depwarn("The macro `@$($(Meta.quot(pack_name_depr)))` is deprecated, use `@$($(Meta.quot(pack_name)))`", $(QuoteNode(pack_name_depr)) )
             esc($Parameters.$(_pack)(ex, $unpack_vars))
         end
         $tn
