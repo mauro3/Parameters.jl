@@ -108,6 +108,10 @@ Documentation is here: [stable](https://mauro3.github.io/Parameters.jl/stable) a
 
 # Related packages
 
+- `Base.@kwdef` has functionality similar to `@with_kw` but more
+  limited.  However, with Julia v1.1 its capabilities will be much
+  enhanced, see [#29316](https://github.com/JuliaLang/julia/pull/29316).
+  If that is enough, ditch the Parameters.jl dependency.
 - [QuickTypes.jl](https://github.com/cstjean/QuickTypes.jl) also
   provides key-word constructors and default values.  Provides a more
   compact format.  I'd say QuickTypes.jl is more suited for REPL and
