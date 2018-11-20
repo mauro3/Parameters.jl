@@ -209,9 +209,9 @@ d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
 a == 5.0 #true
 c == "Hi!" #true
 
-d = Dict{Symbol,Any}()
+d = Dict{String,Any}()
 @pack! d = a, c
-d # Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
+d # Dict{String,Any}("a"=>5.0,"a"=>"Hi!")
 ```
 
 ## Customization of `@unpack` and `@pack!`
@@ -225,7 +225,7 @@ The `Parameters.unpack` function is invoked to unpack one entity of some
 
 `unpack(dt::Any, ::Val{field}) -> value of field`
 
-Two definitions are included in the package to unpack a composite type
+Two definitions are included in the package to unpack a composite type/module
 or a dictionary with Symbol or string keys:
 
 ```

@@ -658,9 +658,9 @@ The `field` is the symbol of the assigned variable.
 Three definitions are included in the package to unpack a composite type
 or a dictionary with Symbol or string keys:
 ```
-@inline unpack{f}(x, ::Val{f}) = getfield(x, f)
-@inline unpack{k}(x::AbstractDict{Symbol}, ::Val{k}) = x[k]
-@inline unpack{S<:AbstractString,k}(x::AbstractDict{S}, ::Val{k}) = x[string(k)]
+@inline unpack(x, ::Val{f}) where {f} = getfield(x, f)
+@inline unpack(x::AbstractDict{Symbol}, ::Val{k}) where {k} = x[k]
+@inline unpack(x::AbstractDict{S}, ::Val{k}) where {S<:AbstractString,k} = x[string(k)]
 ```
 
 More methods can be added to allow for specialized unpacking of other datatypes.
@@ -685,9 +685,9 @@ Two definitions are included in the package to pack into a composite
 type or into a dictionary with Symbol or string keys:
 
 ```
-@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
-@inline pack!{k}(x::AbstractDict{Symbol}, ::Val{k}, val) = x[k]=val
-@inline pack!{S<:AbstractString,k}(x::AbstractDict{S}, ::Val{k}, val) = x[string(k)]=val
+@inline pack!(x, ::Val{f}, val) where {f} = setfield!(x, f, val)
+@inline pack!(x::AbstractDict{Symbol}, ::Val{k}, val) where {k} = x[k]=val
+@inline pack!(x::AbstractDict{S}, ::Val{k}, val) where {S<:AbstractString,k} = x[string(k)]=val
 ```
 
 More methods can be added to allow for specialized packing of other
@@ -701,7 +701,8 @@ function pack! end
 @inline pack!(x::AbstractDict{<:AbstractString}, ::Val{k}, val) where {k} = x[string(k)]=val
 
 """
-Unpacks fields/keys from a composite type or a `Dict{Symbol}` into variables
+Unpacks fields/keys from a composite type, a `Dict{Symbol}`, a `Dict{String}`,
+or a module into variables
 ```julia_skip
 @unpack a, b, c = dict_or_typeinstance
 ```
@@ -722,6 +723,9 @@ d = A(4,7.0,"Hi")
 a == 4 #true
 c == "Hi" #true
 ```
+
+Note that its functionality can be extende by adding methods to the
+`Parameters.unpack` function.
 """
 macro unpack(args)
     args.head!=:(=) && error("Expression needs to be of form `a, b = c`")
@@ -740,7 +744,7 @@ end
 
 
 """
-Packs variables into a composite type or a `Dict{Symbol}`
+Packs variables into a mutable, composite type, a `Dict{Symbol}`, or a `Dict{String}`
 ```julia_skip
 @pack! dict_or_typeinstance = a, b, c
 ```
@@ -764,6 +768,9 @@ d = A(4,7.0,"Hi")
 d.a == 99 #true
 d.c == "HaHa" #true
 ```
+
+Note that its functionality can be extende by adding methods to the
+`Parameters.pack!` function.
 """
 macro pack!(args)
     esc(_pack_bang(args))
@@ -774,7 +781,7 @@ macro pack(args)
     esc(_pack_bang(args))
 end
 function _pack_bang(args)
-    args.head!=:(=) && error("Expression needs to be of form `a = b,c`")
+    args.head!=:(=) && error("Expression needs to be in the form of an assignment.")
     suitecase, items = args.args
     items = isa(items, Symbol) ? [items] : items.args
     suitecase_instance = gensym()
