@@ -53,7 +53,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Parameters manual",
     "title": "(Un)pack macros",
     "category": "section",
-    "text": "When working with parameters, or otherwise, it is often convenient to unpack (and pack, in the case of mutable datatypes) some or all of the fields of a type.  This is often the case when passed into a function.The preferred to do this is using the @unpack and @pack! macros which are generic and also work with non-@with_kw types, modules, and dictionaries (and can be customized for other types too, see next section). Continuing with the Para type defined above:function fn2(var, pa::Para)\n    @unpack a, b = pa # equivalent to: a,b = pa.a,pa.b\n    out = var + a + b\n    b = 77\n    @pack! pa = b # equivalent to: pa.b = b\n    return out, pa\nend\n\nout, pa = fn2(7, pa)Example with a dictionary:d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>\"Hi!\")\n@unpack a, c = d\na == 5.0 #true\nc == \"Hi!\" #true\n\nd = Dict{Symbol,Any}()\n@pack! d = a, c\nd # Dict{Symbol,Any}(:a=>5.0,:c=>\"Hi!\")"
+    "text": "When working with parameters, or otherwise, it is often convenient to unpack (and pack, in the case of mutable datatypes) some or all of the fields of a type.  This is often the case when passed into a function.The preferred to do this is using the @unpack and @pack! macros which are generic and also work with non-@with_kw types, modules, and dictionaries (and can be customized for other types too, see next section). Continuing with the Para type defined above:function fn2(var, pa::Para)\n    @unpack a, b = pa # equivalent to: a,b = pa.a,pa.b\n    out = var + a + b\n    b = 77\n    @pack! pa = b # equivalent to: pa.b = b\n    return out, pa\nend\n\nout, pa = fn2(7, pa)Example with a dictionary:d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>\"Hi!\")\n@unpack a, c = d\na == 5.0 #true\nc == \"Hi!\" #true\n\nd = Dict{String,Any}()\n@pack! d = a, c\nd # Dict{String,Any}(\"a\"=>5.0,\"a\"=>\"Hi!\")"
 },
 
 {
@@ -61,7 +61,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Parameters manual",
     "title": "Customization of @unpack and @pack!",
     "category": "section",
-    "text": "What happens during the (un-)packing of a particular datatype is determined by the functions Parameters.unpack and Parameters.pack!.The Parameters.unpack function is invoked to unpack one entity of some DataType and has signature:unpack(dt::Any, ::Val{field}) -> value of fieldTwo definitions are included in the package to unpack a composite type or a dictionary with Symbol or string keys:@inline unpack{f}(x, ::Val{f}) = getfield(x, f)\n@inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]\n@inline unpack{S<:AbstractString,k}(x::Associative{S}, ::Val{k}) = x[string(k)]The Parameters.pack! function is invoked to pack one entity into some DataType and has signature:pack!(dt::Any, ::Val{field}, value) -> valueTwo definitions are included in the package to pack into a composite type or into a dictionary with Symbol or string keys:@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)\n@inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val\n@inline pack!{S<:AbstractString,k}(x::Associative{S}, ::Val{k}, val) = x[string(k)]=valMore methods can be added to unpack and pack! to allow for specialized packing of datatypes."
+    "text": "What happens during the (un-)packing of a particular datatype is determined by the functions Parameters.unpack and Parameters.pack!.The Parameters.unpack function is invoked to unpack one entity of some DataType and has signature:unpack(dt::Any, ::Val{field}) -> value of fieldTwo definitions are included in the package to unpack a composite type/module or a dictionary with Symbol or string keys:@inline unpack{f}(x, ::Val{f}) = getfield(x, f)\n@inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]\n@inline unpack{S<:AbstractString,k}(x::Associative{S}, ::Val{k}) = x[string(k)]The Parameters.pack! function is invoked to pack one entity into some DataType and has signature:pack!(dt::Any, ::Val{field}, value) -> valueTwo definitions are included in the package to pack into a composite type or into a dictionary with Symbol or string keys:@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)\n@inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val\n@inline pack!{S<:AbstractString,k}(x::Associative{S}, ::Val{k}, val) = x[string(k)]=valMore methods can be added to unpack and pack! to allow for specialized packing of datatypes."
 },
 
 {
@@ -109,7 +109,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "Parameters.@pack!",
     "category": "macro",
-    "text": "Packs variables into a composite type or a Dict{Symbol}\n\n@pack! dict_or_typeinstance = a, b, c\n\nExample with dict:\n\na = 5.0\nc = \"Hi!\"\nd = Dict{Symbol,Any}()\n@pack! d = a, c\nd # Dict{Symbol,Any}(:a=>5.0,:c=>\"Hi!\")\n\nExample with type:\n\na = 99\nc = \"HaHa\"\nmutable struct A; a; b; c; end\nd = A(4,7.0,\"Hi\")\n@pack! d = a, c\nd.a == 99 #true\nd.c == \"HaHa\" #true\n\n\n\n\n\n"
+    "text": "Packs variables into a mutable, composite type, a Dict{Symbol}, or a Dict{String}\n\n@pack! dict_or_typeinstance = a, b, c\n\nExample with dict:\n\na = 5.0\nc = \"Hi!\"\nd = Dict{Symbol,Any}()\n@pack! d = a, c\nd # Dict{Symbol,Any}(:a=>5.0,:c=>\"Hi!\")\n\nExample with type:\n\na = 99\nc = \"HaHa\"\nmutable struct A; a; b; c; end\nd = A(4,7.0,\"Hi\")\n@pack! d = a, c\nd.a == 99 #true\nd.c == \"HaHa\" #true\n\nNote that its functionality can be extende by adding methods to the Parameters.pack! function.\n\n\n\n\n\n"
 },
 
 {
@@ -117,7 +117,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "Parameters.@unpack",
     "category": "macro",
-    "text": "Unpacks fields/keys from a composite type or a Dict{Symbol} into variables\n\n@unpack a, b, c = dict_or_typeinstance\n\nExample with dict:\n\nd = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>\"Hi!\")\n@unpack a, c = d\na == 5.0 #true\nc == \"Hi!\" #true\n\nExample with type:\n\nstruct A; a; b; c; end\nd = A(4,7.0,\"Hi\")\n@unpack a, c = d\na == 4 #true\nc == \"Hi\" #true\n\n\n\n\n\n"
+    "text": "Unpacks fields/keys from a composite type, a Dict{Symbol}, a Dict{String}, or a module into variables\n\n@unpack a, b, c = dict_or_typeinstance\n\nExample with dict:\n\nd = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>\"Hi!\")\n@unpack a, c = d\na == 5.0 #true\nc == \"Hi!\" #true\n\nExample with type:\n\nstruct A; a; b; c; end\nd = A(4,7.0,\"Hi\")\n@unpack a, c = d\na == 4 #true\nc == \"Hi\" #true\n\nNote that its functionality can be extende by adding methods to the Parameters.unpack function.\n\n\n\n\n\n"
 },
 
 {
@@ -141,7 +141,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "Parameters.pack!",
     "category": "function",
-    "text": "This function is invoked to pack one entity into some DataType and has signature:\n\npack!(dt::Any, ::Val{field}, value) -> value\n\nNote that this means the only symbols or immutable field-descriptors are allowed, as they are used as type parameter in Val.\n\nTwo definitions are included in the package to pack into a composite type or into a dictionary with Symbol or string keys:\n\n@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)\n@inline pack!{k}(x::AbstractDict{Symbol}, ::Val{k}, val) = x[k]=val\n@inline pack!{S<:AbstractString,k}(x::AbstractDict{S}, ::Val{k}, val) = x[string(k)]=val\n\nMore methods can be added to allow for specialized packing of other datatypes.\n\nSee also unpack.\n\n\n\n\n\n"
+    "text": "This function is invoked to pack one entity into some DataType and has signature:\n\npack!(dt::Any, ::Val{field}, value) -> value\n\nNote that this means the only symbols or immutable field-descriptors are allowed, as they are used as type parameter in Val.\n\nTwo definitions are included in the package to pack into a composite type or into a dictionary with Symbol or string keys:\n\n@inline pack!(x, ::Val{f}, val) where {f} = setfield!(x, f, val)\n@inline pack!(x::AbstractDict{Symbol}, ::Val{k}, val) where {k} = x[k]=val\n@inline pack!(x::AbstractDict{S}, ::Val{k}, val) where {S<:AbstractString,k} = x[string(k)]=val\n\nMore methods can be added to allow for specialized packing of other datatypes.\n\nSee also unpack.\n\n\n\n\n\n"
 },
 
 {
@@ -149,7 +149,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "Parameters.unpack",
     "category": "function",
-    "text": "This function is invoked to unpack one field/entry of some DataType dt and has signature:\n\nunpack(dt::Any, ::Val{field}) -> value of field\n\nThe field is the symbol of the assigned variable.\n\nThree definitions are included in the package to unpack a composite type or a dictionary with Symbol or string keys:\n\n@inline unpack{f}(x, ::Val{f}) = getfield(x, f)\n@inline unpack{k}(x::AbstractDict{Symbol}, ::Val{k}) = x[k]\n@inline unpack{S<:AbstractString,k}(x::AbstractDict{S}, ::Val{k}) = x[string(k)]\n\nMore methods can be added to allow for specialized unpacking of other datatypes.\n\nSee also pack!.\n\n\n\n\n\n"
+    "text": "This function is invoked to unpack one field/entry of some DataType dt and has signature:\n\nunpack(dt::Any, ::Val{field}) -> value of field\n\nThe field is the symbol of the assigned variable.\n\nThree definitions are included in the package to unpack a composite type or a dictionary with Symbol or string keys:\n\n@inline unpack(x, ::Val{f}) where {f} = getfield(x, f)\n@inline unpack(x::AbstractDict{Symbol}, ::Val{k}) where {k} = x[k]\n@inline unpack(x::AbstractDict{S}, ::Val{k}) where {S<:AbstractString,k} = x[string(k)]\n\nMore methods can be added to allow for specialized unpacking of other datatypes.\n\nSee also pack!.\n\n\n\n\n\n"
 },
 
 {
