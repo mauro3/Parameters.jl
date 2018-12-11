@@ -536,9 +536,13 @@ function with_kw(typedef, mod::Module, withshow=true)
     pack_name_depr = Symbol("pack_"*string(tn))
     showfn = if withshow
         :(function Base.show(io::IO, p::$tn)
+              if get(io, :compact, false) || get(io, :typeinfo, nothing)==$tn
+                Base.show_default(IOContext(io, :limit => true), p)
+              else
                 # just dumping seems to give ok output, in particular for big data-sets:
                 dump(IOContext(io, :limit => true), p, maxdepth=1)
-            end)
+              end
+          end)
     else
         :nothing
     end
