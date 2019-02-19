@@ -470,6 +470,7 @@ end
 Base.getproperty(::PropertyExample, name::Symbol) = String(name)
 Base.setproperty!(d::PropertyExample, name::Symbol, value) =
     setfield!(d, :last_set_property, (name, value))
+Base.propertynames(::PropertyExample) = (:A, :B, :C)
 
 let d = PropertyExample(:should_be_ignored, nothing)
     @unpack a, b = d
@@ -479,6 +480,8 @@ let d = PropertyExample(:should_be_ignored, nothing)
     a = "a value"
     @pack! d = a
     @test getfield(d, :last_set_property) == (:a, "a value")
+
+    @test type2dict(d) == Dict(:A => "A", :B => "B", :C => "C")
 end
 
 # TODO add test with non String string

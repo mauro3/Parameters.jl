@@ -188,8 +188,8 @@ Dict{Symbol,Any} with 2 entries:
 """
 function type2dict(dt)
     di = Dict{Symbol,Any}()
-    for n in fieldnames(typeof(dt))
-        di[n] = getfield(dt, n)
+    for n in propertynames(dt)
+        di[n] = getproperty(dt, n)
     end
     di
 end
