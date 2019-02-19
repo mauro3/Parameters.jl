@@ -662,7 +662,7 @@ The `field` is the symbol of the assigned variable.
 Three definitions are included in the package to unpack a composite type
 or a dictionary with Symbol or string keys:
 ```
-@inline unpack(x, ::Val{f}) where {f} = getfield(x, f)
+@inline unpack(x, ::Val{f}) where {f} = getproperty(x, f)
 @inline unpack(x::AbstractDict{Symbol}, ::Val{k}) where {k} = x[k]
 @inline unpack(x::AbstractDict{S}, ::Val{k}) where {S<:AbstractString,k} = x[string(k)]
 ```
@@ -672,7 +672,7 @@ More methods can be added to allow for specialized unpacking of other datatypes.
 See also `pack!`.
 """
 function unpack end
-@inline unpack(x, ::Val{f}) where {f} = getfield(x, f)
+@inline unpack(x, ::Val{f}) where {f} = getproperty(x, f)
 @inline unpack(x::AbstractDict{Symbol}, ::Val{k}) where {k} = x[k]
 @inline unpack(x::AbstractDict{<:AbstractString}, ::Val{k}) where {k} = x[string(k)]
 
@@ -689,7 +689,7 @@ Two definitions are included in the package to pack into a composite
 type or into a dictionary with Symbol or string keys:
 
 ```
-@inline pack!(x, ::Val{f}, val) where {f} = setfield!(x, f, val)
+@inline pack!(x, ::Val{f}, val) where {f} = setproperty!(x, f, val)
 @inline pack!(x::AbstractDict{Symbol}, ::Val{k}, val) where {k} = x[k]=val
 @inline pack!(x::AbstractDict{S}, ::Val{k}, val) where {S<:AbstractString,k} = x[string(k)]=val
 ```
@@ -700,7 +700,7 @@ datatypes.
 See also `unpack`.
 """
 function pack! end
-@inline pack!(x, ::Val{f}, val) where {f} = setfield!(x, f, val)
+@inline pack!(x, ::Val{f}, val) where {f} = setproperty!(x, f, val)
 @inline pack!(x::AbstractDict{Symbol}, ::Val{k}, val) where {k} = x[k]=val
 @inline pack!(x::AbstractDict{<:AbstractString}, ::Val{k}, val) where {k} = x[string(k)]=val
 

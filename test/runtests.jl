@@ -463,6 +463,24 @@ d = Dict("a"=>5.0,"b"=>2,"c"=>"Hi!")
 @test a == 5.0 #true
 @test c == "Hi!" #true
 
+mutable struct PropertyExample
+    a
+    last_set_property
+end
+Base.getproperty(::PropertyExample, name::Symbol) = String(name)
+Base.setproperty!(d::PropertyExample, name::Symbol, value) =
+    setfield!(d, :last_set_property, (name, value))
+
+let d = PropertyExample(:should_be_ignored, nothing)
+    @unpack a, b = d
+    @test a == "a"
+    @test b == "b"
+
+    a = "a value"
+    @pack! d = a
+    @test getfield(d, :last_set_property) == (:a, "a value")
+end
+
 # TODO add test with non String string
 
 # Example with type:
