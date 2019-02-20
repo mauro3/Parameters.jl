@@ -229,7 +229,7 @@ Two definitions are included in the package to unpack a composite type/module
 or a dictionary with Symbol or string keys:
 
 ```
-@inline unpack{f}(x, ::Val{f}) = getfield(x, f)
+@inline unpack{f}(x, ::Val{f}) = getproperty(x, f)
 @inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
 @inline unpack{S<:AbstractString,k}(x::Associative{S}, ::Val{k}) = x[string(k)]
 ```
@@ -243,7 +243,7 @@ Two definitions are included in the package to pack into a composite
 type or into a dictionary with Symbol or string keys:
 
 ```
-@inline pack!{f}(x, ::Val{f}, val) = setfield!(x, f, val)
+@inline pack!{f}(x, ::Val{f}, val) = setproperty!(x, f, val)
 @inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
 @inline pack!{S<:AbstractString,k}(x::Associative{S}, ::Val{k}, val) = x[string(k)]=val
 ```
