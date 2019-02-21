@@ -223,7 +223,11 @@ determined by the functions [`Parameters.unpack`](@ref) and
 The `Parameters.unpack` function is invoked to unpack one entity of some
 `DataType` and has signature:
 
-`unpack(dt::Any, ::Val{field}) -> value of field`
+`unpack(dt::Any, ::Val{property}) -> value of property`
+
+Note that `unpack` (and `pack!`) works with `Base.getproperty`.  By
+default this means that all the fields of a type are unpacked but if
+`getproperty` is overloaded, then it will unpack accordingly.
 
 Two definitions are included in the package to unpack a composite type/module
 or a dictionary with Symbol or string keys:
@@ -278,5 +282,7 @@ local variables are available in a function using `@unpack_*`. Examples:
 - the `@unpack_*` will shadow an input argument of the function with
   the same name as a type-fieldname. This I found very perplexing at
   times.
+- they do not work with properties, i.e. they can only pack/unpack the
+  actual fields of types.
 
-Thus, in general, it is probably better to use the `@(un)pack` macros instead.
+Thus, in general, it is probably better to use the `@(un)pack(!)` macros instead.

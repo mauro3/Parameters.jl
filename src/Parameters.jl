@@ -185,6 +185,8 @@ Dict{Symbol,Any} with 2 entries:
   :a => 4
   :b => 5
 ```
+
+Note that this uses `getproperty`.
 """
 function type2dict(dt)
     di = Dict{Symbol,Any}()
@@ -655,9 +657,9 @@ end
 This function is invoked to unpack one field/entry of some DataType
 `dt` and has signature:
 
-`unpack(dt::Any, ::Val{field}) -> value of field`
+`unpack(dt::Any, ::Val{property}) -> value of property`
 
-The `field` is the symbol of the assigned variable.
+The `property` is the symbol of the assigned variable.
 
 Three definitions are included in the package to unpack a composite type
 or a dictionary with Symbol or string keys:
@@ -680,10 +682,7 @@ function unpack end
 This function is invoked to pack one entity into some DataType and has
 signature:
 
-`pack!(dt::Any, ::Val{field}, value) -> value`
-
-Note that this means the only symbols or immutable field-descriptors
-are allowed, as they are used as type parameter in `Val`.
+`pack!(dt::Any, ::Val{property}, value) -> value`
 
 Two definitions are included in the package to pack into a composite
 type or into a dictionary with Symbol or string keys:
@@ -705,7 +704,7 @@ function pack! end
 @inline pack!(x::AbstractDict{<:AbstractString}, ::Val{k}, val) where {k} = x[string(k)]=val
 
 """
-Unpacks fields/keys from a composite type, a `Dict{Symbol}`, a `Dict{String}`,
+Unpacks fields/properties/keys from a composite type, a `Dict{Symbol}`, a `Dict{String}`,
 or a module into variables
 ```julia_skip
 @unpack a, b, c = dict_or_typeinstance
