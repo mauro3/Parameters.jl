@@ -6,8 +6,10 @@
 [![Build Status](https://travis-ci.org/mauro3/Parameters.jl.svg?branch=master)](https://travis-ci.org/mauro3/Parameters.jl)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/mauro3/Parameters.jl?branch=master&svg=true)](https://ci.appveyor.com/project/mauro3/parameters-jl/branch/master)
 
-[![Parameters](http://pkg.julialang.org/badges/Parameters_0.6.svg)](http://pkg.julialang.org/?pkg=Parameters)
-[![Parameters](http://pkg.julialang.org/badges/Parameters_0.7.svg)](http://pkg.julialang.org/detail/Parameters)
+[![codecov](https://codecov.io/gh/mauro3/Parameters.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/mauro3/Parameters.jl)
+
+<!-- [![Parameters](http://pkg.julialang.org/badges/Parameters_0.6.svg)](http://pkg.julialang.org/?pkg=Parameters) -->
+<!-- [![Parameters](http://pkg.julialang.org/badges/Parameters_0.7.svg)](http://pkg.julialang.org/detail/Parameters) -->
 
 This is a package I use to handle numerical-model parameters, thus the
 name.  However, it should be useful otherwise too.  It has two main
