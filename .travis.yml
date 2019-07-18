@@ -6,7 +6,6 @@ os:
   - linux
   - osx
 julia:
-  - 0.7
   - 1.0
   - nightly
 matrix:
@@ -17,8 +16,14 @@ notifications:
 # https://github.com/travis-ci/travis-ci/issues/4942
 git:
   depth: 99999
-## Documeter.jl
-after_success:
-  - julia -e 'using Pkg; ps=Pkg.PackageSpec(name="Documenter", version="0.19"); Pkg.add(ps); Pkg.pin(ps)'
-  - julia -e 'import Parameters; cd(joinpath(dirname(pathof(Parameters)), "..")); include(joinpath("docs", "make.jl"))'
-  - julia -e 'using Pkg; cd(Pkg.dir("Parameters")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+## Documeter.jl https://discourse.julialang.org/t/psa-use-a-project-for-building-your-docs/14974/5
+jobs:
+  include:
+    - stage: "Documentation"
+      julia: 1.0
+      os: linux
+      script:
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
+                                               Pkg.instantiate()'
+        - julia --project=docs/ docs/make.jl
+      after_success: skip
