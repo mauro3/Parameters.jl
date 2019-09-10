@@ -251,13 +251,13 @@ reconstruct(pp; kws...) = reconstruct(pp, kws)
 # end
 _unpack(binding, fields) = Expr(:block, [:($f = $binding.$f) for f in fields]...)
 # Pack fields back into binding using reconstruct:
-function _pack_mutable(_T, binding, fields)
+function _pack_mutable(binding, fields)
     e = Expr(:block, [:($binding.$f = $f) for f in fields]...)
     push!(e.args, binding)
     e
 end
-function _pack_immutable(T, binding, fields)
-    Expr(:(=), binding, Expr(:call, T, fields...))
+function _pack_immutable(T, fields)
+    Expr(:call, T, fields...)
 end
 
 const macro_hidden_nargs = length(:(@m).args) - 1 # ==1 on Julia 0.6, ==2 on Julia 0.7
@@ -534,8 +534,8 @@ function with_kw(typedef, mod::Module, withshow=true)
 
     # (un)pack macro from https://groups.google.com/d/msg/julia-users/IQS2mT1ITwU/hDtlV7K1elsJ
     unpack_name = Symbol("unpack_"*string(tn))
-    pack_name = Symbol("pack_"*string(tn)*"!")
-    pack_name_depr = Symbol("pack_"*string(tn))
+    pack!_name = Symbol("pack_"*string(tn)*"!")
+    pack_name = Symbol("pack_"*string(tn))
     showfn = if withshow
         :(function Base.show(io::IO, p::$tn)
               if get(io, :compact, false) || get(io, :typeinfo, nothing)==$tn
@@ -548,7 +548,23 @@ function with_kw(typedef, mod::Module, withshow=true)
     else
         :nothing
     end
-    _pack = ismutable ? :_pack_mutable : :_pack_immutable
+    if ismutable
+        pack_macros = quote
+            macro $pack!_name(ex)
+                esc($Parameters._pack_mutable(ex, $unpack_vars))
+            end
+            macro $pack_name(ex)
+                Base.depwarn("The macro `@$($(Meta.quot(pack_name)))` is deprecated, use `@$($(Meta.quot(pack!_name)))`", $(QuoteNode(pack_name)) )
+                esc($Parameters._pack_mutable(ex, $unpack_vars))
+            end
+        end
+    else
+        pack_macros = quote
+            macro $pack_name()
+                esc($Parameters._pack_immutable($tn, $unpack_vars))
+            end
+        end
+    end
 
     # Finish up
     quote
@@ -560,13 +576,7 @@ function with_kw(typedef, mod::Module, withshow=true)
         macro $unpack_name(ex)
             esc($Parameters._unpack(ex, $unpack_vars))
         end
-        macro $pack_name(ex)
-            esc($Parameters.$(_pack)($tn, ex, $unpack_vars))
-        end
-        macro $pack_name_depr(ex)
-            Base.depwarn("The macro `@$($(Meta.quot(pack_name_depr)))` is deprecated, use `@$($(Meta.quot(pack_name)))`", $(QuoteNode(pack_name_depr)) )
-            esc($Parameters.$(_pack)($tn, ex, $unpack_vars))
-        end
+        $pack_macros
         $tn
     end
 end
