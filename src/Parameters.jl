@@ -788,10 +788,6 @@ macro pack!(args)
     esc(_pack_bang(args))
 end
 
-macro pack(args)
-    Base.depwarn("The macro `@pack` is deprecated, use `@pack!`", Symbol("@pack"))
-    esc(_pack_bang(args))
-end
 function _pack_bang(args)
     args.head!=:(=) && error("Expression needs to be in the form of an assignment.")
     suitecase, items = args.args
