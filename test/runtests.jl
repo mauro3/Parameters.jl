@@ -302,6 +302,11 @@ let
     a = 2
     c = 3
     @test_throws LoadError eval(:(@pack!_P1 mt))
+    local mt2
+    let P1 = error  # `P1` should not be resolved in this namespace
+        @pack_P1! mt2
+    end
+    @test mt2 === P1(r=r, c=c, a=a)
 end
 
 @with_kw mutable struct P1m

@@ -251,13 +251,13 @@ reconstruct(pp; kws...) = reconstruct(pp, kws)
 # end
 _unpack(binding, fields) = Expr(:block, [:($f = $binding.$f) for f in fields]...)
 # Pack fields back into binding using reconstruct:
-function _pack_mutable(binding, fields)
+function _pack_mutable(_T, binding, fields)
     e = Expr(:block, [:($binding.$f = $f) for f in fields]...)
     push!(e.args, binding)
     e
 end
-function _pack_immutable(binding, fields)
-    error("Cannot pack an immutable.  Consider using `reconstruct` (or make a pull request).")
+function _pack_immutable(T, binding, fields)
+    Expr(:(=), binding, Expr(:call, T, fields...))
 end
 
 const macro_hidden_nargs = length(:(@m).args) - 1 # ==1 on Julia 0.6, ==2 on Julia 0.7
@@ -561,11 +561,11 @@ function with_kw(typedef, mod::Module, withshow=true)
             esc($Parameters._unpack(ex, $unpack_vars))
         end
         macro $pack_name(ex)
-            esc($Parameters.$(_pack)(ex, $unpack_vars))
+            esc($Parameters.$(_pack)($tn, ex, $unpack_vars))
         end
         macro $pack_name_depr(ex)
             Base.depwarn("The macro `@$($(Meta.quot(pack_name_depr)))` is deprecated, use `@$($(Meta.quot(pack_name)))`", $(QuoteNode(pack_name_depr)) )
-            esc($Parameters.$(_pack)(ex, $unpack_vars))
+            esc($Parameters.$(_pack)($tn, ex, $unpack_vars))
         end
         $tn
     end
