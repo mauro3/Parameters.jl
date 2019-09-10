@@ -329,6 +329,10 @@ let
     else
         @test string(mt) == "P1m\n  r: Int32 1\n  c: Int32 3\n  a: Float64 2.0\n"
     end
+    mt2 = let P1m = error  # `P1m` should not be resolved in this namespace
+        @pack_P1m
+    end
+    @test (mt2.r, mt2.c, mt2.a) == (r, c, a)
 end
 
 ### Assertions

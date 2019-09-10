@@ -256,7 +256,7 @@ function _pack_mutable(binding, fields)
     push!(e.args, binding)
     e
 end
-function _pack_immutable(T, fields)
+function _pack_new(T, fields)
     Expr(:call, T, fields...)
 end
 
@@ -553,15 +553,14 @@ function with_kw(typedef, mod::Module, withshow=true)
             macro $pack!_name(ex)
                 esc($Parameters._pack_mutable(ex, $unpack_vars))
             end
-            macro $pack_name(ex)
-                Base.depwarn("The macro `@$($(Meta.quot(pack_name)))` is deprecated, use `@$($(Meta.quot(pack!_name)))`", $(QuoteNode(pack_name)) )
-                esc($Parameters._pack_mutable(ex, $unpack_vars))
+            macro $pack_name()
+                esc($Parameters._pack_new($tn, $unpack_vars))
             end
         end
     else
         pack_macros = quote
             macro $pack_name()
-                esc($Parameters._pack_immutable($tn, $unpack_vars))
+                esc($Parameters._pack_new($tn, $unpack_vars))
             end
         end
     end
