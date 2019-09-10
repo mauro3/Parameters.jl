@@ -1,6 +1,9 @@
+# 2019-09-10
+Added support of packing immutables (by creating one) through `@pack_SomeType`.
+
 # 2018-07-10
 
-Added named tuple support. 
+Added named tuple support.
 
 # 2017-09-26
 

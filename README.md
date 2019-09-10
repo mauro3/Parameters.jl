@@ -110,6 +110,15 @@ Documentation is here: [stable](https://mauro3.github.io/Parameters.jl/stable) a
 
 # Related packages
 
+Complementary:
+- [EponymTuples.jl](https://github.com/tpapp/EponymTuples.jl) packing/unpacking
+  of named tuples.
+- [NamedTupleTools.jl](https://github.com/JeffreySarnoff/NamedTupleTools.jl)
+  has many named-tuple helper functions
+- [Setfield.jl](https://github.com/jw3126/Setfield.jl) for setting
+  immutable fields (i.e. similar to the here provided packing).
+
+Implementing similar things:
 - `Base.@kwdef` has functionality similar to `@with_kw` but more
   limited.  However, with Julia v1.1 its capabilities will be much
   enhanced, see [#29316](https://github.com/JuliaLang/julia/pull/29316).
