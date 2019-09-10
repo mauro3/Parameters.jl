@@ -302,6 +302,10 @@ let
     a = 2
     c = 3
     @test_throws LoadError eval(:(@pack!_P1 mt))
+    mt2 = let P1 = error  # `P1` should not be resolved in this namespace
+        @pack_P1
+    end
+    @test mt2 === P1(r=r, c=c, a=a)
 end
 
 @with_kw mutable struct P1m
@@ -319,6 +323,11 @@ let
     r = 1
     a = 2
     c = 3
+    mt2 = let P1m = error  # `P1m` should not be resolved in this namespace
+        @pack_P1m
+    end
+    @test (mt2.r, mt2.c, mt2.a) == (r, c, a)
+    @test (mt.r, mt.c, mt.a) === (4, 6, 5.0)  # mt is unmodified
     @pack_P1m! mt
     if Int==Int64
         @test string(mt) == "P1m\n  r: Int64 1\n  c: Int64 3\n  a: Float64 2.0\n"
