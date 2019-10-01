@@ -1,5 +1,3 @@
-__precompile__()
-
 """
 This is a package I use to handle numerical-model parameters,
 thus the name. However, it should be useful otherwise too.
@@ -41,6 +39,10 @@ c = BB.c
 ```
 """
 module Parameters
+import ConstructionBase
+using ConstructionBase: setproperties
+export setproperties
+
 import Base: @__doc__
 import OrderedCollections: OrderedDict
 
@@ -199,11 +201,7 @@ end
 """
 Make a new instance of a type with the same values as the input type
 except for the fields given in the AbstractDict second argument or as
-keywords.  Works for types, Dicts, and NamedTuples.
-
-Note: this is not very performant.  Check Setfield.jl for a faster &
-nicer implementation.
-
+keywords. Works for types, Dicts, and NamedTuples.
 ```jldoctest
 julia> using Parameters
 
@@ -218,25 +216,29 @@ A(3, 4)
 julia> b = reconstruct(a, b=99)
 A(3, 99)
 ```
+See also [`setproperties`](@ref).
+
+# Overloading
+#
+If you want to overload `reconstruct` consider overloading `setproperties` instead.
+More precisely if you have a dict like type `MyDict <: AbstractDict`, it makes
+sense to overload `reconstruct(o::MyDict, di)`. If you have a record like type,
+you should probably overload `setproperties(o, patch::NamedTuple)` instead.
+
+Formulated differently, if the goal of the reconstruct call is to update:
+* the result of `getindex`, overload `reconstruct`
+* the result of `getproperty` overload `setproperties` instead.
 """
-function reconstruct(pp::T, di) where T
-    di = !isa(di, AbstractDict) ? Dict(di) : copy(di)
-    if pp isa AbstractDict
-        for (k,v) in di
-            !haskey(pp, k) && error("Field $k not in type $T")
-            pp[k] = v
-        end
-        return pp
-    else
-        ns = fieldnames(T)
-        args = []
-        for (i,n) in enumerate(ns)
-            push!(args, pop!(di, n, getfield(pp, n)))
-        end
-        length(di)!=0 && error("Fields $(keys(di)) not in type $T")
-        return pp isa NamedTuple ? T(Tuple(args)) : T(args...)
+function reconstruct(pp::AbstractDict, di)
+    # di = !isa(di, AbstractDict) ? Dict(di) : copy(di)
+    for (k,v) in di
+        !haskey(pp, k) && throw(KeyError(k))
+        pp[k] = v
     end
+    return pp
 end
+reconstruct(obj, patch::NamedTuple) = setproperties(obj, patch)
+reconstruct(obj, patch) = reconstruct(obj, (;patch...))
 reconstruct(pp; kws...) = reconstruct(pp, kws)
 
 
