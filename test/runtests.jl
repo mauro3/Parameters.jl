@@ -36,6 +36,8 @@ end
 # @test "A field Default: sdaf\n" == Markdown.plain(@doc MT1.c)
 @test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(MT1, :r))
 @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(MT1, :c))
+@test setproperties(MT1(), r=12).r === 12
+@test setproperties(MT1(), r=12, c=nothing).c === nothing
 
 abstract type AMT1_2 end
 "Test documentation with type-parameter"
@@ -75,7 +77,8 @@ const TMT1_3 = MT1_3{Int} # Julia bug https://github.com/JuliaLang/julia/issues/
 end
 MT2(r=4, a=5., c=6)
 MT2(r=4, a=5, c="asdf")
-MT2(4, "dsaf", 5)
+obj = MT2(4, "dsaf", 5)
+@test setproperties(obj, (r=42, c=:c)).r === 42
 @test_throws ErrorException MT2(r=4)
 @test_throws ErrorException MT2()
 
@@ -114,6 +117,12 @@ MT3_2(a=5)
 MT3_2(4,5)
 @test_throws ErrorException MT3_2(r=4)
 @test_throws ErrorException MT3_2()
+o = MT3_2(r=4, a=5.0)
+o2 = setproperties(o, r=10, a=20)
+@test o2.r === 10
+@test o2.a === 20.0
+@test o.r === 4
+@test o.a === 5.0
 
 # with type-parameters
 @with_kw struct MT4{R,I}
@@ -130,6 +139,8 @@ mt4=MT4(5.4, 4) # outer positional
 @test_throws ErrorException MT4{Float32, Int}()
 @test_throws InexactError MT4{Float32,Int}(a=5.5)
 @test_throws InexactError MT4{Float32,Int}(5.5, 5.5)
+@test setproperties(MT4(a=1), r=12.0).r === 12.0
+@test setproperties(MT4(a=1), r=12, a=:hello).a === :hello
 
 # with type-parameters 2
 abstract type AMT{R<:Real} end

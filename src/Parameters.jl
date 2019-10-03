@@ -41,12 +41,12 @@ c = BB.c
 module Parameters
 import ConstructionBase
 using ConstructionBase: setproperties
-export setproperties
 
 import Base: @__doc__
 import OrderedCollections: OrderedDict
 
 export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack!, @pack
+export setproperties
 
 ## Parser helpers
 #################

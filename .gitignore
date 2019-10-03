@@ -2,3 +2,4 @@
 *.jl.mem
 docs/build/
 tmp*
+Manifest.toml
