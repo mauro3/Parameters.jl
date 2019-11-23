@@ -607,8 +607,8 @@ function with_kw_nt(typedef, mod)
     NT = gensym(:NamedTuple_kw)
     nt = Expr(:tuple, nt...)
     quote
-        $NT = (; $(kwargs...)) -> $nt
-        (::typeof($NT))($(args...)) = $nt
+        $NT(; $(kwargs...)) =$nt
+        $NT($(args...)) = $nt
         $NT
     end
 end

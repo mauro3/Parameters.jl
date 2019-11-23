@@ -657,3 +657,13 @@ end
 
 z2 = TestModule.test_function(TestModule.TestStruct(; y = 9.0))
 @test z2.x == 1 && z2.y == 10.0
+
+# issue 91
+@testset "i91" begin
+    function foo()
+        a = @with_kw (x = 1, y = 2)
+        return a
+    end
+    @test foo()() == (x = 1, y = 2)
+    @test foo()(y=4) == (x = 1, y = 4)
+end
