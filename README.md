@@ -133,6 +133,10 @@ Implementing similar things:
   the syntax is less nice than Parameters.jl.
 - [ExtractMacro.jl](https://github.com/carlobaldassi/ExtractMacro.jl) also has
   the `@unpack` functionality.
+- [FieldDefaults.jl](https://github.com/rafaqz/FieldDefaults.jl) also has 
+  keyword defaults. You can use it as a minimalist replacement for Parameters.jl 
+  with the aid of [FieldMetadata.jl](https://github.com/rafaqz/FieldMetadata.jl)
+  and [Flatten.jl](https://github.com/rafaqz/Flatten.jl).
 
 # TODO
 
