@@ -3,13 +3,10 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://mauro3.github.io/Parameters.jl/stable)
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://mauro3.github.io/Parameters.jl/latest)
 
-[![Build Status](https://travis-ci.org/mauro3/Parameters.jl.svg?branch=master)](https://travis-ci.org/mauro3/Parameters.jl)
+[![Build Status](https://travis-ci.com/mauro3/Parameters.jl.svg?branch=master)](https://travis-ci.com/mauro3/Parameters.jl)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/mauro3/Parameters.jl?branch=master&svg=true)](https://ci.appveyor.com/project/mauro3/parameters-jl/branch/master)
 
 [![codecov](https://codecov.io/gh/mauro3/Parameters.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/mauro3/Parameters.jl)
-
-<!-- [![Parameters](http://pkg.julialang.org/badges/Parameters_0.6.svg)](http://pkg.julialang.org/?pkg=Parameters) -->
-<!-- [![Parameters](http://pkg.julialang.org/badges/Parameters_0.7.svg)](http://pkg.julialang.org/detail/Parameters) -->
 
 This is a package I use to handle numerical-model parameters, thus the
 name.  However, it should be useful otherwise too.  It has two main
@@ -133,8 +130,8 @@ Implementing similar things:
   the syntax is less nice than Parameters.jl.
 - [ExtractMacro.jl](https://github.com/carlobaldassi/ExtractMacro.jl) also has
   the `@unpack` functionality.
-- [FieldDefaults.jl](https://github.com/rafaqz/FieldDefaults.jl) also has 
-  keyword defaults. You can use it as a minimalist replacement for Parameters.jl 
+- [FieldDefaults.jl](https://github.com/rafaqz/FieldDefaults.jl) also has
+  keyword defaults. You can use it as a minimalist replacement for Parameters.jl
   with the aid of [FieldMetadata.jl](https://github.com/rafaqz/FieldMetadata.jl)
   and [Flatten.jl](https://github.com/rafaqz/Flatten.jl).
 
