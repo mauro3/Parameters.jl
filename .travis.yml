@@ -16,9 +16,10 @@ notifications:
 # https://github.com/travis-ci/travis-ci/issues/4942
 git:
   depth: 99999
+after_success:
+  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
 ## Documeter.jl https://discourse.julialang.org/t/psa-use-a-project-for-building-your-docs/14974/5
 jobs:
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
   include:
     - stage: "Documentation"
       julia: 1.0
