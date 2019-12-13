@@ -180,14 +180,19 @@ Since the macro operates on a single tuple expression (as opposed to a tuple of 
 
 # (Un)pack macros
 
+## `@unpack` and `@pack` re-exported from UnPack.jl
+
 When working with parameters, or otherwise, it is often convenient to
 unpack (and pack, in the case of mutable datatypes) some or all of the
 fields of a type.  This is often the case when passed into a function.
 
-The preferred to do this is using the [`@unpack`](@ref) and [`@pack!`](@ref) macros
-which are generic and also work with non-`@with_kw` types, modules, and
-dictionaries (and can be customized for other types too, see next section). Continuing
-with the `Para` type defined above:
+The preferred to do this is using the `@unpack` and
+`@pack!` macros from the package
+[UnPack.jl](https://github.com/mauro3/UnPack.jl).  These are generic
+and also work with non-`@with_kw` stucts, named-tuples, modules, and
+dictionaries.
+Here one example is given, for more see the README of
+UnPack. Continuing with the `Para` struct defined above:
 
 ```julia
 function fn2(var, pa::Para)
@@ -201,64 +206,14 @@ end
 out, pa = fn2(7, pa)
 ```
 
-Example with a dictionary:
+Note that `@unpack` and `@pack!` can be customized on types,
+see [UnPack.jl](https://github.com/mauro3/UnPack.jl).
 
-```julia
-d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
-@unpack a, c = d
-a == 5.0 #true
-c == "Hi!" #true
-
-d = Dict{String,Any}()
-@pack! d = a, c
-d # Dict{String,Any}("a"=>5.0,"a"=>"Hi!")
-```
-
-## Customization of `@unpack` and `@pack!`
-
-What happens during the (un-)packing of a particular datatype is
-determined by the functions [`Parameters.unpack`](@ref) and
-[`Parameters.pack!`](@ref).
-
-The `Parameters.unpack` function is invoked to unpack one entity of some
-`DataType` and has signature:
-
-`unpack(dt::Any, ::Val{property}) -> value of property`
-
-Note that `unpack` (and `pack!`) works with `Base.getproperty`.  By
-default this means that all the fields of a type are unpacked but if
-`getproperty` is overloaded, then it will unpack accordingly.
-
-Two definitions are included in the package to unpack a composite type/module
-or a dictionary with Symbol or string keys:
-
-```
-@inline unpack{f}(x, ::Val{f}) = getproperty(x, f)
-@inline unpack{k}(x::Associative{Symbol}, ::Val{k}) = x[k]
-@inline unpack{S<:AbstractString,k}(x::Associative{S}, ::Val{k}) = x[string(k)]
-```
-
-The `Parameters.pack!` function is invoked to pack one entity into some
-`DataType` and has signature:
-
-`pack!(dt::Any, ::Val{field}, value) -> value`
-
-Two definitions are included in the package to pack into a composite
-type or into a dictionary with Symbol or string keys:
-
-```
-@inline pack!{f}(x, ::Val{f}, val) = setproperty!(x, f, val)
-@inline pack!{k}(x::Associative{Symbol}, ::Val{k}, val) = x[k]=val
-@inline pack!{S<:AbstractString,k}(x::Associative{S}, ::Val{k}, val) = x[string(k)]=val
-```
-
-More methods can be added to `unpack` and `pack!` to allow for
-specialized packing of datatypes.
-
-## The type-specific (un)pack macros (somewhat dangerous)
+## The type-specific (un)pack-all macros (somewhat dangerous)
 
 The `@with_kw` macro automatically produces type-specific (un-)pack
-macros of form `@unpack_TypeName`, `@pack_TypeName!`, and `@pack_TypeName` which unpack/pack all fields:
+macros of form `@unpack_TypeName`, `@pack_TypeName!`, and
+`@pack_TypeName` which unpack/pack all fields:
 
 ```julia
 function fn(var, pa::Para)
