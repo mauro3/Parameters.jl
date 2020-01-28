@@ -5,10 +5,12 @@ version = "0.12.0"
 
 [deps]
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 
 [compat]
-OrderedCollections = "≥ 0.1.0"
-julia = "≥ 1.0.0"
+OrderedCollections = "1"
+UnPack = "0.1"
+julia = "1"
 
 [extras]
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
