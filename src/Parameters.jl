@@ -220,14 +220,15 @@ A(3, 99)
 ```
 """
 function reconstruct(pp::T, di) where T
-    di = !isa(di, AbstractDict) ? Dict(di) : copy(di)
     if pp isa AbstractDict
+        pp = deepcopy(pp)
         for (k,v) in di
             !haskey(pp, k) && error("Field $k not in type $T")
             pp[k] = v
         end
         return pp
     else
+        di = !isa(di, AbstractDict) ? Dict(di) : copy(di)
         ns = fieldnames(T)
         args = []
         for (i,n) in enumerate(ns)
