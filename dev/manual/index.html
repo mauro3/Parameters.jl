@@ -75,7 +75,14 @@ julia&gt; y
 3
 
 julia&gt; z
-&quot;foo&quot;</code></pre><p>Since the macro operates on a single tuple expression (as opposed to a tuple of assignment expressions),writing <code>@with_kw(x = 1, y = :foo)</code> will return an error suggesting you write <code>@with_kw (x = 1, y = :foo)</code>.</p><h1><a class="nav-anchor" id="(Un)pack-macros-1" href="#(Un)pack-macros-1">(Un)pack macros</a></h1><h2><a class="nav-anchor" id="@unpack-and-@pack-re-exported-from-UnPack.jl-1" href="#@unpack-and-@pack-re-exported-from-UnPack.jl-1"><code>@unpack</code> and <code>@pack</code> re-exported from UnPack.jl</a></h2><p>When working with parameters, or otherwise, it is often convenient to unpack (and pack, in the case of mutable datatypes) some or all of the fields of a type.  This is often the case when passed into a function.</p><p>The preferred to do this is using the <code>@unpack</code> and <code>@pack!</code> macros from the package <a href="https://github.com/mauro3/UnPack.jl">UnPack.jl</a>.  These are generic and also work with non-<code>@with_kw</code> stucts, named-tuples, modules, and dictionaries. Here one example is given, for more see the README of UnPack. Continuing with the <code>Para</code> struct defined above:</p><pre><code class="language-julia">function fn2(var, pa::Para)
+&quot;foo&quot;</code></pre><p>Since the macro operates on a single tuple expression (as opposed to a tuple of assignment expressions),writing <code>@with_kw(x = 1, y = :foo)</code> will return an error suggesting you write <code>@with_kw (x = 1, y = :foo)</code>.</p><h1><a class="nav-anchor" id="(Un)pack-macros-1" href="#(Un)pack-macros-1">(Un)pack macros</a></h1><h2><a class="nav-anchor" id="@unpack-and-@pack-re-exported-from-UnPack.jl-1" href="#@unpack-and-@pack-re-exported-from-UnPack.jl-1"><code>@unpack</code> and <code>@pack</code> re-exported from UnPack.jl</a></h2><p>When working with parameters, or otherwise, it is often convenient to unpack (and pack, in the case of mutable datatypes) some or all of the fields of a type.  This is often the case when passed into a function.</p><p>The preferred to do this is using the <code>@unpack</code> and <code>@pack!</code> macros from the package <a href="https://github.com/mauro3/UnPack.jl">UnPack.jl</a>.  These are generic and also work with non-<code>@with_kw</code> stucts, named-tuples, modules, and dictionaries. Here one example is given, for more see the README of UnPack. Define a mutable struct <code>MPara</code>:</p><pre><code class="language-julia">@with_kw mutable struct MPara{R&lt;:Real}
+    a::R = 5
+    b::R
+    c::R = a+b
+end
+pa = MPara(b=7)
+
+function fn2(var, pa::MPara)
     @unpack a, b = pa # equivalent to: a,b = pa.a,pa.b
     out = var + a + b
     b = 77
