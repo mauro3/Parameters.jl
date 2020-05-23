@@ -192,10 +192,17 @@ The preferred to do this is using the `@unpack` and
 and also work with non-`@with_kw` stucts, named-tuples, modules, and
 dictionaries.
 Here one example is given, for more see the README of
-UnPack. Continuing with the `Para` struct defined above:
+UnPack. Define a mutable struct `MPara`:
 
 ```julia
-function fn2(var, pa::Para)
+@with_kw mutable struct MPara{R<:Real}
+    a::R = 5
+    b::R
+    c::R = a+b
+end
+pa = MPara(b=7)
+
+function fn2(var, pa::MPara)
     @unpack a, b = pa # equivalent to: a,b = pa.a,pa.b
     out = var + a + b
     b = 77
