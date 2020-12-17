@@ -176,7 +176,7 @@ end
 Transforms a type-instance into a dictionary.
 
 ```
-julia> type T
+julia> struct T
            a
            b
        end
