@@ -1,5 +1,12 @@
 # Parameters
 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mauro3.github.io/Parameters.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://mauro3.github.io/Parameters.jl/dev)
+
+[![Build Status](https://github.com/mauro3/Parameters.jl/workflows/CI/badge.svg)](https://github.com/mauro3/Parameters.jl/actions)
+[![Coverage](https://codecov.io/gh/mauro3/Parameters.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/mauro3/Parameters.jl)
+
+
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://mauro3.github.io/Parameters.jl/stable)
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://mauro3.github.io/Parameters.jl/latest)
 
