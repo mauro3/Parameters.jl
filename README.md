@@ -4,16 +4,9 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://mauro3.github.io/Parameters.jl/dev)
 
 [![Build Status](https://github.com/mauro3/Parameters.jl/workflows/CI/badge.svg)](https://github.com/mauro3/Parameters.jl/actions)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/mauro3/Parameters.jl?branch=master&svg=true)](https://ci.appveyor.com/project/mauro3/parameters-jl/branch/master)
 [![Coverage](https://codecov.io/gh/mauro3/Parameters.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/mauro3/Parameters.jl)
 
-
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://mauro3.github.io/Parameters.jl/stable)
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://mauro3.github.io/Parameters.jl/latest)
-
-[![Build Status](https://travis-ci.com/mauro3/Parameters.jl.svg?branch=master)](https://travis-ci.com/mauro3/Parameters.jl)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/mauro3/Parameters.jl?branch=master&svg=true)](https://ci.appveyor.com/project/mauro3/parameters-jl/branch/master)
-
-[![codecov](https://codecov.io/gh/mauro3/Parameters.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/mauro3/Parameters.jl)
 
 This is a package I use to handle numerical-model parameters, thus the
 name.  However, it should be useful otherwise too.  It has two main
