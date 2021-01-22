@@ -17,7 +17,7 @@ name.  However, it should be useful otherwise too.  It has two main
 features:
 
 - keyword type constructors with default values for `struct`s and `NamedTuples`,
-- unpacking and packing of composite types and dicts.
+- unpacking and packing of composite types and dicts (mostly via [UnPack.jl](https://github.com/mauro3/UnPack.jl)).
 
 Checkout my ten minute JuliaCon 2018 [talk](https://youtu.be/JFrzrTYFYbU?t=1m).
 
