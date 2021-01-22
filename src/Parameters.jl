@@ -45,7 +45,7 @@ import Base: @__doc__
 import OrderedCollections: OrderedDict
 using UnPack: @unpack, @pack!
 
-export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack!, @pack
+export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack!, @pack, @consts
 
 ## Parser helpers
 #################
@@ -657,4 +657,25 @@ macro with_kw_noshow(typedef)
     return esc(with_kw(typedef, __module__, false))
 end
 
+###########
+# @consts macro
+
+"""
+
+"""
+macro consts(block)
+    @assert block.head == :block
+    args = block.args
+    for i in eachindex(args)
+        a = args[i]
+        if a isa LineNumberNode
+            continue
+        elseif a.head == :(=)
+            args[i] = Expr(:const, args[i])
+        else
+            error("Could not parse block")
+        end
+    end
+    return esc(block)
+end
 end # module
