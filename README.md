@@ -6,7 +6,11 @@
 [![Build Status](https://github.com/mauro3/Parameters.jl/workflows/CI/badge.svg)](https://github.com/mauro3/Parameters.jl/actions)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/mauro3/Parameters.jl?branch=master&svg=true)](https://ci.appveyor.com/project/mauro3/parameters-jl/branch/master)
 [![Coverage](https://codecov.io/gh/mauro3/Parameters.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/mauro3/Parameters.jl)
+[![pkgeval](https://juliahub.com/docs/Parameters/pkgeval.svg)](https://juliahub.com/ui/Packages/Parameters/ycYNs)
 
+
+[![deps](https://juliahub.com/docs/Parameters/deps.svg)](https://juliahub.com/ui/Packages/Parameters/ycYNs?t=2)
+[![version](https://juliahub.com/docs/Parameters/version.svg)](https://juliahub.com/ui/Packages/Parameters/ycYNs)
 
 This is a package I use to handle numerical-model parameters, thus the
 name.  However, it should be useful otherwise too.  It has two main
