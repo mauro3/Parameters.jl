@@ -668,3 +668,17 @@ z2 = TestModule.test_function(TestModule.TestStruct(; y = 9.0))
     @test foo()() == (x = 1, y = 2)
     @test foo()(y=4) == (x = 1, y = 4)
 end
+
+####
+# @consts
+####
+@consts begin
+    a34 = 1
+    b34 = 2.0
+    d34 = sin(56)
+end
+@test a34 == 1
+@test b34 == 2.0
+@test_throws ErrorException global b34 = 1
+## this test is dependent on Julia version, leave it:
+# @test_warn "WARNING: redefinition of constant b34. This may fail, cause incorrect answers, or produce other errors." global b34 = 4.0

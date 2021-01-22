@@ -61,8 +61,6 @@ julia> MyNT(x = 2)
 (x = 2, y = "foo", z = :bar)
 ```
 
-> v0.6 users: since `NamedTuples` are not supported in base Julia v0.6, you must import the `NamedTuples.jl` package. Be aware of [this issue](https://github.com/JuliaLang/julia/issues/17240) with keyword arguments in v0.6.
-
 Unpacking is done with `@unpack` (`@pack!` is similar):
 ```julia
 struct B
@@ -77,6 +75,16 @@ a = BB.a
 c = BB.c
 ```
 
+Defining several constants
+```julia
+@consts begin
+    a = 1
+    b = 2.0
+    c = "a"
+end
+```
+
+
 The features are:
 
 - a keyword constructor for the type
@@ -88,7 +96,8 @@ The features are:
 - packing and unpacking macros for the type: `@unpack_*` where `*` is
   the type name.
 - generic packing and unpacking macros `@pack!`, `@unpack` (work with
-  any types).
+  any types, via [UnPack.jl](https://github.com/mauro3/UnPack.jl))
+- `@consts` macro to defined a bunch of constants
 
 The keyword-constructor and default-values functionality will probably
 make it into Julia

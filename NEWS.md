@@ -1,3 +1,6 @@
+# 2021-01-22
+Added `@consts` macro to define a block of constants.
+
 # 2019-09-10
 Added support of packing immutables (by creating one) through `@pack_SomeType`.
 

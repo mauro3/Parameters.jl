@@ -136,10 +136,6 @@ re-definition warnings, then use [`@with_kw_noshow`](@ref).
 
 As mentioned in the README, the `@with_kw` macro can be used to decorate a named tuple and produce a named tuple constructor with those defaults.
 
-> Users of Julia v0.6 should be aware of this [caveat](https://github.com/JuliaLang/julia/issues/17240) that prohibits assignments like `@with_kw (f = f, x = x)`. This is a consequence of different scoping rules for keyword arguments in [v0.6](https://docs.julialang.org/en/stable/manual/functions/#Evaluation-Scope-of-Default-Values-1) and [v0.7](https://docs.julialang.org/en/latest/manual/functions/#Evaluation-Scope-of-Default-Values-1).
-
-> Users of v0.6 will also need to explicitly import `NamedTuples.jl`, since this functionality is not present in that version of base Julia.
-
 These named tuples can be defined as such:
 
 ```julia
@@ -177,6 +173,19 @@ julia> z
 ```
 
 Since the macro operates on a single tuple expression (as opposed to a tuple of assignment expressions),writing `@with_kw(x = 1, y = :foo)` will return an error suggesting you write `@with_kw (x = 1, y = :foo)`.
+
+# Blocks of constants
+
+Several constants can be defined like so:
+```julia
+@consts begin
+    a = 1
+    b = 2
+    c = 3
+end
+```
+(if you do the math, you'll need more than three constants in the block to actually save typing.)
+
 
 # (Un)pack macros
 
