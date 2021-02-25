@@ -4,10 +4,12 @@ author = ["Mauro Werder <mauro3@runbox.com>"]
 version = "0.12.2"
 
 [deps]
+MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 
 [compat]
+MacroTools = "0.5"
 OrderedCollections = "1"
 UnPack = "0.1, 1.0"
 julia = "1"

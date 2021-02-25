@@ -41,8 +41,9 @@ c = BB.c
 ```
 """
 module Parameters
-import Base: @__doc__
-import OrderedCollections: OrderedDict
+using Base: @__doc__
+using OrderedCollections: OrderedDict
+using MacroTools: rmlines, prewalk, flatten
 using UnPack: @unpack, @pack!
 
 export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack!, @pack, @consts
@@ -309,6 +310,16 @@ function with_kw(typedef, mod::Module, withshow=true)
               Also, make sure to use a trailing comma for single-field NamedTuples.
               """)
     end
+
+    # record first line number
+    firstline = nothing
+    for arg in typedef.args[3].args
+        if arg isa LineNumberNode
+            firstline = arg
+            break
+        end
+    end
+
     err1str = "Field \'"
     err2str = "\' has no default, supply it with keyword."
 
@@ -579,19 +590,23 @@ function with_kw(typedef, mod::Module, withshow=true)
         end
     end
 
-    # Finish up
-    quote
-        Base.@__doc__ $typ
-        $outer_positional
-        $outer_kw
-        $outer_copy
-        $showfn
-        macro $unpack_name(ex)
+    # Finish up:
+    # - remove un-needed blocks
+    # - replace all line numbers pointing (they are all pointing to this file) with firstline
+    flatten(prewalk(x -> x isa LineNumberNode ? firstline : x,
+            quote
+            Base.@__doc__ $typ
+            $outer_positional
+            $outer_kw
+            $outer_copy
+            $showfn
+            macro $unpack_name(ex)
             esc($Parameters._unpack(ex, $unpack_vars))
-        end
-        $pack_macros
-        $tn
-    end
+            end
+            $pack_macros
+            $tn
+            end
+            ))
 end
 
 """
@@ -620,11 +635,17 @@ function with_kw_nt(typedef, mod)
     end
     NT = gensym(:NamedTuple_kw)
     nt = Expr(:tuple, nt...)
+
+    # Finish up:
+    # - remove un-needed blocks
+    # - there are no line-numbers in the incoming expr, thus remove all
+    flatten(prewalk(rmlines,
     quote
         $NT(; $(kwargs...)) =$nt
         $NT($(args...)) = $nt
         $NT
-    end
+                    end
+                    ))
 end
 
 """
