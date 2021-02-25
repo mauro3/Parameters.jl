@@ -262,8 +262,6 @@ function _pack_new(T, fields)
     Expr(:call, T, fields...)
 end
 
-const macro_hidden_nargs = length(:(@m).args) - 1 # ==1 on Julia 0.6, ==2 on Julia 0.7
-
 """
 This function is called by the `@with_kw` macro and does the syntax
 transformation from:
@@ -341,10 +339,10 @@ function with_kw(typedef, mod::Module, withshow=true)
     l, i = next(lns, start(lns))
     if l isa Expr && l.head == :macrocall && l.args[1] == Symbol("@deftype")
         has_deftyp = true
-        if length(l.args) != (2 + macro_hidden_nargs)
+        if length(l.args) != 3
             error("Malformed `@deftype` line $l")
         end
-        deftyp = l.args[2 + macro_hidden_nargs]
+        deftyp = l.args[3]
         if done(lns, i)
             error("@with_kw only supported for types which have at least one field.")
         end
@@ -385,7 +383,7 @@ function with_kw(typedef, mod::Module, withshow=true)
     unpack_vars = Any[]
     # the type def
     fielddefs = quote end # holds r::R etc
-    fielddefs.args = Any[] # in julia 0.5 this is [:( # /home/mauro/.julia/v0.5/Parameters/src/Parameters.jl, line 228:)]
+    fielddefs.args = Any[]
     kws = OrderedDict{Any, Any}()
     # assertions in the body
     asserts = Any[]
@@ -523,6 +521,20 @@ function with_kw(typedef, mod::Module, withshow=true)
     # constructors are to allow both calls:
     #   `MT4(r=4, a=5.0)` (outer kwarg-constructor) and
     #   `MT4{Float32, Int}(r=4, a=5.)` (inner kwarg constructor).
+    #
+    # NOTE to above NOTE: this is probably not the case (anymore?),
+    # as Base.@kwdef does not define inner constructors:
+    # julia> Base.@kwdef struct MT4_{R,I}
+    #            r::R=5
+    #            a::I
+    #        end
+    #
+    # julia> MT4_(r=4, a=5.0)
+    # MT4_{Int64,Float64}(4, 5.0)
+    #
+    # julia> MT4_{Float32, Int}(r=4, a=5.)
+    # MT4_{Float32,Int64}(4.0f0, 5)
+
 
     ## outer copy constructor
     ###
