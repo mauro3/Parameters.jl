@@ -198,9 +198,14 @@ function type2dict(dt)
 end
 
 """
+    reconstruct(pp; kws...
+    reconstruct(T::Type, pp; kws...)
+
 Make a new instance of a type with the same values as the input type
-except for the fields given in the AbstractDict second argument or as
-keywords.  Works for types, Dicts, and NamedTuples.
+except for the fields given in the keyword args.  Works for types, Dicts,
+and NamedTuples.  Can also reconstruct to another type, which is probably
+mostly useful for parameterised types where the parameter changes on
+reconstruction.
 
 Note: this is not very performant.  Check Setfield.jl for a faster &
 nicer implementation.
@@ -213,34 +218,56 @@ julia> struct A
            b
        end
 
-julia> a = A(3,4)
+julia> x = A(3,4)
 A(3, 4)
 
-julia> b = reconstruct(a, b=99)
+julia> reconstruct(x, b=99)
 A(3, 99)
+
+julia> struct B{T}
+          a::T
+          b
+       end
+
+julia> y = B(sin, 1)
+B{typeof(sin)}(sin, 1)
+
+julia> reconstruct(B, y, a=cos) # note reconstruct(y, a=cos) errors!
+B{typeof(cos)}(cos, 1)
 ```
 """
-function reconstruct(pp::T, di) where T
-    if pp isa AbstractDict
-        pp = deepcopy(pp)
-        for (k,v) in di
-            !haskey(pp, k) && error("Field $k not in type $T")
-            pp[k] = v
+reconstruct(pp::T, di) where T = reconstruct(T, pp, di)
+reconstruct(pp; kws...) = reconstruct(pp, kws)
+reconstruct(T::Type, pp; kws...) = reconstruct(T, pp, kws)
+function reconstruct(::Type{T}, pp, di) where T
+    di = !isa(di, AbstractDict) ? Dict(di) : copy(di)
+    ns = if T<:AbstractDict
+        if pp isa AbstractDict
+            keys(pp)
+        else
+            fieldnames(typeof(pp))
         end
-        return pp
     else
-        di = !isa(di, AbstractDict) ? Dict(di) : copy(di)
-        ns = fieldnames(T)
-        args = []
-        for (i,n) in enumerate(ns)
+        fieldnames(T)
+    end
+    args = []
+    for (i,n) in enumerate(ns)
+        if pp isa AbstractDict
+            push!(args, pop!(di, n, pp[n]))
+        else
             push!(args, pop!(di, n, getfield(pp, n)))
         end
-        length(di)!=0 && error("Fields $(keys(di)) not in type $T")
-        return pp isa NamedTuple ? T(Tuple(args)) : T(args...)
+    end
+    length(di)!=0 && error("Fields $(keys(di)) not in type $T")
+
+    if T<:AbstractDict
+        return T(zip(ns,args))
+    elseif T <: NamedTuple
+        return T(Tuple(args))
+    else
+        return T(args...)
     end
 end
-reconstruct(pp; kws...) = reconstruct(pp, kws)
-
 
 ###########################
 # Keyword constructors with @with_kw

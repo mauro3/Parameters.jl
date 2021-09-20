@@ -1,8 +1,8 @@
 using Parameters, Test, Markdown, REPL
 
-# misc
-a8679 = @eval (a=1, b=2)
-ra8679 = @eval (a=1, b=44)
+# reconstruct
+a8679 = (a=1, b=2)
+ra8679 = (a=1, b=44)
 @test ra8679 == reconstruct(a8679, b=44)
 @test_throws ErrorException reconstruct(a8679, c=44)
 
@@ -18,6 +18,20 @@ end
 a8679 = A8679(1, 2)
 @test A8679(1, 44) == reconstruct(a8679, b=44)
 @test_throws ErrorException reconstruct(a8679, c=44)
+
+@test reconstruct(A8679, (a=1, b=2), b=44) == A8679(1, 44)
+@test reconstruct(A8679, Dict(:a=>1, :b=>2), b=44) == A8679(1, 44)
+@test_throws KeyError reconstruct(A8679, Dict("a"=>1, "b"=>2), b=44) == A8679(1, 44)
+@test reconstruct(typeof((a=1, b=2)), A8679(1, 2), b=44) == (a=1, b=44)
+@test reconstruct(Dict{Symbol,Any}, A8679(1, 2), b=44) == Dict(:a=>1, :b=>44)
+
+struct B8679{T}
+    a::T
+    b
+end
+a8679 = B8679(sin, 1)
+@test reconstruct(B8679, a8679, a=cos) == B8679{typeof(cos)}(cos, 1)
+@test_throws MethodError reconstruct(a8679, a=cos)
 
 ##########
 # @with_kw
