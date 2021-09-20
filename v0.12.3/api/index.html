@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>API · Parameters.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">Parameters.jl</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Parameters.jl</a></li><li><a class="tocitem" href="../manual/">Parameters manual</a></li><li class="is-active"><a class="tocitem" href>API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>API</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>API</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/mauro3/Parameters.jl/blob/master/docs/src/api.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="API"><a class="docs-heading-anchor" href="#API">API</a><a id="API-1"></a><a class="docs-heading-anchor-permalink" href="#API" title="Permalink"></a></h1><article class="docstring"><header><a class="docstring-binding" id="Parameters.Parameters" href="#Parameters.Parameters"><code>Parameters.Parameters</code></a> — <span class="docstring-category">Module</span></header><section><div><p>This is a package I use to handle numerical-model parameters, thus the name. However, it should be useful otherwise too. It has two main features:</p><ul><li>keyword type constructors with default values, and</li><li>unpacking and packing of composite types and dicts.</li></ul><p>The macro <code>@with_kw</code> which decorates a type definition to allow default values and a keyword constructor:</p><pre><code class="language-none">julia&gt; using Parameters
+
+julia&gt; @with_kw struct A
+           a::Int = 6
+           b::Float64 = -1.1
+           c::UInt8
+       end
+
+julia&gt; A(c=4)
+A
+  a: 6
+  b: -1.1
+  c: 4</code></pre><p>Unpacking is done with <code>@unpack</code> (<code>@pack!</code> is similar):</p><pre><code class="language-none">struct B
+    a
+    b
+    c
+end
+@unpack a, c = B(4,5,6)
+# is equivalent to
+BB = B(4,5,6)
+a = BB.a
+c = BB.c</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/mauro3/Parameters.jl/blob/029dad2453c80b99468281888a0846ce249c0b93/src/Parameters.jl#L3-L42">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Parameters.reconstruct-Union{Tuple{T}, Tuple{T, Any}} where T" href="#Parameters.reconstruct-Union{Tuple{T}, Tuple{T, Any}} where T"><code>Parameters.reconstruct</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">reconstruct(pp; kws...
+reconstruct(T::Type, pp; kws...)</code></pre><p>Make a new instance of a type with the same values as the input type except for the fields given in the keyword args.  Works for types, Dicts, and NamedTuples.  Can also reconstruct to another type, which is probably mostly useful for parameterised types where the parameter changes on reconstruction.</p><p>Note: this is not very performant.  Check Setfield.jl for a faster &amp; nicer implementation.</p><pre><code class="language-julia-repl">julia&gt; using Parameters
+
+julia&gt; struct A
+           a
+           b
+       end
+
+julia&gt; x = A(3,4)
+A(3, 4)
+
+julia&gt; reconstruct(x, b=99)
+A(3, 99)
+
+julia&gt; struct B{T}
+          a::T
+          b
+       end
+
+julia&gt; y = B(sin, 1)
+B{typeof(sin)}(sin, 1)
+
+julia&gt; reconstruct(B, y, a=cos) # note reconstruct(y, a=cos) errors!
+B{typeof(cos)}(cos, 1)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/mauro3/Parameters.jl/blob/029dad2453c80b99468281888a0846ce249c0b93/src/Parameters.jl#L200-L238">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Parameters.type2dict-Tuple{Any}" href="#Parameters.type2dict-Tuple{Any}"><code>Parameters.type2dict</code></a> — <span class="docstring-category">Method</span></header><section><div><p>Transforms a type-instance into a dictionary.</p><pre><code class="language-none">julia&gt; struct T
+           a
+           b
+       end
+
+julia&gt; type2dict(T(4,5))
+Dict{Symbol,Any} with 2 entries:
+  :a =&gt; 4
+  :b =&gt; 5</code></pre><p>Note that this uses <code>getproperty</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/mauro3/Parameters.jl/blob/029dad2453c80b99468281888a0846ce249c0b93/src/Parameters.jl#L175-L191">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Parameters.with_kw" href="#Parameters.with_kw"><code>Parameters.with_kw</code></a> — <span class="docstring-category">Function</span></header><section><div><p>This function is called by the <code>@with_kw</code> macro and does the syntax transformation from:</p><pre><code class="language-julia">@with_kw struct MM{R}
+    r::R = 1000.
+    a::R
+end</code></pre><p>into</p><pre><code class="language-julia">struct MM{R}
+    r::R
+    a::R
+    MM{R}(r,a) where {R} = new(r,a)
+    MM{R}(;r=1000., a=error(&quot;no default for a&quot;)) where {R} = MM{R}(r,a) # inner kw, type-paras are required when calling
+end
+MM(r::R,a::R) where {R} = MM{R}(r,a) # default outer positional constructor
+MM(;r=1000,a=error(&quot;no default for a&quot;)) =  MM(r,a) # outer kw, so no type-paras are needed when calling
+MM(m::MM; kws...) = reconstruct(mm,kws)
+MM(m::MM, di::Union{AbstractDict, Tuple{Symbol,Any}}) = reconstruct(mm, di)
+macro unpack_MM(varname)
+    esc(quote
+    r = varname.r
+    a = varname.a
+    end)
+end
+macro pack_MM(varname)
+    esc(quote
+    varname = Parameters.reconstruct(varname,r=r,a=a)
+    end)
+end</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/mauro3/Parameters.jl/blob/029dad2453c80b99468281888a0846ce249c0b93/src/Parameters.jl#L292-L328">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Parameters.with_kw_nt-Tuple{Any, Any}" href="#Parameters.with_kw_nt-Tuple{Any, Any}"><code>Parameters.with_kw_nt</code></a> — <span class="docstring-category">Method</span></header><section><div><p>Do the with-kw stuff for named tuples.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/mauro3/Parameters.jl/blob/029dad2453c80b99468281888a0846ce249c0b93/src/Parameters.jl#L624-L626">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Parameters.@consts-Tuple{Any}" href="#Parameters.@consts-Tuple{Any}"><code>Parameters.@consts</code></a> — <span class="docstring-category">Macro</span></header><section><div></div><a class="docs-sourcelink" target="_blank" href="https://github.com/mauro3/Parameters.jl/blob/029dad2453c80b99468281888a0846ce249c0b93/src/Parameters.jl#L702-L704">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Parameters.@with_kw-Tuple{Any}" href="#Parameters.@with_kw-Tuple{Any}"><code>Parameters.@with_kw</code></a> — <span class="docstring-category">Macro</span></header><section><div><p>Macro which allows default values for field types and a few other features.</p><p>Basic usage:</p><pre><code class="language-julia">@with_kw struct MM{R}
+    r::R = 1000.
+    a::Int = 4
+end</code></pre><p>For more details see manual.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/mauro3/Parameters.jl/blob/029dad2453c80b99468281888a0846ce249c0b93/src/Parameters.jl#L657-L670">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Parameters.@with_kw_noshow-Tuple{Any}" href="#Parameters.@with_kw_noshow-Tuple{Any}"><code>Parameters.@with_kw_noshow</code></a> — <span class="docstring-category">Macro</span></header><section><div><p>As <code>@with_kw</code> but does not define a <code>show</code> method to avoid annoying redefinition warnings.</p><pre><code class="language-julia">@with_kw_noshow struct MM{R}
+    r::R = 1000.
+    a::Int = 4
+end</code></pre><p>For more details see manual.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/mauro3/Parameters.jl/blob/029dad2453c80b99468281888a0846ce249c0b93/src/Parameters.jl#L682-L694">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../manual/">« Parameters manual</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 20 September 2021 22:03">Monday 20 September 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

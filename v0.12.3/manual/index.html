@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Parameters manual · Parameters.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">Parameters.jl</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Parameters.jl</a></li><li class="is-active"><a class="tocitem" href>Parameters manual</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Types-with-default-values-and-keyword-constructors"><span>Types with default values &amp; keyword constructors</span></a></li><li><a class="tocitem" href="#Named-Tuple-Support"><span>Named Tuple Support</span></a></li><li class="toplevel"><a class="tocitem" href="#Blocks-of-constants"><span>Blocks of constants</span></a></li><li class="toplevel"><a class="tocitem" href="#(Un)pack-macros"><span>(Un)pack macros</span></a></li><li><a class="tocitem" href="#@unpack-and-@pack-re-exported-from-UnPack.jl"><span><code>@unpack</code> and <code>@pack</code> re-exported from UnPack.jl</span></a></li><li><a class="tocitem" href="#The-type-specific-(un)pack-all-macros-(somewhat-dangerous)"><span>The type-specific (un)pack-all macros (somewhat dangerous)</span></a></li></ul></li><li><a class="tocitem" href="../api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Parameters manual</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Parameters manual</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/mauro3/Parameters.jl/blob/master/docs/src/manual.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Parameters-manual"><a class="docs-heading-anchor" href="#Parameters-manual">Parameters manual</a><a id="Parameters-manual-1"></a><a class="docs-heading-anchor-permalink" href="#Parameters-manual" title="Permalink"></a></h1><p>This is a manual by example (<a href="https://github.com/mauro3/Parameters.jl/blob/master/examples/ex1.jl">examples/ex1.jl</a>).</p><h1 id="Types-with-default-values-and-keyword-constructors"><a class="docs-heading-anchor" href="#Types-with-default-values-and-keyword-constructors">Types with default values &amp; keyword constructors</a><a id="Types-with-default-values-and-keyword-constructors-1"></a><a class="docs-heading-anchor-permalink" href="#Types-with-default-values-and-keyword-constructors" title="Permalink"></a></h1><p>Create a type which has default values using <a href="../api/#Parameters.@with_kw-Tuple{Any}"><code>@with_kw</code></a>:</p><pre><code class="language-julia">using Parameters
+
+@with_kw struct PhysicalPara{R}
+    rw::R = 1000.
+    ri::R = 900.
+    L::R = 3.34e5
+    g::R = 9.81
+    cw::R = 4220.
+    day::R = 24*3600.
+end</code></pre><p>Now the type can be constructed using the default values, or with non-defaults specified with keywords:</p><pre><code class="language-julia"># Create an instance with the defaults
+pp = PhysicalPara()
+pp_f32 = PhysicalPara{Float32}() # the type parameter can be chosen explicitly
+# Make one with some non-defaults
+pp2 = PhysicalPara(cw=77.0, day= 987.0)
+# Make another one based on the previous one with some modifications
+pp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)
+# the normal positional constructor can also be used
+# (and should be used in hot inner loops)
+pp4 = PhysicalPara(1,2,3,4,5,6)</code></pre><p>To enforce constraints on the values, it&#39;s possible to use <code>@assert</code>s straight inside the type-def. (As usual, for mutables these asserts can be violated by updating the fields after type construction.)</p><pre><code class="language-julia">@with_kw struct PhysicalPara2{R}
+    rw::R = 1000.; @assert rw&gt;0
+    ri::R = 900.
+    @assert rw&gt;ri # Note that the placement of assertions is not
+                  # relevant. (They are moved to the constructor.
+end</code></pre><p>Parameter interdependence is possible:</p><pre><code class="language-julia">@with_kw struct Para{R&lt;:Real}
+    a::R = 5
+    b::R
+    c::R = a+b
+end
+pa = Para(b=7)</code></pre><p>Often the bulk of fields will have the same type. To help with this, a default type can be set. Using this feature, the last example (with additional field <code>d</code>) can be written more compactly as:</p><pre><code class="language-julia">@with_kw struct Para2{R&lt;:Real} @deftype R
+    a = 5
+    b
+    c = a+b
+    d::Int = 4 # adding a type overrides the @deftype
+end
+pa2 = Para2(b=7)
+
+# or more pedestrian
+@with_kw struct Para3 @deftype Float64
+    a = 5
+    b
+    c = a+b
+    d::Int = 4
+end
+pa3 = Para3(b=7)</code></pre><p>Custom inner constructors can be defined as long as:</p><ul><li>one defining all positional arguments is given</li><li>no zero-positional arguments constructor is defined (as that would clash with the keyword constructor)</li><li>no <code>@assert</code>s (as in above example) are used within the type body.</li></ul><p>The keyword constructor goes through the inner positional constructor, thus invariants or any other calculation will be honored.</p><pre><code class="language-julia">@with_kw struct MyS{R}
+    a::R = 5
+    b = 4
+    MyS{R}(a,b) where {R} = (@assert a&gt;b; new(a,b)) #
+    MyS{R}(a) where {R} = MyS{R}(a, a-1) # For this provide your own outer constructor:
+end
+MyS(a::R) where {R} = MyS{R}(a)
+
+MyS{Int}() # MyS(5,4)
+ms = MyS(3) # MyS(3,2)
+MyS(ms, b=-1) # MyS(3,-1)
+try
+    MyS(ms, b=6) # this will fail the assertion
+catch
+end</code></pre><p>Note that two of the main reasons to have an inner constructor, assertions and simple calculations, are more easily achieved with <code>@assert</code>s and parameter interdependence.</p><p>The macro <code>@with_kw</code> defines a show-method which is, hopefully, more informative than the standard one. For example the printing of the first example is:</p><pre><code class="language-julia">julia&gt; PhysicalPara()
+PhysicalPara{Float64}
+  rw: Float64 1000.0
+  ri: Float64 900.0
+  L: Float64 334000.0
+  g: Float64 9.81
+  cw: Float64 4220.0
+  day: Float64 86400.0</code></pre><p>If this <code>show</code> method definition is not desired, for instance because of method re-definition warnings, then use <a href="../api/#Parameters.@with_kw_noshow-Tuple{Any}"><code>@with_kw_noshow</code></a>.</p><h2 id="Named-Tuple-Support"><a class="docs-heading-anchor" href="#Named-Tuple-Support">Named Tuple Support</a><a id="Named-Tuple-Support-1"></a><a class="docs-heading-anchor-permalink" href="#Named-Tuple-Support" title="Permalink"></a></h2><p>As mentioned in the README, the <code>@with_kw</code> macro can be used to decorate a named tuple and produce a named tuple constructor with those defaults.</p><p>These named tuples can be defined as such:</p><pre><code class="language-julia">MyNT = @with_kw (f = x -&gt; x^3, y = 3, z = &quot;foo&quot;)</code></pre><p>And the constructors can be used as follows:</p><pre><code class="language-julia">julia&gt; MyNT(f = x -&gt; x^2, z = :foo)
+(f = #12, y = 3, z = :foo)</code></pre><p>The constructor is not type-locked:</p><pre><code class="language-julia">julia&gt; MyNT(f = &quot;x -&gt; x^3&quot;)
+(f = &quot;x -&gt; x^3&quot;, y = 3, z = &quot;foo&quot;)</code></pre><p>And these named tuples can unpacked in the usual way (see below).</p><pre><code class="language-julia">julia&gt; @unpack f, y, z = MyNT()
+(f = #7, y = 3, z = &quot;foo&quot;)
+
+julia&gt; f
+(::#7) (generic function with 1 method)
+
+julia&gt; y
+3
+
+julia&gt; z
+&quot;foo&quot;</code></pre><p>Since the macro operates on a single tuple expression (as opposed to a tuple of assignment expressions),writing <code>@with_kw(x = 1, y = :foo)</code> will return an error suggesting you write <code>@with_kw (x = 1, y = :foo)</code>.</p><h1 id="Blocks-of-constants"><a class="docs-heading-anchor" href="#Blocks-of-constants">Blocks of constants</a><a id="Blocks-of-constants-1"></a><a class="docs-heading-anchor-permalink" href="#Blocks-of-constants" title="Permalink"></a></h1><p>Several constants can be defined like so:</p><pre><code class="language-julia">@consts begin
+    a = 1
+    b = 2
+    c = 3
+end</code></pre><p>(if you do the math, you&#39;ll need more than three constants in the block to actually save typing.)</p><h1 id="(Un)pack-macros"><a class="docs-heading-anchor" href="#(Un)pack-macros">(Un)pack macros</a><a id="(Un)pack-macros-1"></a><a class="docs-heading-anchor-permalink" href="#(Un)pack-macros" title="Permalink"></a></h1><h2 id="@unpack-and-@pack-re-exported-from-UnPack.jl"><a class="docs-heading-anchor" href="#@unpack-and-@pack-re-exported-from-UnPack.jl"><code>@unpack</code> and <code>@pack</code> re-exported from UnPack.jl</a><a id="@unpack-and-@pack-re-exported-from-UnPack.jl-1"></a><a class="docs-heading-anchor-permalink" href="#@unpack-and-@pack-re-exported-from-UnPack.jl" title="Permalink"></a></h2><p>When working with parameters, or otherwise, it is often convenient to unpack (and pack, in the case of mutable datatypes) some or all of the fields of a type.  This is often the case when passed into a function.</p><p>The preferred to do this is using the <code>@unpack</code> and <code>@pack!</code> macros from the package <a href="https://github.com/mauro3/UnPack.jl">UnPack.jl</a>.  These are generic and also work with non-<code>@with_kw</code> stucts, named-tuples, modules, and dictionaries. Here one example is given, for more see the README of UnPack. Define a mutable struct <code>MPara</code>:</p><pre><code class="language-julia">@with_kw mutable struct MPara{R&lt;:Real}
+    a::R = 5
+    b::R
+    c::R = a+b
+end
+pa = MPara(b=7)
+
+function fn2(var, pa::MPara)
+    @unpack a, b = pa # equivalent to: a,b = pa.a,pa.b
+    out = var + a + b
+    b = 77
+    @pack! pa = b # equivalent to: pa.b = b
+    return out, pa
+end
+
+out, pa = fn2(7, pa)</code></pre><p>Note that <code>@unpack</code> and <code>@pack!</code> can be customized on types, see <a href="https://github.com/mauro3/UnPack.jl">UnPack.jl</a>.</p><h2 id="The-type-specific-(un)pack-all-macros-(somewhat-dangerous)"><a class="docs-heading-anchor" href="#The-type-specific-(un)pack-all-macros-(somewhat-dangerous)">The type-specific (un)pack-all macros (somewhat dangerous)</a><a id="The-type-specific-(un)pack-all-macros-(somewhat-dangerous)-1"></a><a class="docs-heading-anchor-permalink" href="#The-type-specific-(un)pack-all-macros-(somewhat-dangerous)" title="Permalink"></a></h2><p>The <code>@with_kw</code> macro automatically produces type-specific (un-)pack macros of form <code>@unpack_TypeName</code>, <code>@pack_TypeName!</code>, and <code>@pack_TypeName</code> which unpack/pack all fields:</p><pre><code class="language-julia">function fn(var, pa::Para)
+    @unpack_Para pa # the macro is constructed during the @with_kw
+                    # and called @unpack_*
+    out = var + a + b
+    b = 77
+    @pack_Para! pa # only works with mutables
+    return out, pa
+end
+
+out, pa = fn(7, pa)</code></pre><p>When needing a new instance, e.g. for immutables, use the no-bang version:</p><pre><code class="language-none">pa2 = @pack_Para</code></pre><p>However, note that the (un-)packing macros which unpack all fields have a few pitfalls, as changing the type definition will change what local variables are available in a function using <code>@unpack_*</code>. Examples:</p><ul><li>adding a field <code>pi</code> to a type would hijack <code>Base.pi</code> usage in any function using <code>@unpack_*</code></li><li>the <code>@unpack_*</code> will shadow an input argument of the function with the same name as a type-fieldname. This I found very perplexing at times.</li><li>they do not work with properties, i.e. they can only pack/unpack the actual fields of types.</li></ul><p>Thus, in general, it is probably better to use the <code>@(un)pack(!)</code> macros instead.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Parameters.jl</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 20 September 2021 22:03">Monday 20 September 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
