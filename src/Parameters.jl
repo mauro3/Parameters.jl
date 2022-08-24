@@ -45,7 +45,7 @@ import Base: @__doc__
 import OrderedCollections: OrderedDict
 using UnPack: @unpack, @pack!
 
-export @with_kw, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack!, @pack, @consts
+export @with_kw, @kw_only, @with_kw_noshow, type2dict, reconstruct, @unpack, @pack!, @pack, @consts
 
 ## Parser helpers
 #################
@@ -326,7 +326,7 @@ macro pack_MM(varname)
 end
 ```
 """
-function with_kw(typedef, mod::Module, withshow=true)
+function with_kw(typedef, mod::Module, withshow=true, allow_default=true)
     if typedef.head==:tuple # named-tuple
         withshow==false && error("`@with_kw_noshow` not supported for named tuples")
         return with_kw_nt(typedef, mod)
@@ -486,18 +486,27 @@ function with_kw(typedef, mod::Module, withshow=true)
         push!(args, k)
         push!(kwargs.args, Expr(:kw,k,w))
     end
-    if length(typparas)>0
-        tps = stripsubtypes(typparas)
-        innerc = :( $tn{$(tps...)}($kwargs) where {$(tps...)} = $tn{$(tps...)}($(args...)))
+    if allow_default
+        if length(typparas)>0
+            tps = stripsubtypes(typparas)
+            innerc = :( $tn{$(tps...)}($kwargs) where {$(tps...)} = $tn{$(tps...)}($(args...)))
+        else
+            innerc = :($tn($kwargs) = $tn($(args...)) )
+        end
     else
-        innerc = :($tn($kwargs) = $tn($(args...)) )
+        if length(typparas)>0
+            tps = stripsubtypes(typparas)
+            innerc = :( $tn{$(tps...)}($kwargs) where {$(tps...)} = new{$(tps...)}($(args...)))
+        else
+            innerc = :($tn($kwargs) = new($(args...)) )
+        end
     end
     push!(typ.args[3].args, innerc)
 
     # Inner positional constructor: only make it if no inner
     # constructors are user-defined.  If one or several are defined,
     # assume that one has the standard positional signature.
-    if length(inner_constructors)==0
+    if length(inner_constructors)==0 && allow_default
         if length(typparas)>0
             tps = stripsubtypes(typparas)
             innerc2 = :( $tn{$(tps...)}($(args...)) where {$(tps...)} = new{$(tps...)}($(args...)) )
@@ -677,6 +686,14 @@ macro with_kw(args...)
           Did you try to construct a NamedTuple but omitted the space between the macro and the NamedTuple?
           Do `@with_kw (a=1, b=2)` and not `@with_kw(a=1, b=2)`.
           """)
+end
+
+"""
+As `@with_kw` but does not declare a default constructor when no inner
+constructor is found.
+"""
+macro kw_only(typedef)
+    return esc(with_kw(typedef, __module__, true, false))
 end
 
 """
