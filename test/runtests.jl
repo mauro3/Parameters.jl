@@ -81,6 +81,34 @@ const TMT1_3 = MT1_3{Int} # Julia bug https://github.com/JuliaLang/julia/issues/
 @test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :r))
 @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :c))
 
+# no positional inner constructor
+@kw_only struct KWO
+    foo
+    bar
+end
+
+function KWO(args...)
+    global outer_constructor_called = true
+    KWO(; foo="foo", bar="bar")
+end
+
+outer_constructor_called = false
+kwo = KWO(42)
+@test outer_constructor_called == true
+@test kwo.foo == "foo"
+@test kwo.bar == "bar"
+
+outer_constructor_called = false
+kwo2 = KWO(42, 43)
+@test outer_constructor_called == true
+@test kwo2.foo == "foo"
+@test kwo2.bar == "bar"
+
+outer_constructor_called = false
+kwo3 = KWO(; foo=42, bar=43)
+@test outer_constructor_called == false
+@test kwo3.foo == 42
+@test kwo3.bar == 43
 
 # parameter-less
 @with_kw_noshow mutable struct MT2
