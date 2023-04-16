@@ -390,7 +390,7 @@ function with_kw(typedef, mod::Module, withshow=true)
             push!(lns2, l)
             continue
         end
-        if l.head==:macrocall && l.args[1]!=Symbol("@assert")
+        if l.head==:macrocall && l.args[1] != Symbol("@assert") && l.args[1] != Symbol("@smart_assert")
             tmp = macroexpand(mod, l)
             if tmp.head==:block
                 llns = Lines(tmp)
@@ -456,7 +456,7 @@ function with_kw(typedef, mod::Module, withshow=true)
                 # unwrap-macro
                 push!(unpack_vars, decolon2(fld))
             end
-        elseif l.head==:macrocall  && l.args[1]==Symbol("@assert")
+        elseif l.head==:macrocall && (l.args[1]==Symbol("@assert") || l.args[1]==Symbol("@smart_assert"))
             # store all asserts
             push!(asserts, l)
         elseif l.head==:function # inner constructor
