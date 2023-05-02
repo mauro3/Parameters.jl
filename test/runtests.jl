@@ -1,4 +1,4 @@
-using Parameters, Test, Markdown, REPL
+using Parameters, Test, Markdown, REPL, SmartAsserts
 
 # reconstruct
 a8679 = (a=1, b=2)
@@ -380,9 +380,9 @@ end
 
 ### Smart Assertions
 @with_kw struct MT12Smart
-    a=5; @assert a>=5
+    a=5; @smart_assert a>=5
     b
-    @assert b>a
+    @smart_assert b>a
 end
 
 @test_throws AssertionError MT12Smart(b=2)
@@ -392,7 +392,7 @@ end
 # only asserts allowed if no inner constructors
 @test_throws ErrorException Parameters.with_kw(:(struct MT13Smart
                                                    a=5;
-                                                   @assert a>=5
+                                                   @smart_assert a>=5
                                                    MT13Smart(a) = new(8)
                                                  end),
                                                @__MODULE__)
@@ -400,7 +400,7 @@ end
 # issue #29: assertions with parameterized types
 @with_kw struct MT12aSmart{R}
     a::Array{R,1}
-    @assert 1 == length(a)
+    @smart_assert 1 == length(a)
 end
 @test_throws AssertionError MT12aSmart([1,2])
 @test MT12aSmart([1]).a==MT12aSmart(a=[1]).a
