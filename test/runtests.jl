@@ -1,4 +1,10 @@
-using Parameters, Test, Markdown, REPL, SmartAsserts
+using Parameters, Test, Markdown, REPL
+
+if VERSION >= v"1.5"
+    using Pkg
+    Pkg.add("SmartAsserts")
+    using SmartAsserts
+end
 
 # reconstruct
 a8679 = (a=1, b=2)
@@ -379,31 +385,34 @@ end
 @test MT12a([1]).a==MT12a(a=[1]).a
 
 ### Smart Assertions
-@with_kw struct MT12Smart
-    a=5; @smart_assert a>=5
-    b
-    @smart_assert b>a
+
+@static if VERSION >= v"1.5" # Need static otherwise it tries to evaluate code below which fails
+    @with_kw struct MT12Smart
+        a=5; @smart_assert a>=5
+        b
+        @smart_assert b>a
+    end
+
+    @test_throws AssertionError MT12Smart(b=2)
+    @test_throws AssertionError MT12Smart(a=1,b=2)
+    @test MT12Smart(b=6)==MT12Smart(5,6)
+
+    # only asserts allowed if no inner constructors
+    @test_throws ErrorException Parameters.with_kw(:(struct MT13Smart
+                                                    a=5;
+                                                    @smart_assert a>=5
+                                                    MT13Smart(a) = new(8)
+                                                    end),
+                                                @__MODULE__)
+
+    # issue #29: assertions with parameterized types
+    @with_kw struct MT12aSmart{R}
+        a::Array{R,1}
+        @smart_assert 1 == length(a)
+    end
+    @test_throws AssertionError MT12aSmart([1,2])
+    @test MT12aSmart([1]).a==MT12aSmart(a=[1]).a
 end
-
-@test_throws AssertionError MT12Smart(b=2)
-@test_throws AssertionError MT12Smart(a=1,b=2)
-@test MT12Smart(b=6)==MT12Smart(5,6)
-
-# only asserts allowed if no inner constructors
-@test_throws ErrorException Parameters.with_kw(:(struct MT13Smart
-                                                   a=5;
-                                                   @smart_assert a>=5
-                                                   MT13Smart(a) = new(8)
-                                                 end),
-                                               @__MODULE__)
-
-# issue #29: assertions with parameterized types
-@with_kw struct MT12aSmart{R}
-    a::Array{R,1}
-    @smart_assert 1 == length(a)
-end
-@test_throws AssertionError MT12aSmart([1,2])
-@test MT12aSmart([1]).a==MT12aSmart(a=[1]).a
 
 ####
 # issue 10: infer type parameters from kw-args

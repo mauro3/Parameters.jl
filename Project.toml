@@ -14,9 +14,9 @@ julia = "1"
 
 [extras]
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-SmartAsserts = "56560af0-ab70-43fe-a531-155d81972b00"
 
 [targets]
-test = ["REPL", "Test", "Markdown", "SmartAsserts"]
+test = ["REPL", "Test", "Markdown", "Pkg"]
