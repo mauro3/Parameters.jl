@@ -36,11 +36,11 @@ pp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)
 pp4 = PhysicalPara(1,2,3,4,5,6)
 ```
 
-To enforce constraints on the values, it's possible to use `@assert`s or `@smart_asserts`[^1]
+To enforce constraints on the values, it's possible to use `@assert`s or `@smart_assert`[^1]
 straight inside the type-def. (As usual, for mutables these
 asserts can be violated by updating the fields after type construction.)
 
-[^1]: `@smart_assert` is defined in [SmartAsserts.jl](https://github.com/MrVPlusOne/SmartAsserts.jl/tree/main).
+[^1]: `@smart_assert` is defined in [SmartAsserts.jl](https://github.com/MrVPlusOne/SmartAsserts.jl).
 
 ```julia
 @with_kw struct PhysicalPara2{R}
