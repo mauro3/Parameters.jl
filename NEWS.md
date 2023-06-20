@@ -1,3 +1,9 @@
+# 2023-06-20
+
+Dropped Julia 1.0-1.4 support.
+
+Added support for `@smart_assert` from [SmartAsserts.jl](https://github.com/MrVPlusOne/SmartAsserts.jl) in type-body.
+
 # 2021-01-22
 Added `@consts` macro to define a block of constants.
 
