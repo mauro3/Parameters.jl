@@ -1,10 +1,4 @@
-using Parameters, Test, Markdown, REPL
-
-if VERSION >= v"1.5"
-    using Pkg
-    Pkg.add("SmartAsserts")
-    using SmartAsserts
-end
+using Parameters, Test, Markdown, REPL, SmartAsserts
 
 # reconstruct
 a8679 = (a=1, b=2)
