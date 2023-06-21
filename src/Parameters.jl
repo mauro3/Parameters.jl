@@ -289,6 +289,9 @@ function _pack_new(T, fields)
     Expr(:call, T, fields...)
 end
 
+"The symbol to use to indicate that `typeof(default_value)` is used."
+const TYPEOF=:typeof
+
 """
 This function is called by the `@with_kw` macro and does the syntax
 transformation from:
@@ -420,7 +423,7 @@ function with_kw(typedef, mod::Module, withshow=true)
             continue
         end
         if l isa Symbol  # no default value and no type annotation
-            if has_deftyp
+            if has_deftyp && deftyp!=TYPEOF # doesn't work to do ::typeof(default_value) here
                 push!(fielddefs.args, :($l::$deftyp))
             else
                 push!(fielddefs.args, l)
@@ -432,16 +435,22 @@ function with_kw(typedef, mod::Module, withshow=true)
             push!(unpack_vars, sym)
         elseif l isa String # doc-string
             push!(fielddefs.args, l)
-        elseif l.head==:(=)  # default value and with or without type annotation
+        elseif l.head==:(=)
             if l.args[1] isa Expr && (l.args[1].head==:call || # inner constructor
                                         l.args[1].head==:where && l.args[1].args[1].head==:call) # inner constructor with `where`
                 check_inner_constructor(l)
                 push!(inner_constructors, l)
-            else
+            else # default value and with or without type annotation
                 fld = l.args[1]
                 if fld isa Symbol && has_deftyp # no type annotation
                     fld = :($fld::$deftyp)
                 end
+                # process TYPEOF
+                if !(fld isa Symbol) && fld.args[2]==TYPEOF
+                    # replace with typeof(default_value)
+                    fld.args[2] = :(typeof($(l.args[2])))
+                end
+
                 # add field doc-strings
                 docstring = string("Default: ", l.args[2])
                 if i > 1 && lns[i-1] isa String
@@ -451,6 +460,7 @@ function with_kw(typedef, mod::Module, withshow=true)
                     # otherwise add a new line
                     push!(fielddefs.args, docstring)
                 end
+                # add to output
                 push!(fielddefs.args, fld)
                 kws[decolon2(fld)] = l.args[2]
                 # unwrap-macro
@@ -465,6 +475,7 @@ function with_kw(typedef, mod::Module, withshow=true)
         elseif l.head==:block
             error("No nested begin-end allowed in type defintion")
         else # no default value but with type annotation
+            l.args[2]==TYPEOF && error("Cannot infer type from default if there is no default.")
             push!(fielddefs.args, l)
             sym = decolon2(l.args[1])
             syms = string(sym)
