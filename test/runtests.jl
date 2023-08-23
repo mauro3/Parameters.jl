@@ -724,3 +724,10 @@ end
 @test_throws ErrorException global b34 = 1
 ## this test is dependent on Julia version, leave it:
 # @test_warn "WARNING: redefinition of constant b34. This may fail, cause incorrect answers, or produce other errors." global b34 = 4.0
+
+macro structmacro()
+    return quote struct mystruct; myfield::Int; end end
+end
+
+# triggers a with_kw call on :macrocall and :block
+@with_kw @structmacro
