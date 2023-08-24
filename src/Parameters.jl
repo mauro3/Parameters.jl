@@ -330,6 +330,10 @@ function with_kw(typedef, mod::Module, withshow=true)
     if typedef.head==:tuple # named-tuple
         withshow==false && error("`@with_kw_noshow` not supported for named tuples")
         return with_kw_nt(typedef, mod)
+    elseif typedef.head == :macrocall
+        return with_kw(macroexpand(mod, typedef), mod, withshow)
+    elseif typedef.head == :block
+        return with_kw(typedef.args[2], mod, withshow)
     elseif typedef.head != :struct
         error("""Only works on type-defs or named tuples.
               Make sure to have a space after `@with_kw`, e.g. `@with_kw (a=1,)
