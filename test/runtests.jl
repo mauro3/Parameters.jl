@@ -622,7 +622,7 @@ end
 @test typeof(UP4())==UP4{Int}
 @test UP4().g===9
 @test UP4().a===4.0
-
+@inferred UP4(UP4(1,2.0))
 
 # Issue 21
 # A macro to create the same fields in several types:
