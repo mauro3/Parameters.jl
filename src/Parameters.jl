@@ -250,12 +250,14 @@ function reconstruct(::Type{T}, pp, di) where T
     else
         fieldnames(T)
     end
-    args = []
-    for (i,n) in enumerate(ns)
-        if pp isa AbstractDict
+    if pp isa AbstractDict
+        args = []
+        for n in ns
             push!(args, pop!(di, n, pp[n]))
-        else
-            push!(args, pop!(di, n, getfield(pp, n)))
+        end
+    else
+        args = map(ns) do n
+            pop!(di, n, getfield(pp, n))
         end
     end
     length(di)!=0 && error("Fields $(keys(di)) not in type $T")
