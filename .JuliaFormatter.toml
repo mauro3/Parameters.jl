@@ -1,0 +1,10 @@
+style = "yas"
+margin = 100
+align_assignment = true
+align_pair_arrow = true
+align_conditional = true
+whitespace_ops_in_indices = false
+import_to_using = false
+pipe_to_function_call = false
+always_use_return = false
+always_for_in = false
