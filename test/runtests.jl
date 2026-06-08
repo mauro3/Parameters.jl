@@ -12,8 +12,8 @@ a8679 = Dict(:a=>1, :b=>2)
 @test_throws ErrorException reconstruct(a8679, c=44)
 
 struct A8679
-    a
-    b
+    a::Any
+    b::Any
 end
 a8679 = A8679(1, 2)
 @test A8679(1, 44) == reconstruct(a8679, b=44)
@@ -27,7 +27,7 @@ a8679 = A8679(1, 2)
 
 struct B8679{T}
     a::T
-    b
+    b::Any
 end
 a8679 = B8679(sin, 1)
 @test reconstruct(B8679, a8679, a=cos) == B8679{typeof(cos)}(cos, 1)
@@ -81,15 +81,14 @@ const TMT1_3 = MT1_3{Int} # Julia bug https://github.com/JuliaLang/julia/issues/
 @test "Field r Default: 4\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :r))
 @test "A field Default: sdaf\n" == Markdown.plain(REPL.fielddoc(TMT1_3, :c))
 
-
 # parameter-less
 @with_kw_noshow mutable struct MT2
     r::Int
-    c
+    c::Any
     a::Float64
 end
-MT2(r=4, a=5., c=6)
-MT2(r=4, a=5, c="asdf")
+MT2(; r=4, a=5.0, c=6)
+MT2(; r=4, a=5, c="asdf")
 MT2(4, "dsaf", 5)
 @test_throws ErrorException MT2(r=4)
 @test_throws ErrorException MT2()
@@ -98,10 +97,10 @@ MT2(4, "dsaf", 5)
     r::Int=5
     a::Float64
 end
-MT3(r=4, a=5.)
-MT3(r=4, a=5)
-MT3(a=5)
-MT3(4,5)
+MT3(; r=4, a=5.0)
+MT3(; r=4, a=5)
+MT3(; a=5)
+MT3(4, 5)
 @test_throws ErrorException MT3(r=4)
 @test_throws ErrorException MT3()
 
@@ -112,10 +111,10 @@ abstract type MM2{T} end
     r::Int=5
     a::Float64
 end
-MT3_1(r=4, a=5.)
-MT3_1(r=4, a=5)
-MT3_1(a=5)
-MT3_1(4,5)
+MT3_1(; r=4, a=5.0)
+MT3_1(; r=4, a=5)
+MT3_1(; a=5)
+MT3_1(4, 5)
 @test_throws ErrorException MT3_1(r=4)
 @test_throws ErrorException MT3_1()
 
@@ -123,10 +122,10 @@ MT3_1(4,5)
     r::Int=5
     a::Float64
 end
-MT3_2(r=4, a=5.)
-MT3_2(r=4, a=5)
-MT3_2(a=5)
-MT3_2(4,5)
+MT3_2(; r=4, a=5.0)
+MT3_2(; r=4, a=5)
+MT3_2(; a=5)
+MT3_2(4, 5)
 @test_throws ErrorException MT3_2(r=4)
 @test_throws ErrorException MT3_2()
 
@@ -135,14 +134,14 @@ MT3_2(4,5)
     r::R=5
     a::I
 end
-@test MT4(r=4, a=5.0)==MT4{Int,Float64}(4,5.0)
-MT4{Float32, Int}(r=4, a=5.)
-MT4{Float32, Int}(a=5.)
-MT4{Float32, Int}(5.4, 4)  # inner positional
+@test MT4(r=4, a=5.0)==MT4{Int,Float64}(4, 5.0)
+MT4{Float32,Int}(; r=4, a=5.0)
+MT4{Float32,Int}(; a=5.0)
+MT4{Float32,Int}(5.4, 4)  # inner positional
 mt4=MT4(5.4, 4) # outer positional
 @test MT4(mt4)==mt4 # outer reconstruct
 @test MT4(mt4; a=77)==MT4(5.4, 77)
-@test_throws ErrorException MT4{Float32, Int}()
+@test_throws ErrorException MT4{Float32,Int}()
 @test_throws InexactError MT4{Float32,Int}(a=5.5)
 @test_throws InexactError MT4{Float32,Int}(5.5, 5.5)
 
@@ -152,32 +151,32 @@ abstract type AMT{R<:Real} end
     r::R=5
     a::I
 end
-@test_throws MethodError MT5(r=4, a=5.) # a has wrong type
-MT5{Float32, Int}(r=4, a=5.)  # a gets converted
-MT5{Float32, Int}(a=5.)
-MT5{Float32, Int}(5.4, 4)  # inner positional
+@test_throws MethodError MT5(r=4, a=5.0) # a has wrong type
+MT5{Float32,Int}(; r=4, a=5.0)  # a gets converted
+MT5{Float32,Int}(; a=5.0)
+MT5{Float32,Int}(5.4, 4)  # inner positional
 mt5=MT5(5.4, 4) # outer positional
 @test MT5(mt5).r==mt5.r # outer reconstruct
 @test MT5(mt5).a==mt5.a # outer reconstruct
 @test MT5(mt5; a=77).a==MT5(5.4, 77).a
 @test MT5(mt5; a=77).r==MT5(5.4, 77).r
-@test_throws ErrorException MT5{Float32, Int}()
+@test_throws ErrorException MT5{Float32,Int}()
 @test_throws InexactError MT5{Float32,Int}(a=5.5)
 @test_throws InexactError MT5{Float32,Int}(5.5, 5.5)
-@test_throws  MethodError MT5(5., "asdf")
-@test_throws  TypeError MT5( "asdf", 5)
-@test_throws  TypeError MT5{Float64, String}(5., "asdf")
-@test_throws  TypeError MT5{String, Int}("asdf", 6)
+@test_throws MethodError MT5(5.0, "asdf")
+@test_throws TypeError MT5("asdf", 5)
+@test_throws TypeError MT5{Float64,String}(5.0, "asdf")
+@test_throws TypeError MT5{String,Int}("asdf", 6)
 
 # with type parameters and supertype
 @with_kw mutable struct MT4_1{T} <: MM1
     r::Int=5
     a::T
 end
-MT4_1{Float64}(r=4, a=5.)
-MT4_1{Float64}(r=4, a=5)
-MT4_1{Float64}(a=5)
-MT4_1{Float64}(4,5)
+MT4_1{Float64}(; r=4, a=5.0)
+MT4_1{Float64}(; r=4, a=5)
+MT4_1{Float64}(; a=5)
+MT4_1{Float64}(4, 5)
 @test_throws ErrorException MT4_1{Float64}(r=4)
 @test_throws ErrorException MT4_1{Float64}()
 
@@ -185,10 +184,10 @@ MT4_1{Float64}(4,5)
     r::Int=5
     a::T
 end
-MT4_2{Float64}(r=4, a=5.)
-MT4_2{Float64}(r=4, a=5)
-MT4_2{Float64}(a=5)
-MT4_2{Float64}(4,5)
+MT4_2{Float64}(; r=4, a=5.0)
+MT4_2{Float64}(; r=4, a=5)
+MT4_2{Float64}(; a=5)
+MT4_2{Float64}(4, 5)
 @test_throws ErrorException MT4_2{Float64}(r=4)
 @test_throws ErrorException MT4_2{Float64}()
 
@@ -196,76 +195,76 @@ MT4_2{Float64}(4,5)
 @with_kw struct MT6{R,I<:Integer} <: AMT{R}
     r::R=5
     a::I
-    MT6{R,I}(r) where {R,I} = new{R,I}(r,r)
-    MT6{R,I}(r,a) where {R,I} = (@assert a>r; new{R,I}(r,a))
+    MT6{R,I}(r) where {R,I} = new{R,I}(r, r)
+    MT6{R,I}(r, a) where {R,I} = (@assert a>r; new{R,I}(r, a))
 end
-@test_throws MethodError MT6(r=4, a=5.) # need to specify type parameters
-MT6{Float32, Int}(r=4, a=5.)
-MT6{Float32, Int}(a=6.)
-MT6{Float32, Int}(5.4, 6)  # inner positional
+@test_throws MethodError MT6(r=4, a=5.0) # need to specify type parameters
+MT6{Float32,Int}(; r=4, a=5.0)
+MT6{Float32,Int}(; a=6.0)
+MT6{Float32,Int}(5.4, 6)  # inner positional
 mt6=MT6(5.4, 6) # outer positional
 @test MT6(mt6)==mt6 # outer reconstruct
 @test MT6(mt6; a=77)==MT6(5.4, 77)
-@test_throws ErrorException MT6{Float32, Int}()
+@test_throws ErrorException MT6{Float32,Int}()
 @test_throws InexactError MT6{Float32,Int}(a=5.5)
 @test_throws InexactError MT6{Float32,Int}(5.5, 6.5)
-@test_throws  MethodError MT6(5., "asdf")
-@test_throws  TypeError MT6( "asdf", 5)
-@test_throws  TypeError MT6{Float64, String}(5., "asdf")
-@test_throws  TypeError MT6{String, Int}("asdf", 6)
+@test_throws MethodError MT6(5.0, "asdf")
+@test_throws TypeError MT6("asdf", 5)
+@test_throws TypeError MT6{Float64,String}(5.0, "asdf")
+@test_throws TypeError MT6{String,Int}("asdf", 6)
 
 # user defined BAD inner positional constructor
 @with_kw mutable struct MT7{R,I<:Integer} <: AMT{R}
     r::R=5
     a::I
-    MT7{R,R}(r::R) where {R} = new{R,R}(r,r+8)
+    MT7{R,R}(r::R) where {R} = new{R,R}(r, r+8)
     # no MT7(r,a)
 end
-@test_throws MethodError MT7{Float32, Int}(r=4, a=5.)
+@test_throws MethodError MT7{Float32,Int}(r=4, a=5.0)
 
 # user defined BAD inner positional constructor
 tmp = :(struct MT8{R,I<:Integer} <: AMT{R}
-        r::R=5
-        a::I
-        MT8() = new{Int,Int}(5,6) # this would shadow the keyword constructor!
-        MT8{R,I}(r,a) where {R,I} = new{R,I}(r,a)
+            r::R=5
+            a::I
+            MT8() = new{Int,Int}(5, 6) # this would shadow the keyword constructor!
+            MT8{R,I}(r, a) where {R,I} = new{R,I}(r, a)
         end)
 @test_throws ErrorException Parameters.with_kw(tmp, @__MODULE__)
 tmp = :(mutable struct MT8{R,I<:Integer} <: AMT{R}
-        r::R=5
-        a::I
-        MT8(;a=7) = new{Int,Int}(5,a) # this would shadow the keyword constructor!
-        MT8{R,I}(r,a) where {R,I} = new{R,I}(r,a)
+            r::R=5
+            a::I
+            MT8(; a=7) = new{Int,Int}(5, a) # this would shadow the keyword constructor!
+            MT8{R,I}(r, a) where {R,I} = new{R,I}(r, a)
         end)
 @test_throws ErrorException Parameters.with_kw(tmp, @__MODULE__)
 
 # default type annotation (adapted from MT6 test above)
-@with_kw struct MT8{R,I<:Integer} <: AMT{R} @deftype R
+@with_kw struct MT8{R,I<:Integer} <: AMT{R}
+    @deftype R
     r=5
     a::I
-    MT8{R,R}(r::R) where {R} = new{R,R}(r,r)
-    MT8{R,I}(r,a) where {R,I} = (@assert a>r; new{R,I}(r,a))
+    MT8{R,R}(r::R) where {R} = new{R,R}(r, r)
+    MT8{R,I}(r, a) where {R,I} = (@assert a>r; new{R,I}(r, a))
 end
-@test_throws MethodError MT8(r=4, a=5.) # need to specify type parameters
-MT8{Float32, Int}(r=4, a=5.)
-MT8{Float32, Int}(a=6.)
-MT8{Float32, Int}(5.4, 6)  # inner positional
+@test_throws MethodError MT8(r=4, a=5.0) # need to specify type parameters
+MT8{Float32,Int}(; r=4, a=5.0)
+MT8{Float32,Int}(; a=6.0)
+MT8{Float32,Int}(5.4, 6)  # inner positional
 mt6=MT8(5.4, 6) # outer positional
 @test MT8(mt6)==mt6 # outer reconstruct
 @test MT8(mt6; a=77)==MT8(5.4, 77)
-@test_throws ErrorException MT8{Float32, Int}()
+@test_throws ErrorException MT8{Float32,Int}()
 @test_throws InexactError MT8{Float32,Int}(a=5.5)
 @test_throws InexactError MT8{Float32,Int}(5.5, 6.5)
-@test_throws  MethodError MT8(5., "asdf")
-@test_throws  TypeError MT8( "asdf", 5)
-@test_throws  TypeError MT8{Float64, String}(5., "asdf")
-@test_throws  TypeError MT8{String, Int}("asdf", 6)
+@test_throws MethodError MT8(5.0, "asdf")
+@test_throws TypeError MT8("asdf", 5)
+@test_throws TypeError MT8{Float64,String}(5.0, "asdf")
+@test_throws TypeError MT8{String,Int}("asdf", 6)
 @test MT8.var.name==:R
 @test MT8.body.var.name==:I
 @test MT8.body.var.ub==Integer
 @test MT8{Float32,Int32}.types[1]==Float32
 @test MT8{Float32,Int32}.types[2]==Int32
-
 
 # parameter interdependence
 @with_kw struct MT9{R<:Real}
@@ -287,7 +286,7 @@ end
 
 # binding outside variables
 a_ = 7
-b_ = [1,2]
+b_ = [1, 2]
 @with_kw struct MT11
     a::Int=a_  # a::Int=a is not possible as the outside a gets shadowed
     b::Vector{Int}=b_
@@ -303,16 +302,16 @@ b_[1] = 2
 ## (Un)pack
 @with_kw struct P1
     r::Int
-    c
+    c::Any
     a::Float64
 end
 
 let
-    mt = P1(r=4, a=5, c=6)
+    mt = P1(; r=4, a=5, c=6)
     @unpack_P1 mt
     @test r===4
     @test c===6
-    @test a===5.
+    @test a===5.0
     r = 1
     a = 2
     c = 3
@@ -325,16 +324,16 @@ end
 
 @with_kw mutable struct P1m
     r::Int
-    c
+    c::Any
     a::Float64
 end
 
 let
-    mt = P1m(r=4, a=5, c=6)
+    mt = P1m(; r=4, a=5, c=6)
     @unpack_P1 mt
     @test r===4
     @test c===6
-    @test a===5.
+    @test a===5.0
     r = 1
     a = 2
     c = 3
@@ -353,20 +352,21 @@ end
 
 ### Assertions
 @with_kw struct MT12
-    a=5; @assert a>=5
-    b
+    a=5;
+    @assert a>=5
+    b::Any
     @assert b>a
 end
 
 @test_throws AssertionError MT12(b=2)
-@test_throws AssertionError MT12(a=1,b=2)
-@test MT12(b=6)==MT12(5,6)
+@test_throws AssertionError MT12(a=1, b=2)
+@test MT12(b=6)==MT12(5, 6)
 
 # only asserts allowed if no inner constructors
 @test_throws ErrorException Parameters.with_kw(:(struct MT13
-                                                   a=5;
-                                                   @assert a>=5
-                                                   MT13(a) = new(8)
+                                                     a=5;
+                                                     @assert a>=5
+                                                     MT13(a) = new(8)
                                                  end),
                                                @__MODULE__)
 
@@ -375,49 +375,51 @@ end
     a::Array{R,1}
     @assert 1 == length(a)
 end
-@test_throws AssertionError MT12a([1,2])
+@test_throws AssertionError MT12a([1, 2])
 @test MT12a([1]).a==MT12a(a=[1]).a
 
 ### Smart Assertions
 
 @with_kw struct MT12Smart
-    a=5; @smart_assert a>=5
-    b
+    a=5;
+    @smart_assert a>=5
+    b::Any
     @smart_assert b>a
 end
 
 @test_throws AssertionError MT12Smart(b=2)
-@test_throws AssertionError MT12Smart(a=1,b=2)
-@test MT12Smart(b=6)==MT12Smart(5,6)
+@test_throws AssertionError MT12Smart(a=1, b=2)
+@test MT12Smart(b=6)==MT12Smart(5, 6)
 
 # only asserts allowed if no inner constructors
 @test_throws ErrorException Parameters.with_kw(:(struct MT13Smart
-                                                a=5;
-                                                @smart_assert a>=5
-                                                MT13Smart(a) = new(8)
-                                                end),
-                                            @__MODULE__)
+                                                     a=5;
+                                                     @smart_assert a>=5
+                                                     MT13Smart(a) = new(8)
+                                                 end),
+                                               @__MODULE__)
 
 # issue #29: assertions with parameterized types
 @with_kw struct MT12aSmart{R}
     a::Array{R,1}
     @smart_assert 1 == length(a)
 end
-@test_throws AssertionError MT12aSmart([1,2])
+@test_throws AssertionError MT12aSmart([1, 2])
 @test MT12aSmart([1]).a==MT12aSmart(a=[1]).a
 
 ####
 # issue 10: infer type parameters from kw-args
-@with_kw struct I10{T} @deftype Int
+@with_kw struct I10{T}
+    @deftype Int
     a::T
     b = 10
     c::T="aaa"
 end
 @test_throws ErrorException I10()
-@test I10(1,2,3)==I10{Int}(1,2,3)
+@test I10(1, 2, 3)==I10{Int}(1, 2, 3)
 @test_throws MethodError I10(a=10) # typeof(a)!=typeof(c)
-a_ = I10(a="asd")
-b_ = I10{String}("asd",10,"aaa")
+a_ = I10(; a="asd")
+b_ = I10{String}("asd", 10, "aaa")
 @test a_==b_
 
 @with_kw struct I10a{T}
@@ -443,7 +445,7 @@ end
 
 # issue #56: spliced-in modules
 @eval @with_kw struct SplicedModule <: $Base.AbstractVector{Int}
-    x
+    x::Any
 end
 @test SplicedModule(12).x == 12
 
@@ -452,7 +454,7 @@ end
 MyNT = @with_kw (a=1, b="test", w=:uu)
 @test MyNT()==(a=1, b="test", w=:uu)
 @test MyNT(b=1)==(a=1, b=1, w=:uu)
-@test MyNT(1,2,"a")==(a=1, b=2, w="a")
+@test MyNT(1, 2, "a")==(a=1, b=2, w="a")
 @test_throws MethodError MyNT(c=1)
 @test_throws LoadError @eval @with_kw (a::Int=1,) # no type annotations allowed
 @test_throws LoadError @eval @with_kw(a=1,) # no space
@@ -467,44 +469,46 @@ MyNT3 = @with_kw (a=1, b=a)
 
 @test_throws ErrorException MyNT().z # Undefined field access
 q = x -> x^3
-scopingTest = @with_kw (q = q,)
+scopingTest = @with_kw (q=q,)
 @test scopingTest().q(2) == 8
 x = [1, 2, 3]
-scopingTest = @with_kw (x = x,)
+scopingTest = @with_kw (x=x,)
 @test scopingTest().x == [1, 2, 3]
 x = [1, 2, 3]
-immutabilityTest = @with_kw (f = x,)
+immutabilityTest = @with_kw (f=x,)
 obj = immutabilityTest()
 x = [4, 5, 6]
 @test obj.f == [1, 2, 3] # Test immutability
 @test immutabilityTest().f == [4, 5, 6] # Test rebinding for new object
 
 # Exotic input test
-naughtyInputs = ["!@#\$%^&*()`~", :"()esc(;", :x, :(eval(:x)), true, esc(true), "-9223372036854775808/-1", :(0/0), "-9223372036854775808/-1", "0xabad1dea", :(@test)]
+naughtyInputs = ["!@#\$%^&*()`~", :"()esc(;", :x, :(eval(:x)), true, esc(true),
+                 "-9223372036854775808/-1", :(0/0), "-9223372036854775808/-1", "0xabad1dea",
+                 :(@test)]
 for input in naughtyInputs
-    naughtyTest = @with_kw (x = input, y = 2)
+    naughtyTest = @with_kw (x=input, y=2)
     @test naughtyTest().x == input
 end
 
 # Other behavior checks
-compoundTest = @with_kw (x = (2 > 1), y = 2)
+compoundTest = @with_kw (x=(2 > 1), y=2)
 @test compoundTest().x == true # Compound evaluation check
 foo(x) = 3*x
-anonymousTest = @with_kw (x = x -> foo(x), y = 2)
+anonymousTest = @with_kw (x=x -> foo(x), y=2)
 @test anonymousTest().x(4) == 12 # Anonymous functions/value clash check
-symbolTest = @with_kw (x = :x, y = 2)
+symbolTest = @with_kw (x=:x, y=2)
 @test symbolTest().x == :x
 
 ###########################
 # Packing and unpacking @unpack, @pack!
 ##########################
 # Example with dict:
-d = Dict{Symbol,Any}(:a=>5.0,:b=>2,:c=>"Hi!")
+d = Dict{Symbol,Any}(:a=>5.0, :b=>2, :c=>"Hi!")
 @unpack a, c = d
 @test a == 5.0 #true
 @test c == "Hi!" #true
 
-d = Dict("a"=>5.0,"b"=>2,"c"=>"Hi!")
+d = Dict("a"=>5.0, "b"=>2, "c"=>"Hi!")
 @unpack a, c = d
 @test a == 5.0 #true
 @test c == "Hi!" #true
@@ -516,12 +520,13 @@ d = Dict("a"=>5.0,"b"=>2,"c"=>"Hi!")
 @test c == "Hi!" #true
 
 mutable struct PropertyExample
-    a
-    last_set_property
+    a::Any
+    last_set_property::Any
 end
 Base.getproperty(::PropertyExample, name::Symbol) = String(name)
-Base.setproperty!(d::PropertyExample, name::Symbol, value) =
+function Base.setproperty!(d::PropertyExample, name::Symbol, value)
     setfield!(d, :last_set_property, (name, value))
+end
 Base.propertynames(::PropertyExample) = (:A, :B, :C)
 
 let d = PropertyExample(:should_be_ignored, nothing)
@@ -539,8 +544,13 @@ end
 # TODO add test with non String string
 
 # Example with type:
-mutable struct A; a; b; c; end
-d = A(4,7.0,"Hi!")
+mutable struct A
+    ;
+    a::Any;
+    b::Any;
+    c::Any;
+end
+d = A(4, 7.0, "Hi!")
 @unpack a, c = d
 @test a == 4 #true
 @test c == "Hi!" #true
@@ -552,27 +562,26 @@ a = 5.0
 c = "Hi!"
 d = Dict{Symbol,Any}()
 @pack! d = a, c
-@test d==Dict{Symbol,Any}(:a=>5.0,:c=>"Hi!")
+@test d==Dict{Symbol,Any}(:a=>5.0, :c=>"Hi!")
 
 d = Dict{String,Any}()
 @pack! d = a, c
-@test d==Dict{String,Any}("a"=>5.0,"c"=>"Hi!")
-
+@test d==Dict{String,Any}("a"=>5.0, "c"=>"Hi!")
 
 # Example with type:
 a = 99
 c = "HaHa"
-d = A(4,7.0,"Hi")
+d = A(4, 7.0, "Hi")
 @pack! d = a, c
 @test d.a == 99
 @test d.c == "HaHa"
 
 # older tests ported
 mutable struct UP1
-    aUP1
-    bUP1
+    aUP1::Any
+    bUP1::Any
 end
-uu = UP1(1,2)
+uu = UP1(1, 2)
 @test_throws ErrorException @unpack cUP1 = uu
 @test_throws ErrorException @unpack aUP1, cUP1 = uu
 
@@ -585,7 +594,6 @@ aUP1, bUP1 = 0, 0
 @test aUP1==1
 @test bUP1==2
 
-
 vv = uu
 aUP1 = 99
 @pack! uu = aUP1
@@ -593,10 +601,10 @@ aUP1 = 99
 @test uu.aUP1==99
 
 struct UP2
-    aUP2
-    bUP2
+    aUP2::Any
+    bUP2::Any
 end
-uu = UP2(1,2)
+uu = UP2(1, 2)
 @test_throws ErrorException @unpack cUP2 = uu
 @test_throws ErrorException @unpack aUP2, cUP2 = uu
 
@@ -609,10 +617,10 @@ struct UP3
     b::Int
 end
 function f(u::UP3)
-    @unpack a,b = u
-    a,b
+    @unpack a, b = u
+    a, b
 end
-@inferred f(UP3(1,2))
+@inferred f(UP3(1, 2))
 
 #
 @with_kw struct UP4{T}
@@ -622,7 +630,7 @@ end
 @test typeof(UP4())==UP4{Int}
 @test UP4().g===9
 @test UP4().a===4.0
-@inferred UP4(UP4(1,2.0))
+@inferred UP4(UP4(1, 2.0))
 
 # Issue 21
 # A macro to create the same fields in several types:
@@ -634,12 +642,12 @@ macro def(name, definition)
     end
 end
 @def sharedparams1 begin
-    a::Float64  = 1.0
+    a::Float64 = 1.0
     b::Int = 1
 end
 
 @def sharedparams2 begin
-    c::Float64  = 1.0
+    c::Float64 = 1.0
     d::Int = 1
 end
 
@@ -648,35 +656,36 @@ end
     @sharedparams2
 end
 
-@test MyType1()==MyType1(1,1,1,1)
+@test MyType1()==MyType1(1, 1, 1, 1)
 
 @def sharedparams3 begin
-    e::Float64  = 1.0
+    e::Float64 = 1.0
     @assert x>0  # nested macros which shouldn't be expanded are not allowed
 end
 
 @test_throws AssertionError Parameters.with_kw(:(struct MyType2
-    @sharedparams1
-    @sharedparams2
-    @sharedparams3
-end), @__MODULE__)
+                                                     @sharedparams1
+                                                     @sharedparams2
+                                                     @sharedparams3
+                                                 end), @__MODULE__)
 
 @def sharedparams4 begin
-    e::Float64  = 1.0
+    e::Float64 = 1.0
     @sharedparams1 # not allowed as it will lead to nested begin-end block
 end
 @test_throws ErrorException Parameters.with_kw(:(struct MyType2
-    @sharedparams4
-end), @__MODULE__)
+                                                     @sharedparams4
+                                                 end), @__MODULE__)
 
 ### New 0.6 type system
-@with_kw struct V06{T} @deftype Array{I,1} where I<:Integer
+@with_kw struct V06{T}
+    @deftype Array{I,1} where {I<:Integer}
     a::T
     b = [10]
-    c::Vector{S} where S<:AbstractString=["aaa"]
+    c::Vector{S} where {S<:AbstractString}=["aaa"]
 end
-V06(a=88)
-V06(a=88, b=[1], c=["a"])
+V06(; a=88)
+V06(; a=88, b=[1], c=["a"])
 V06(88, [1], ["a"])
 
 ### test escaping
@@ -698,17 +707,17 @@ end
 
 end
 
-z2 = TestModule.test_function(TestModule.TestStruct(; y = 9.0))
+z2 = TestModule.test_function(TestModule.TestStruct(; y=9.0))
 @test z2.x == 1 && z2.y == 10.0
 
 # issue 91
 @testset "i91" begin
     function foo()
-        a = @with_kw (x = 1, y = 2)
+        a = @with_kw (x=1, y=2)
         return a
     end
-    @test foo()() == (x = 1, y = 2)
-    @test foo()(y=4) == (x = 1, y = 4)
+    @test foo()() == (x=1, y=2)
+    @test foo()(y=4) == (x=1, y=4)
 end
 
 ####
@@ -726,7 +735,12 @@ end
 # @test_warn "WARNING: redefinition of constant b34. This may fail, cause incorrect answers, or produce other errors." global b34 = 4.0
 
 macro structmacro()
-    return quote struct mystruct; myfield::Int; end end
+    return quote
+        struct mystruct
+            ;
+            myfield::Int;
+        end
+    end
 end
 
 # triggers a with_kw call on :macrocall and :block

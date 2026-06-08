@@ -11,12 +11,12 @@ Create a type which has default values using [`@with_kw`](@ref):
 using Parameters
 
 @with_kw struct PhysicalPara{R}
-    rw::R = 1000.
-    ri::R = 900.
+    rw::R = 1000.0
+    ri::R = 900.0
     L::R = 3.34e5
     g::R = 9.81
-    cw::R = 4220.
-    day::R = 24*3600.
+    cw::R = 4220.0
+    day::R = 24*3600.0
 end
 ```
 
@@ -28,12 +28,12 @@ non-defaults specified with keywords:
 pp = PhysicalPara()
 pp_f32 = PhysicalPara{Float32}() # the type parameter can be chosen explicitly
 # Make one with some non-defaults
-pp2 = PhysicalPara(cw=77.0, day= 987.0)
+pp2 = PhysicalPara(cw = 77.0, day = 987.0)
 # Make another one based on the previous one with some modifications
-pp3 = PhysicalPara(pp2; cw=.11e-7, rw=100.)
+pp3 = PhysicalPara(pp2; cw = .11e-7, rw = 100.0)
 # the normal positional constructor can also be used
 # (and should be used in hot inner loops)
-pp4 = PhysicalPara(1,2,3,4,5,6)
+pp4 = PhysicalPara(1, 2, 3, 4, 5, 6)
 ```
 
 To enforce constraints on the values, it's possible to use `@assert`s or `@smart_assert`[^1]
@@ -44,10 +44,13 @@ asserts can be violated by updating the fields after type construction.)
 
 ```julia
 @with_kw struct PhysicalPara2{R}
-    rw::R = 1000.; @assert rw>0
-    ri::R = 900.
-    @assert rw>ri # Note that the placement of assertions is not
-                  # relevant. (They are moved to the constructor.
+    rw::R = 1000.0;
+    @assert rw>0
+    ri::R = 900.0
+
+    # Note that the placement of assertions is not
+    # relevant. (They are moved to the constructor)
+    @assert rw>ri
 end
 ```
 
@@ -59,7 +62,7 @@ Parameter interdependence is possible:
     b::R
     c::R = a+b
 end
-pa = Para(b=7)
+pa = Para(b = 7)
 ```
 
 Often the bulk of fields will have the same type. To help with this,
@@ -69,28 +72,28 @@ additional field `d`) can be written more compactly as:
 ```julia
 @with_kw struct Para2{R<:Real} @deftype R
     a = 5
-    b
+    b::Any
     c = a+b
     d::Int = 4 # adding a type overrides the @deftype
 end
-pa2 = Para2(b=7)
+pa2 = Para2(b = 7)
 
 # or more pedestrian
 @with_kw struct Para3 @deftype Float64
     a = 5
-    b
+    b::Any
     c = a+b
     d::Int = 4
 end
-pa3 = Para3(b=7)
+pa3 = Para3(b = 7)
 ```
 
 Custom inner constructors can be defined as long as:
 
-- one defining all positional arguments is given
-- no zero-positional arguments constructor is defined (as that
-  would clash with the keyword constructor)
-- no `@assert`s (as in above example) are used within the type body.
+  - one defining all positional arguments is given
+  - no zero-positional arguments constructor is defined (as that
+    would clash with the keyword constructor)
+  - no `@assert`s (as in above example) are used within the type body.
 
 The keyword constructor goes through the inner positional constructor,
 thus invariants or any other calculation will be honored.
@@ -99,16 +102,16 @@ thus invariants or any other calculation will be honored.
 @with_kw struct MyS{R}
     a::R = 5
     b = 4
-    MyS{R}(a,b) where {R} = (@assert a>b; new(a,b)) #
+    MyS{R}(a, b) where {R} = (@assert a>b; new(a, b)) #
     MyS{R}(a) where {R} = MyS{R}(a, a-1) # For this provide your own outer constructor:
 end
 MyS(a::R) where {R} = MyS{R}(a)
 
 MyS{Int}() # MyS(5,4)
 ms = MyS(3) # MyS(3,2)
-MyS(ms, b=-1) # MyS(3,-1)
+MyS(ms, b = -1) # MyS(3,-1)
 try
-    MyS(ms, b=6) # this will fail the assertion
+    MyS(ms, b = 6) # this will fail the assertion
 catch
 end
 ```
@@ -179,6 +182,7 @@ Since the macro operates on a single tuple expression (as opposed to a tuple of 
 # Blocks of constants
 
 Several constants can be defined like so:
+
 ```julia
 @consts begin
     a = 1
@@ -186,8 +190,8 @@ Several constants can be defined like so:
     c = 3
 end
 ```
-(if you do the math, you'll need more than three constants in the block to actually save typing.)
 
+(if you do the math, you'll need more than three constants in the block to actually save typing.)
 
 # (Un)pack macros
 
@@ -211,7 +215,7 @@ UnPack. Define a mutable struct `MPara`:
     b::R
     c::R = a+b
 end
-pa = MPara(b=7)
+pa = MPara(b = 7)
 
 function fn2(var, pa::MPara)
     @unpack a, b = pa # equivalent to: a,b = pa.a,pa.b
@@ -235,8 +239,9 @@ macros of form `@unpack_TypeName`, `@pack_TypeName!`, and
 
 ```julia
 function fn(var, pa::Para)
-    @unpack_Para pa # the macro is constructed during the @with_kw
-                    # and called @unpack_*
+    # The macro is constructed during the @with_kw
+    # and called @unpack_*:
+    @unpack_Para pa
     out = var + a + b
     b = 77
     @pack_Para! pa # only works with mutables
@@ -247,6 +252,7 @@ out, pa = fn(7, pa)
 ```
 
 When needing a new instance, e.g. for immutables, use the no-bang version:
+
 ```
 pa2 = @pack_Para
 ```
@@ -255,12 +261,12 @@ However, note that the (un-)packing macros which unpack all fields
 have a few pitfalls, as changing the type definition will change what
 local variables are available in a function using `@unpack_*`. Examples:
 
-- adding a field `pi` to a type would hijack `Base.pi` usage in any
-  function using `@unpack_*`
-- the `@unpack_*` will shadow an input argument of the function with
-  the same name as a type-fieldname. This I found very perplexing at
-  times.
-- they do not work with properties, i.e. they can only pack/unpack the
-  actual fields of types.
+  - adding a field `pi` to a type would hijack `Base.pi` usage in any
+    function using `@unpack_*`
+  - the `@unpack_*` will shadow an input argument of the function with
+    the same name as a type-fieldname. This I found very perplexing at
+    times.
+  - they do not work with properties, i.e. they can only pack/unpack the
+    actual fields of types.
 
 Thus, in general, it is probably better to use the `@(un)pack(!)` macros instead.

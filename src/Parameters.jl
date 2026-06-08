@@ -56,13 +56,13 @@ struct Lines
 end
 start(lns::Lines) = 1
 function next(lns::Lines, nr)
-    for i=nr:length(lns.block.args)
+    for i = nr:length(lns.block.args)
         if lns.block.args[i] isa LineNumberNode
             continue
         end
-        if ( lns.block.args[i] isa Symbol
-             || lns.block.args[i] isa String # doc-string
-             || !(lns.block.args[i].head==:line))
+        if (lns.block.args[i] isa Symbol
+            || lns.block.args[i] isa String # doc-string
+            || !(lns.block.args[i].head==:line))
             return lns.block.args[i], i+1
         end
     end
@@ -83,7 +83,7 @@ end
 # This is not O(1) but hey...
 function Base.setindex!(lns::Lines, val, ind)
     ii = 1
-    for i=1:length(lns.block.args)
+    for i = 1:length(lns.block.args)
         if lns.block.args[i] isa LineNumberNode
             continue
         end
@@ -92,14 +92,14 @@ function Base.setindex!(lns::Lines, val, ind)
                 lns.block.args[i] = val
                 return nothing
             end
-            ii +=1
+            ii += 1
         end
     end
     throw(BoundsError("Attempted to set line $ind of $(ii-1) length code-block"))
 end
 
 # Transforms :(a::b) -> :a
-decolon2(a::Expr) = (@assert a.head==:(::);  a.args[1])
+decolon2(a::Expr) = (@assert a.head==:(::); a.args[1])
 decolon2(a::Symbol) = a
 
 # Keep the ::T of the args if T ∈ typparas,
@@ -108,7 +108,7 @@ function keep_only_typparas(args, typparas)
     args = copy(args)
     tokeep = Int[]
     typparas_ = map(stripsubtypes, typparas)
-    for i=1:length(args)
+    for i = 1:length(args)
         isa(args[i], String) && continue # do not keep field doc-strings
         push!(tokeep, i)
         isa(args[i], Symbol) && continue
@@ -127,7 +127,7 @@ symbol_in(s::Symbol, ex::Symbol) = s==ex
 symbol_in(s::Symbol, ex) = false
 function symbol_in(s::Symbol, ex::Expr)
     for a in ex.args
-        symbol_in(s,a) && return true
+        symbol_in(s, a) && return true
     end
     return false
 end
@@ -236,10 +236,10 @@ julia> reconstruct(B, y, a=cos) # note reconstruct(y, a=cos) errors!
 B{typeof(cos)}(cos, 1)
 ```
 """
-reconstruct(pp::T, di) where T = reconstruct(T, pp, di)
+reconstruct(pp::T, di) where {T} = reconstruct(T, pp, di)
 reconstruct(pp; kws...) = reconstruct(pp, kws)
 reconstruct(T::Type, pp; kws...) = reconstruct(T, pp, kws)
-function reconstruct(::Type{T}, pp, di) where T
+function reconstruct(::Type{T}, pp, di) where {T}
     di = !isa(di, AbstractDict) ? Dict(di) : copy(di)
     ns = if T<:AbstractDict
         if pp isa AbstractDict
@@ -263,7 +263,7 @@ function reconstruct(::Type{T}, pp, di) where T
     length(di)!=0 && error("Fields $(keys(di)) not in type $T")
 
     if T<:AbstractDict
-        return T(zip(ns,args))
+        return T(zip(ns, args))
     elseif T <: NamedTuple
         return T(Tuple(args))
     else
@@ -387,7 +387,7 @@ function with_kw(typedef, mod::Module, withshow=true)
     # top-level)
     # See issue https://github.com/mauro3/Parameters.jl/issues/21
     lns2 = Any[] # need new lines as expanded macros may have many lines
-    for (i,l) in enumerate(lns) # loop over body of typedef
+    for (i, l) in enumerate(lns) # loop over body of typedef
         if i==1 && has_deftyp
             push!(lns2, l)
             continue
@@ -396,7 +396,8 @@ function with_kw(typedef, mod::Module, withshow=true)
             push!(lns2, l)
             continue
         end
-        if l.head==:macrocall && l.args[1] != Symbol("@assert") && l.args[1] != Symbol("@smart_assert")
+        if l.head==:macrocall && l.args[1] != Symbol("@assert") &&
+           l.args[1] != Symbol("@smart_assert")
             tmp = macroexpand(mod, l)
             if tmp.head==:block
                 llns = Lines(tmp)
@@ -404,7 +405,7 @@ function with_kw(typedef, mod::Module, withshow=true)
                     push!(lns2, ll)
                 end
             else
-                push!(lns2,tmp)
+                push!(lns2, tmp)
             end
         else
             push!(lns2, l)
@@ -417,10 +418,10 @@ function with_kw(typedef, mod::Module, withshow=true)
     # the type def
     fielddefs = quote end # holds r::R etc
     fielddefs.args = Any[]
-    kws = OrderedDict{Any, Any}()
+    kws = OrderedDict{Any,Any}()
     # assertions in the body
     asserts = Any[]
-    for (i,l) in enumerate(lns) # loop over body of typedef
+    for (i, l) in enumerate(lns) # loop over body of typedef
         if i==1 && has_deftyp
             # ignore @deftype line
             continue
@@ -440,7 +441,7 @@ function with_kw(typedef, mod::Module, withshow=true)
             push!(fielddefs.args, l)
         elseif l.head==:(=)  # default value and with or without type annotation
             if l.args[1] isa Expr && (l.args[1].head==:call || # inner constructor
-                                        l.args[1].head==:where && l.args[1].args[1].head==:call) # inner constructor with `where`
+                                      l.args[1].head == :where && l.args[1].args[1].head==:call) # inner constructor with `where`
                 check_inner_constructor(l)
                 push!(inner_constructors, l)
             else
@@ -462,7 +463,8 @@ function with_kw(typedef, mod::Module, withshow=true)
                 # unwrap-macro
                 push!(unpack_vars, decolon2(fld))
             end
-        elseif l.head==:macrocall && (l.args[1]==Symbol("@assert") || l.args[1]==Symbol("@smart_assert"))
+        elseif l.head==:macrocall &&
+               (l.args[1]==Symbol("@assert") || l.args[1]==Symbol("@smart_assert"))
             # store all asserts
             push!(asserts, l)
         elseif l.head==:function # inner constructor
@@ -474,7 +476,7 @@ function with_kw(typedef, mod::Module, withshow=true)
             push!(fielddefs.args, l)
             sym = decolon2(l.args[1])
             syms = string(sym)
-            kws[sym] = :(error($err1str *$syms * $err2str))
+            kws[sym] = :(error($err1str * $syms * $err2str))
             # unwrap-macro
             push!(unpack_vars, l.args[1])
         end
@@ -488,15 +490,15 @@ function with_kw(typedef, mod::Module, withshow=true)
     # invariants) which also gets used with the keywords.
     args = Any[]
     kwargs = Expr(:parameters)
-    for (k,w) in kws
+    for (k, w) in kws
         push!(args, k)
-        push!(kwargs.args, Expr(:kw,k,w))
+        push!(kwargs.args, Expr(:kw, k, w))
     end
     if length(typparas)>0
         tps = stripsubtypes(typparas)
-        innerc = :( $tn{$(tps...)}($kwargs) where {$(tps...)} = $tn{$(tps...)}($(args...)))
+        innerc = :($tn{$(tps...)}($kwargs) where {$(tps...)} = $tn{$(tps...)}($(args...)))
     else
-        innerc = :($tn($kwargs) = $tn($(args...)) )
+        innerc = :($tn($kwargs) = $tn($(args...)))
     end
     push!(typ.args[3].args, innerc)
 
@@ -506,7 +508,7 @@ function with_kw(typedef, mod::Module, withshow=true)
     if length(inner_constructors)==0
         if length(typparas)>0
             tps = stripsubtypes(typparas)
-            innerc2 = :( $tn{$(tps...)}($(args...)) where {$(tps...)} = new{$(tps...)}($(args...)) )
+            innerc2 = :($tn{$(tps...)}($(args...)) where {$(tps...)} = new{$(tps...)}($(args...)))
         else
             innerc2 = :($tn($(args...)) = new($(args...)))
         end
@@ -528,8 +530,9 @@ function with_kw(typedef, mod::Module, withshow=true)
     if typparas!=Any[] # condition (1)
         # fields definitions stripped of ::Int etc., only keep ::T if T∈typparas :
         fielddef_strip_contT = keep_only_typparas(fielddefs.args, typparas)
-        outer_positional = :(  $tn($(fielddef_strip_contT...)) where {$(typparas...)}
-                             = $tn{$(stripsubtypes(typparas)...)}($(args...)))
+        outer_positional = :(function $tn($(fielddef_strip_contT...)) where {$(typparas...)}
+                                 $tn{$(stripsubtypes(typparas)...)}($(args...))
+                             end)
         # Check condition (2)
         checks = true
         for tp in stripsubtypes(typparas)
@@ -548,7 +551,7 @@ function with_kw(typedef, mod::Module, withshow=true)
     if typparas==Any[]
         outer_kw=:()
     else
-        outer_kw = :($tn($kwargs) = $tn($(args...)) )
+        outer_kw = :($tn($kwargs) = $tn($(args...)))
     end
     # NOTE: The reason to have both outer and inner keyword
     # constructors are to allow both calls:
@@ -568,15 +571,14 @@ function with_kw(typedef, mod::Module, withshow=true)
     # julia> MT4_{Float32, Int}(r=4, a=5.)
     # MT4_{Float32,Int64}(4.0f0, 5)
 
-
     ## outer copy constructor
     ###
     outer_copy = quote
-        $tn(pp::$tn; kws... ) = $Parameters.reconstruct(pp, kws)
+        $tn(pp::$tn; kws...) = $Parameters.reconstruct(pp, kws)
         # $tn(pp::$tn, di::Union(AbstractDict,Vararg{Tuple{Symbol,Any}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
         # $tn(pp::$tn, di::Union(AbstractDict, Tuple{Vararg{Tuple{Symbol, Any}}}) ) = reconstruct(pp, di) # see issue https://github.com/JuliaLang/julia/issues/11537
         $tn(pp::$tn, di::$Parameters.AbstractDict) = $Parameters.reconstruct(pp, di)
-        $tn(pp::$tn, di::Vararg{Tuple{Symbol,Any}} ) = $Parameters.reconstruct(pp, di)
+        $tn(pp::$tn, di::Vararg{Tuple{Symbol,Any}}) = $Parameters.reconstruct(pp, di)
     end
 
     # (un)pack macro from https://groups.google.com/d/msg/julia-users/IQS2mT1ITwU/hDtlV7K1elsJ
@@ -586,10 +588,10 @@ function with_kw(typedef, mod::Module, withshow=true)
     showfn = if withshow
         :(function Base.show(io::IO, p::$tn)
               if get(io, :compact, false) || get(io, :typeinfo, nothing)==$tn
-                Base.show_default(IOContext(io, :limit => true), p)
+                  Base.show_default(IOContext(io, :limit => true), p)
               else
-                # just dumping seems to give ok output, in particular for big data-sets:
-                dump(IOContext(io, :limit => true), p, maxdepth=1)
+                  # just dumping seems to give ok output, in particular for big data-sets:
+                  dump(IOContext(io, :limit => true), p; maxdepth=1)
               end
           end)
     else
@@ -654,7 +656,7 @@ function with_kw_nt(typedef, mod)
     NT = gensym(:NamedTuple_kw)
     nt = Expr(:tuple, nt...)
     quote
-        $NT(; $(kwargs...)) =$nt
+        $NT(; $(kwargs...)) = $nt
         $NT($(args...)) = $nt
         $NT
     end
