@@ -31,6 +31,9 @@ jobs:
           - windows-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Allow Julia 1.9 to load libopenlibm on newer glibc
+        if: matrix.version == '1.9' && matrix.os == 'ubuntu-latest'
+        run: echo "GLIBC_TUNABLES=glibc.rtld.execstack=2" >> "$GITHUB_ENV"
       - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.version }}
@@ -43,4 +46,3 @@ jobs:
           file: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
-
